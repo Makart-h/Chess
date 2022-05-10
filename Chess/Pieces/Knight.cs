@@ -32,9 +32,10 @@ namespace Chess.Pieces
         {
             base.CheckPossibleMoves();
         }
-        public override void MovePiece(Square square)
+        public override void MovePiece(Move move)
         {
-            this.square = square;
+            OnPieceMoved(new PieceMovedEventArgs(this, move));
+            square = move.Latter;
         }
     }
 }

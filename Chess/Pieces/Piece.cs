@@ -18,6 +18,8 @@ namespace Chess.Pieces
         protected MoveSets moveSet;
 
         public static event EventHandler<PieceMovedEventArgs> PieceMoved;
+        public static event EventHandler<PieceSelectedEventArgs> PieceSelected;
+        public static event EventHandler PieceDeselected;
         public int Value { get; protected set; }
         public MoveSets MoveSet { get => moveSet; }
         public bool IsSelected { 
@@ -25,9 +27,9 @@ namespace Chess.Pieces
             set {
                 isSelected = value;
                 if (isSelected)
-                    Chessboard.Instance.OnPieceSelection(this);
+                    OnPieceSelected(new PieceSelectedEventArgs(this));
                 else
-                    Chessboard.Instance.OnPieceDeselection();
+                    OnPieceDeselected(EventArgs.Empty);
                 color.A = isSelected ? (byte)100 : (byte)255;
             }
         }
@@ -73,12 +75,21 @@ namespace Chess.Pieces
                 }
             }
         }
-        public abstract void MovePiece(Square square);
+        public abstract void MovePiece(Move move);
         public abstract void Update();
 
         protected virtual void OnPieceMoved(PieceMovedEventArgs e)
         {
             PieceMoved?.Invoke(this, e);
+        }
+
+        protected virtual void OnPieceSelected(PieceSelectedEventArgs e)
+        {
+            PieceSelected?.Invoke(this, e);
+        }
+        protected virtual void OnPieceDeselected(EventArgs e)
+        {
+            PieceDeselected?.Invoke(this, e);
         }
     }
 }

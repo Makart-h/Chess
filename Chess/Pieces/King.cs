@@ -19,6 +19,7 @@ namespace Chess.Pieces
             get { return canCastleQueenSide; } 
             set { canCastleQueenSide = value; } }
         private readonly List<List<Square>> threats;
+        public static event EventHandler Check;
         public King(Team team, Square square, Texture2D rawTexture) : base(team, square)
         {
             model = new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
@@ -208,7 +209,7 @@ namespace Chess.Pieces
                 }
             }
             if (threats.Count > 0)
-                Chessboard.Instance.OnCheck(this);
+                OnCheck(EventArgs.Empty);
         } //refactor
         public bool CheckIfSquareIsThreatened(Square checkedSquare)
         {
@@ -241,11 +242,17 @@ namespace Chess.Pieces
             this.Square = kingSquare;
             return squareThreats.Count > 0;
         } //refactor
-        public override void MovePiece(Square square)
+        public override void MovePiece(Move move)
         {
-            this.square = square;
+            OnPieceMoved(new PieceMovedEventArgs(this, move));
+            this.square = move.Latter;
             canCastleKingSide = false;
             canCastleQueenSide = false;
+        }
+
+        public void OnCheck(EventArgs e)
+        {
+            Check?.Invoke(this, e);
         }
     }
 }

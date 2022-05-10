@@ -97,11 +97,13 @@ namespace Chess.Pieces
                 }
             }
         }
-        public override void MovePiece(Square square)
+        public override void MovePiece(Move move)
         {
+            OnPieceMoved(new PieceMovedEventArgs(this, move));
+
             if (Math.Abs(this.square.Number.digit - square.Number.digit) == 2)
                 enPassant = true;
-            this.square = square;
+            this.square = move.Latter;
             hasMoved = true;
 
             if (square.Number.digit == promotionSquareNumber)

@@ -111,7 +111,7 @@ namespace Chess
 
             _spriteBatch.Begin();
             _spriteBatch.Draw(chessboard.Model.RawTexture, chessboard.Position, chessboard.Model.TextureRect, Color.White);
-            List<DrawableObject> overlays = chessboard.Overlays;
+            List<DrawableObject> overlays = OverlayManager.GetOverlays();
             foreach (var obj in overlays)
             {
                 _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);

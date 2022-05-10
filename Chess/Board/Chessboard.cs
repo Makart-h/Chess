@@ -15,8 +15,6 @@ namespace Chess.Board
         public static Chessboard Instance;
         private readonly (Square square, Piece piece)[,] squares;
         private readonly List<DrawableObject> pieces;
-        private readonly List<DrawableObject> overlays;
-        public List<DrawableObject> Overlays { get => overlays; }
         public List<DrawableObject> Pieces { get => pieces; }
         public (Square, Piece)[,] Squares { get => squares; }
         static readonly int numberOfSquares = 8;
@@ -40,7 +38,6 @@ namespace Chess.Board
                 }
             }
             pieces = new List<DrawableObject>();
-            overlays = new List<DrawableObject>();
             Instance = this;
         }
         #region BoardInitialization
@@ -184,14 +181,14 @@ namespace Chess.Board
                     string square = move.Description.Split(':')[1];
                     (x, y) = ConvertSquareToIndexes(new Square(square[0], int.Parse(square[1].ToString())));
                     Square newRookPosition = new Square((char)(move.Latter.Number.letter + direction), move.Latter.Number.digit);
-                    squares[x, y].piece.MovePiece(newRookPosition);
+                    Move rookMove = new Move(squares[x, y].piece.Square, newRookPosition, "castle");
+                    squares[x, y].piece.MovePiece(rookMove);
                     (int i, int j) = ConvertSquareToIndexes(newRookPosition);
                     squares[i, j].piece = squares[x, y].piece;
                     squares[x, y].piece = null;
                     
                 }
-                targetedPiece.Piece.MovePiece(move.Latter);
-                OnPieceMove(move);
+                targetedPiece.Piece.MovePiece(move);
                 return true;
             }
             return false;
@@ -318,65 +315,6 @@ namespace Chess.Board
             (int i, int j) = Chessboard.Instance.ConvertSquareToIndexes(square);
             return new Vector2(j * Square.SquareWidth, (Chessboard.NumberOfSquares - i - 1) * Square.SquareHeight);
         }
-        public void OnPieceSelection(Piece piece)
-        {
-            overlays.Add(new SquareOverlay(SquareOverlayType.Selected, piece.Square));
-            foreach (var item in piece.Moves)
-            {
-                switch(item.Description)
-                {
-                    default:
-                    case "moves":
-                        overlays.Add(new SquareOverlay(SquareOverlayType.CanMove, item.Latter));
-                        break;
-                    case "takes":
-                    case "en passant":
-                        overlays.Add(new SquareOverlay(SquareOverlayType.CanTake, item.Latter));
-                        break;
-                }
-            }
-        }
-        public void OnPieceDeselection()
-        {
-            List<DrawableObject> toRemove = new List<DrawableObject>();
-            foreach (var item in overlays)
-            {
-                if (item is SquareOverlay so && (so.Type == SquareOverlayType.Selected || so.Type == SquareOverlayType.CanTake || so.Type == SquareOverlayType.CanMove))
-                    toRemove.Add(item);
-            }
-            foreach (var item in toRemove)
-            {
-                overlays.Remove(item);
-            }
-        }
-        public SquareOverlay ReturnAnOverlay(SquareOverlayType type)
-        {
-            foreach (var item in overlays)
-            {
-                if (item is SquareOverlay so && so.Type == type)
-                    return so;
-            }
-            return null;
-        }
-        public void OnPieceMove(Move move)
-        {
-            overlays.Clear();
-            SquareOverlay from = ReturnAnOverlay(SquareOverlayType.MovedFrom);
-            SquareOverlay to = ReturnAnOverlay(SquareOverlayType.MovedTo);
-            if (from == null)
-                overlays.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
-            else
-                from.Move(move.Former);
-            if (to == null)
-                overlays.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
-            else
-                to.Move(move.Latter);
-        }
-        public void OnCheck(King king)
-        {
-            overlays.Add(new SquareOverlay(SquareOverlayType.Check, king.Square));
-        }
-
         public void OnPromotion(Piece piece)
         {
             PieceType type = GetPromotionType();
