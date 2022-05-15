@@ -6,6 +6,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Chess.Movement;
 using Chess.Graphics;
 using Chess.Pieces;
+using Chess.Data;
 using System.Linq;
 
 namespace Chess.Board
@@ -40,19 +41,19 @@ namespace Chess.Board
             pieces = new List<DrawableObject>();
             Instance = this;
         }
-        #region BoardInitialization
+
         public void InitilizeBoard(string FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
         {
-            
-            var fields = FEN.Split();
-            if (fields.Length != 6)
-                throw new ArgumentException();
-            ParsePieces(fields[0]);
-            ParseMoveOrder(fields[1]);
-            ParseCastlingRights(fields[2]);
             try
             {
-                ParseEnPassant(fields[3]);
+                FENObject fenObject = FENParser.Parse(FEN);
+                foreach (var item in fenObject.AllPieces)
+                {
+                    AddAPiece(item);
+                }
+                toMove = fenObject.TeamToMove;
+                SetCastlingRights(fenObject.WhiteCastling, fenObject.BlackCastling);
+                SetEnPassant(fenObject.EnPassantSquare);
             }
             catch(ArgumentException)
             {
@@ -60,75 +61,25 @@ namespace Chess.Board
                 throw;
             }
         }
-        private void ParsePieces(string fenField)
+        private void SetCastlingRights(CastlingRights white, CastlingRights black)
         {
-            int x = 8;
-            int y = 'A';
-            foreach (char c in fenField)
-            {
-                if (c == '/')
-                {
-                    x--;
-                    y = 'A';
-                }
-                else if (char.IsDigit(c))
-                {
-                    y += c - '0';
-                }
-                else
-                {
-                    try
-                    {
-                        Piece piece = PieceFactory.Instance.CreateAPiece(c, new Square((char)y, x));
-                        AddAPiece(piece);
-                    }
-                    catch (NotImplementedException)
-                    {
-                        //log the exception or perphaps stop initilizing the board since the string might be wrong
-                    }
-                    finally
-                    {
-                        y++;
-                    }
-                }
-            }
+            if ((white & CastlingRights.KingSide) != 0)
+                whiteKing.CanCastleKingSide = true;
+            if ((white & CastlingRights.QueenSide) != 0)
+                whiteKing.CanCastleQueenSide = true;
+            if ((black & CastlingRights.KingSide) != 0)
+                blackKing.CanCastleKingSide = true;
+            if ((black & CastlingRights.QueenSide) != 0)
+                blackKing.CanCastleQueenSide = true;
         }
-        private void ParseMoveOrder(string fenField) => toMove = fenField.Contains("w") ? Team.White : Team.Black;
-        private void ParseCastlingRights(string fenField)
+        private void SetEnPassant(Square? square)
         {
-            foreach (var c in fenField)
+            if (square.HasValue)
             {
-                switch (c)
-                {
-                    case 'K':
-                        whiteKing.CanCastleKingSide = true;
-                        break;
-                    case 'Q':
-                        whiteKing.CanCastleQueenSide = true;
-                        break;
-                    case 'k':
-                        blackKing.CanCastleKingSide = true;
-                        break;
-                    case 'q':
-                        blackKing.CanCastleQueenSide = true;
-                        break;
-                }
-            }
-        }
-        private void ParseEnPassant(string fenField)
-        {
-            if (!fenField.Contains('-'))
-            {
-                if (fenField.Length != 2)
-                    throw new ArgumentException();
-
-                int direction = toMove == Team.White ? -1 : 1;
-                Square square = new Square(fenField[0], fenField[1] - '0' + direction);
-                if (GetAPiece(square) is Pawn p)
+                if (GetAPiece(square.Value) is Pawn p)
                     p.EnPassant = true;
             }
         }
-        #endregion
         public King GetKing(Team team) => team == Team.Black ? blackKing : whiteKing;
         public void AddAPiece(Piece piece)
         {

@@ -57,7 +57,7 @@ namespace Chess
             }
             catch(ArgumentException)
             {
-                //log error and close the game
+                throw;
             }
             chessboard.Update();
 
