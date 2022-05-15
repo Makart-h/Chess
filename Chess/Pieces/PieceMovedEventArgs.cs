@@ -8,8 +8,8 @@ namespace Chess.Pieces
 {
     class PieceMovedEventArgs : EventArgs
     {
-        public Piece Piece;
-        public Move Move;
+        public readonly Piece Piece;
+        public readonly Move Move;
 
         public PieceMovedEventArgs(Piece piece, Move move)
         {

@@ -15,7 +15,6 @@ namespace Chess.Data
             string regex = @"^(?'pieces'[/1-8prnbqk]{18,}) (?'toMove'[wb]) (?'castlingRights'-|[kq]{1,4}) (?'enPassant'-|[a-h]{1}[36]{1}) (?'halfMoves'\d{1,2}) (?'moveNo'\d+)$";
             return new Regex(regex, regexOptions).Match(FEN);
         }
-
         public static FENObject Parse(string FEN)
         {
             Match validatedString = ValidateString(FEN);

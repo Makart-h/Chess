@@ -6,7 +6,7 @@ namespace Chess.Pieces
 {
     class PieceSelectedEventArgs : EventArgs
     {
-        public Piece piece;
+        public readonly Piece piece;
 
         public PieceSelectedEventArgs(Piece piece)
         {
