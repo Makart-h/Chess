@@ -4,6 +4,7 @@ using System.Text;
 
 namespace Chess.Pieces
 {
+    [Flags]
     public enum CastlingRights
     {
         None = 0,

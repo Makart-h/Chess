@@ -63,13 +63,13 @@ namespace Chess.Board
         }
         private void SetCastlingRights(CastlingRights white, CastlingRights black)
         {
-            if ((white & CastlingRights.KingSide) != 0)
+            if ((white & CastlingRights.KingSide) == CastlingRights.KingSide)
                 whiteKing.CanCastleKingSide = true;
-            if ((white & CastlingRights.QueenSide) != 0)
+            if ((white & CastlingRights.QueenSide) == CastlingRights.QueenSide)
                 whiteKing.CanCastleQueenSide = true;
-            if ((black & CastlingRights.KingSide) != 0)
+            if ((black & CastlingRights.KingSide) == CastlingRights.KingSide)
                 blackKing.CanCastleKingSide = true;
-            if ((black & CastlingRights.QueenSide) != 0)
+            if ((black & CastlingRights.QueenSide) == CastlingRights.QueenSide)
                 blackKing.CanCastleQueenSide = true;
         }
         private void SetEnPassant(Square? square)
@@ -170,19 +170,6 @@ namespace Chess.Board
             if (x < 0 || y < 0 || x >= numberOfSquares || y >= numberOfSquares)
                 return Team.Void;
             return squares[y, x].piece == null ? Team.Empty : squares[y, x].piece.Team;
-        }
-        public bool IsSquareUnderAttack(Square square, Team team)
-        {
-            foreach (var item in squares)
-            {
-                if (item.Item2 == null)
-                    continue;
-                if (item.Item2.Team == team)
-                    continue;
-                else if (item.Item2.CanMoveToSquare(square))
-                    return true;            
-            }
-            return false;
         }
         public (int, int) ConvertSquareToIndexes(Square square)
         {

@@ -21,7 +21,13 @@ namespace Chess.AI
                     king = k;
             }
         }
-        public abstract void Update();
+        public virtual void Update()
+        {
+            king.ClearThreats();
+            king.FindAllThreats();
+            foreach (var piece in this.pieces)
+                piece.Update();
+        }
         public abstract void ChooseAMove();
 
         protected void OnMoveChosen(MoveChosenEventArgs args)

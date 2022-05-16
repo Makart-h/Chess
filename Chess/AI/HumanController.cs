@@ -13,7 +13,7 @@ namespace Chess.AI
         }
         public override void Update()
         {
-            throw new NotImplementedException();
+            base.Update();
         }
         public override void ChooseAMove()
         {
