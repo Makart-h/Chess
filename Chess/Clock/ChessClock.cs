@@ -7,7 +7,7 @@ using Chess.Pieces;
 
 namespace Chess.Clock
 {
-    internal class Clock
+    internal class ChessClock
     {
         private readonly Dictionary<Team, Controller> controllers;
         private readonly Dictionary<Team, Timer> timers;
@@ -16,7 +16,7 @@ namespace Chess.Clock
         public Controller ActiveController { get => controllers[activeTeam]; }
         public static event EventHandler<TimerExpiredEventArgs> TimerExpired;
 
-        public Clock(Controller white, Controller black, TimeSpan interval, TimeSpan increment, Team activeTeam)
+        public ChessClock(Controller white, Controller black, TimeSpan interval, TimeSpan increment, Team activeTeam)
         {
             controllers = new Dictionary<Team, Controller>();
             timers = new Dictionary<Team, Timer>();
@@ -41,7 +41,10 @@ namespace Chess.Clock
             activeTeam = activeTeam == Team.White ? Team.Black : Team.White;
             timers[activeTeam].Stop();         
         }
-
+        public void Start()
+        {
+            timers[activeTeam].Start();
+        }
         private void Toggle()
         {
             timers[activeTeam].Interval += increment[activeTeam];

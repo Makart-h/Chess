@@ -33,6 +33,8 @@ namespace Chess.Pieces
         public override void Update()
         {
             moves.Clear();
+            threats.Clear();
+            FindAllThreats();
             CheckPossibleMoves();
         }
         public override void CheckPossibleMoves()

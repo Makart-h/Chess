@@ -7,7 +7,7 @@ namespace Chess.AI
 {
     internal class AIController : Controller
     {
-        public AIController(Piece[] pieces) : base(pieces)
+        public AIController(Team team, Piece[] pieces, CastlingRights castlingRights) : base(team, pieces, castlingRights)
         {
 
         }

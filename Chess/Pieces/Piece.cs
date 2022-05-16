@@ -6,16 +6,18 @@ using Microsoft.Xna.Framework.Graphics;
 using Chess.Movement;
 using Chess.Graphics;
 using Chess.Board;
+using Chess.AI;
 
 namespace Chess.Pieces
 {
-    abstract class Piece : DrawableObject
+    abstract class Piece : DrawableObject, IComparable<Piece>
     {
         protected readonly Team team;
         public Team Team { get => team; }
         protected Square square;
         protected bool isSelected;
         protected MoveSets moveSet;
+        public Controller Owner { get; set; }
 
         public static event EventHandler<PieceMovedEventArgs> PieceMoved;
         public static event EventHandler<PieceSelectedEventArgs> PieceSelected;
@@ -77,12 +79,10 @@ namespace Chess.Pieces
         }
         public abstract void MovePiece(Move move);
         public abstract void Update();
-
         protected virtual void OnPieceMoved(PieceMovedEventArgs e)
         {
             PieceMoved?.Invoke(this, e);
         }
-
         protected virtual void OnPieceSelected(PieceSelectedEventArgs e)
         {
             PieceSelected?.Invoke(this, e);
@@ -91,5 +91,6 @@ namespace Chess.Pieces
         {
             PieceDeselected?.Invoke(this, e);
         }
+        public int CompareTo(Piece other) => Value.CompareTo(other.Value);
     }
 }

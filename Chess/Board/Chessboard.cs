@@ -42,30 +42,11 @@ namespace Chess.Board
             Instance = this;
         }
 
-        public void InitilizeBoard(string FEN = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+        public void InitilizeBoard(Piece[] pieces)
         {
-            try
-            {
-                FENObject fenObject = FENParser.Parse(FEN);
-                foreach (var item in fenObject.AllPieces)
-                {
-                    AddAPiece(item);
-                }
-                toMove = fenObject.TeamToMove;
-                SetCastlingRights(fenObject.WhiteCastling, fenObject.BlackCastling);
-                SetEnPassant(fenObject.EnPassantSquare);
-            }
-            catch(ArgumentException)
-            {
-                //log error
-                throw;
-            }
+            
         }
-        private void SetCastlingRights(CastlingRights white, CastlingRights black)
-        {
-            whiteKing.CastlingRights = white;
-            blackKing.CastlingRights = black;
-        }
+        
         private void SetEnPassant(Square? square)
         {
             if (square.HasValue)
