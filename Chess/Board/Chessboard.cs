@@ -63,14 +63,8 @@ namespace Chess.Board
         }
         private void SetCastlingRights(CastlingRights white, CastlingRights black)
         {
-            if ((white & CastlingRights.KingSide) == CastlingRights.KingSide)
-                whiteKing.CanCastleKingSide = true;
-            if ((white & CastlingRights.QueenSide) == CastlingRights.QueenSide)
-                whiteKing.CanCastleQueenSide = true;
-            if ((black & CastlingRights.KingSide) == CastlingRights.KingSide)
-                blackKing.CanCastleKingSide = true;
-            if ((black & CastlingRights.QueenSide) == CastlingRights.QueenSide)
-                blackKing.CanCastleQueenSide = true;
+            whiteKing.CastlingRights = white;
+            blackKing.CastlingRights = black;
         }
         private void SetEnPassant(Square? square)
         {

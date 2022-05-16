@@ -10,14 +10,7 @@ namespace Chess.Pieces
 {
     class King : Piece
     {
-        private bool canCastleKingSide;
-        public bool CanCastleKingSide { 
-            get { return canCastleKingSide; } 
-            set { canCastleKingSide = value; } }
-        private bool canCastleQueenSide;
-        public bool CanCastleQueenSide { 
-            get { return canCastleQueenSide; } 
-            set { canCastleQueenSide = value; } }
+        public CastlingRights CastlingRights { get; set; }
         private readonly List<List<Square>> threats;
         public static event EventHandler Check;
         public King(Team team, Square square, Texture2D rawTexture) : base(team, square)
@@ -26,16 +19,14 @@ namespace Chess.Pieces
             moves = new List<Move>();
             threats = new List<List<Square>>();
             moveSet = MoveSets.King;
-            canCastleKingSide = false;
-            canCastleQueenSide = false;
+            CastlingRights = CastlingRights.None;
             Value = 0;
         }
         public King(King other) : base(other.team, other.square)
         {
             model = other.model;
             moves = new List<Move>(other.moves);
-            canCastleKingSide = other.canCastleKingSide;
-            canCastleQueenSide = other.canCastleQueenSide;
+            CastlingRights = other.CastlingRights;
             Value = other.Value;
             moveSet = other.MoveSet;
         }
@@ -50,9 +41,9 @@ namespace Chess.Pieces
             
             if (threats.Count == 0)
             {
-                if(canCastleKingSide)
+                if((CastlingRights & CastlingRights.KingSide) == CastlingRights.KingSide)
                     CheckCastling(GetKingSideCastleSquares(), Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter + 3), square.Number.digit)));
-                if(canCastleQueenSide)
+                if((CastlingRights & CastlingRights.QueenSide) == CastlingRights.QueenSide)
                     CheckCastling(GetQueenSideCastleSquares(), Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter - 4), square.Number.digit)));
             }
         }
@@ -246,8 +237,7 @@ namespace Chess.Pieces
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
             this.square = move.Latter;
-            canCastleKingSide = false;
-            canCastleQueenSide = false;
+            CastlingRights = CastlingRights.None;
         }
 
         public void OnCheck(EventArgs e)
