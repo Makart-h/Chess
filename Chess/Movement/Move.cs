@@ -24,7 +24,7 @@ namespace Chess.Movement
 
             if((set & MoveSets.Vertical) != 0)
             {
-                movesGroupedByDirection.Add((MoveSets.Vertical,GenerateMovesInADirection(piece, (s => new Square(s.Number.letter, s.Number.digit + 1)))));
+                movesGroupedByDirection.Add((MoveSets.Vertical, GenerateMovesInADirection(piece, (s => new Square(s.Number.letter, s.Number.digit + 1)))));
                 movesGroupedByDirection.Add((MoveSets.Vertical, GenerateMovesInADirection(piece, (s => new Square(s.Number.letter, s.Number.digit - 1)))));
             }
             if ((set & MoveSets.Horizontal) != 0)
@@ -77,7 +77,8 @@ namespace Chess.Movement
             {
                 current = cordsIterator(current);
                 Team occupiedSquare = Chessboard.Instance.IsSquareOccupied(current);
-                if(occupiedSquare != Team.Empty)
+                Piece pieceOnTheWay = Chessboard.Instance.GetAPiece(current);
+                if (occupiedSquare != Team.Empty && pieceOnTheWay != piece)
                 {
                     if (excludeMove != "takes" && occupiedSquare != piece.Team && occupiedSquare != Team.Void)
                         moves.Add(new Move(piece.Square, current, "takes"));

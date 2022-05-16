@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Text;
 using Chess.Pieces;
 using Chess.Board;
+using Chess.Movement;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -12,9 +13,9 @@ namespace Chess.AI
     internal class HumanController : Controller
     {
         private MouseState previousState;
-        private (Square Square, Piece Piece) targetedPiece;
+        private Piece targetedPiece;
         public (Vector2 Position, Graphics.Model PieceTexture) DragedPiece;
-        public HumanController(Team team, Piece[] pieces, CastlingRights castlingRights) : base(team, pieces, castlingRights)
+        public HumanController(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant) : base(team, pieces, castlingRights, enPassant)
         {
 
         }
@@ -25,25 +26,25 @@ namespace Chess.AI
             MouseState mouseState = Mouse.GetState();
             if (mouseState.LeftButton == ButtonState.Pressed && previousState.LeftButton != ButtonState.Pressed)
             {
-                targetedPiece = Chessboard.Instance.IsAValidPieceToMove(Chessboard.Instance.CheckCollisions(mouseState.Position.X, mouseState.Position.Y));
-                if (targetedPiece.Piece != null)
+                targetedPiece = Chessboard.Instance.CheckCollisions(mouseState.Position.X, mouseState.Position.Y);
+                if (targetedPiece != null && targetedPiece.Team == team)
                 {
-                    targetedPiece.Piece.IsSelected = true;
-                    DragedPiece.PieceTexture = new Graphics.Model(targetedPiece.Piece.Model);
+                    targetedPiece.IsSelected = true;
+                    DragedPiece.PieceTexture = new Graphics.Model(targetedPiece.Model);
                 }
             }
             else if (mouseState.LeftButton == ButtonState.Released && previousState.LeftButton == ButtonState.Pressed)
             {
-                if (targetedPiece.Piece != null && targetedPiece.Piece.Team == team)
+                if (targetedPiece != null && targetedPiece.Team == team)
                 {
                     (int x, int y) = mouseState.Position;
-                    if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.FromCords(x, y)))
+                    if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.FromCords(x, y), out Move move))
                     {
-                        Chessboard.Instance.Update();
+                        OnMoveChosen(new MoveChosenEventArgs(this, targetedPiece, move));
                     }
-                    DragedPiece.PieceTexture = null;
-                    targetedPiece.Piece.IsSelected = false;
-                    targetedPiece.Piece = null;
+                        DragedPiece.PieceTexture = null;
+                        targetedPiece.IsSelected = false;
+                        targetedPiece = null;
                 }
             }
             if (DragedPiece.PieceTexture != null)

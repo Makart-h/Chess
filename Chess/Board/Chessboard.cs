@@ -14,137 +14,90 @@ namespace Chess.Board
     class Chessboard : DrawableObject
     {
         public static Chessboard Instance;
-        private readonly (Square square, Piece piece)[,] squares;
-        private readonly List<DrawableObject> pieces;
-        public List<DrawableObject> Pieces { get => pieces; }
-        public (Square, Piece)[,] Squares { get => squares; }
+        private readonly Dictionary<Square, Piece> pieces;
         static readonly int numberOfSquares = 8;
         public static int NumberOfSquares {get => numberOfSquares;}
-        private King whiteKing;
-        private King blackKing;
-        private Team toMove;
-        public Team ToMove { get => toMove; }
+        public static event EventHandler<PieceRemovedFromTheBoardEventArgs> PieceRemovedFromTheBoard;
 
         public Chessboard(Texture2D rawTexture)
         {
-            squares = new (Square, Piece)[numberOfSquares, numberOfSquares];
             model = new Graphics.Model(rawTexture, 0, 0, numberOfSquares * Square.SquareWidth, numberOfSquares * Square.SquareHeight);
             position = new Vector2(0, 0);
-            for (int i = 0; i < numberOfSquares; ++i)
+            Instance = this;
+            pieces = new Dictionary<Square, Piece>();
+            foreach(var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
             {
-                for (int j = 0; j < numberOfSquares; ++j)
+                foreach (var number in from n in Enumerable.Range(1, numberOfSquares)
+                                       select int.Parse(n.ToString()))
                 {
-                    squares[i, j].square = new Square((char)('A' + j), i + 1);
-                    squares[i, j].piece = null;
+                    pieces[new Square(letter, number)] = null;
                 }
             }
-            pieces = new List<DrawableObject>();
-            Instance = this;
         }
-
         public void InitilizeBoard(Piece[] pieces)
         {
-            
-        }
-        
-        private void SetEnPassant(Square? square)
-        {
-            if (square.HasValue)
+            foreach (var piece in pieces)
             {
-                if (GetAPiece(square.Value) is Pawn p)
-                    p.EnPassant = true;
+                this.pieces[piece.Square] = piece;
             }
         }
-        public King GetKing(Team team) => team == Team.Black ? blackKing : whiteKing;
         public void AddAPiece(Piece piece)
         {
-            (int y, int x) = ConvertSquareToIndexes(piece.Square);
-            if(piece is King k)
-            {
-                if (k.Team == Team.Black)
-                    blackKing = k;
-                else
-                    whiteKing = k;
-            }
-            squares[y, x].piece = piece;
-            pieces.Add(piece);
+            pieces[piece.Square] = piece;
         }
-        public (Square, Piece) CheckCollisions(int x, int y)
+        public Piece CheckCollisions(int x, int y)
         {
-            int indexX = x / Square.SquareWidth;
-            int indexY = numberOfSquares - 1 - y / Square.SquareHeight;
+            Square square = FromCords(x, y);
 
-            return squares[indexY, indexX];
+            return pieces[square];
         }
-        public (Square, Piece) IsAValidPieceToMove((Square s, Piece p) square)
+        public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)
         {
-            if (square.p != null && square.p.Team == toMove)
-                return square;
-
-            return (square.s, null);
-        }
-        public bool MovePiece((Square Square, Piece Piece) targetedPiece, Square newSquare)
-        {
-            List<Move> moves = targetedPiece.Piece.Moves;
-            Move move = targetedPiece.Piece.GetAMove(newSquare);
+            List<Move> moves = targetedPiece.Moves;
+            move = targetedPiece.GetAMove(newSquare);
             if (move != null)
             {
-                (int oldX, int oldY) = ConvertSquareToIndexes(move.Former);               
-                (int x, int y) = ConvertSquareToIndexes(move.Latter);
                 if (move.Description == "takes")
                 {
                     RemoveAPiece(move.Latter);
-                }                   
-                squares[oldX, oldY].piece = null;
-                squares[x, y].piece = targetedPiece.Piece;
+                }
+                pieces[move.Former] = null;
+                pieces[move.Latter] = targetedPiece;
                 moves.Clear();
-                toMove = toMove == Team.Black ? Team.White : Team.Black;
                 if (move.Description == "en passant")
                     RemoveAPiece(new Square(move.Latter.Number.letter, move.Former.Number.digit));
                 else if(move.Description.Contains("castle"))
                 {
-                    int direction = (int)move.Former.Number.letter > (int)move.Latter.Number.letter ? 1 : -1;
+                    int direction = move.Former.Number.letter > move.Latter.Number.letter ? 1 : -1;
                     string square = move.Description.Split(':')[1];
-                    (x, y) = ConvertSquareToIndexes(new Square(square[0], int.Parse(square[1].ToString())));
+                    Square originalRookPosition = new Square(square[0], int.Parse(square[1].ToString()));
                     Square newRookPosition = new Square((char)(move.Latter.Number.letter + direction), move.Latter.Number.digit);
-                    Move rookMove = new Move(squares[x, y].piece.Square, newRookPosition, "castle");
-                    squares[x, y].piece.MovePiece(rookMove);
-                    (int i, int j) = ConvertSquareToIndexes(newRookPosition);
-                    squares[i, j].piece = squares[x, y].piece;
-                    squares[x, y].piece = null;
+                    Move rookMove = new Move(pieces[originalRookPosition].Square, newRookPosition, "castle");
+                    pieces[originalRookPosition].MovePiece(rookMove);
+                    pieces[newRookPosition] = pieces[originalRookPosition];
+                    pieces[originalRookPosition] = null;
                     
                 }
-                targetedPiece.Piece.MovePiece(move);
+                targetedPiece.MovePiece(move);
                 return true;
             }
             return false;
         }
-        public GameState GetNewGameState() => new GameState(this.squares, (toMove == Team.White ? Team.Black : Team.White));
         public void RemoveAPiece(Square square)
         {
-            (int y, int x) = ConvertSquareToIndexes(square);
-            if (x < 0 || x >= numberOfSquares || y < 0 || y > numberOfSquares)
-                return;
-            else
-            {
-                pieces.Remove(squares[y, x].piece);
-                squares[y, x].piece = null;
+            if(pieces[square] != null)
+            {         
+                OnPieceRemovedFromTheBoard(new PieceRemovedFromTheBoardEventArgs(pieces[square]));
+                pieces[square] = null;
             }
         }
-        public Piece GetAPiece(Square square)
-        {
-            (int y, int x) = ConvertSquareToIndexes(square);
-            if (x < 0 || x >= numberOfSquares || y < 0 || y > numberOfSquares)
-                return null;
-            else
-                return squares[y, x].Item2;
-        }
+        public Piece GetAPiece(Square square) => pieces.TryGetValue(square, out Piece piece) ? piece : null;
         public Team IsSquareOccupied(Square square)
         {
             (int y, int x) = ConvertSquareToIndexes(square);
             if (x < 0 || y < 0 || x >= numberOfSquares || y >= numberOfSquares)
                 return Team.Void;
-            return squares[y, x].piece == null ? Team.Empty : squares[y, x].piece.Team;
+            return pieces[square] == null ? Team.Empty : pieces[square].Team;
         }
         public (int, int) ConvertSquareToIndexes(Square square)
         {
@@ -188,30 +141,10 @@ namespace Chess.Board
                     if (pieceOnTheWay == null)
                         continue;
 
-                    return pieceOnTheWay == second ? true : false;
+                    return pieceOnTheWay == second;
                 }
             }
             return false;
-        }
-        public void Update()
-        {
-            switch (toMove)
-            {
-                case Team.White:
-                    whiteKing.ClearThreats();
-                    whiteKing.FindAllThreats();
-                    break;
-                case Team.Black:
-                    blackKing.ClearThreats();
-                    blackKing.FindAllThreats();
-                    break;
-            }
-            foreach(var item in squares)
-            {
-                if (item.piece == null || item.piece.Team != toMove)
-                    continue;
-                item.piece.Update();              
-            }
         }
         public static Square FromCords(int x, int y)
         {
@@ -248,6 +181,11 @@ namespace Chess.Board
         public PieceType GetPromotionType()
         {
             return PieceType.Queen;
+        }
+
+        public void OnPieceRemovedFromTheBoard(PieceRemovedFromTheBoardEventArgs args)
+        {
+            PieceRemovedFromTheBoard?.Invoke(this, args);
         }
     }
 }

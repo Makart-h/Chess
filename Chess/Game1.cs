@@ -12,7 +12,7 @@ using Chess.Clock;
 
 namespace Chess
 {
-    public class Game1 : Game
+    internal class Game1 : Game
     {
         private GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
@@ -25,6 +25,8 @@ namespace Chess
         private List<Controller> controllers;
         private ChessClock clock;
         private FENObject fenObject;
+        private bool draw;
+        private bool update;
 
         public Game1()
         {
@@ -44,12 +46,25 @@ namespace Chess
             _graphics.PreferredBackBufferHeight = 576;   // set this value to the desired height of your window
             _graphics.ApplyChanges();
 
-            fenObject = FENParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
-            Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling);
-            Controller black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling);
+            //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+            //"6k1/6p1/5p1p/1p2p3/p2p2q1/Pr1P2Nn/Q7/6RK b - - 1 38"
+            //"r1bk1q2/pp4pB/4pn2/3p4/3P3Q/2P3P1/PP1N2PP/R5K1 b - - 6 18"
+            //5k2/1q6/8/8/4n3/4K3/8/8 w - - 0 1
+            try
+            {
+                fenObject = FENParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+            }
+            catch (ArgumentException)
+            {
+                throw;
+            }
+            Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
+            Controller black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
             controllers.Add(white);
             controllers.Add(black);
             clock = new ChessClock(white, black, new TimeSpan(0, 10, 0), new TimeSpan(0), fenObject.TeamToMove);
+            chessboard.InitilizeBoard(fenObject.AllPieces);
+            clock.Start();
         }
 
         protected override void LoadContent()
@@ -58,17 +73,6 @@ namespace Chess
             chessboard = new Chessboard(this.Content.Load<Texture2D>("chessboard"));
             pieceFactory = new PieceFactory(this.Content.Load<Texture2D>("Tpieces"));
             Overlays = this.Content.Load<Texture2D>("Tsquares");
-            try
-            {
-                chessboard.InitilizeBoard(fenObject.AllPieces);
-                //chessboard.InitilizeBoard("6k1/6p1/5p1p/1p2p3/p2p2q1/Pr1P2Nn/Q7/6RK b - - 1 38");
-                //chessboard.InitilizeBoard("r1bk1q2/pp4pB/4pn2/3p4/3P3Q/2P3P1/PP1N2PP/R5K1 b - - 6 18");
-            }
-            catch(ArgumentException)
-            {
-                throw;
-            }
-            chessboard.Update();
 
             // TODO: use this.Content to load your game content here
         }
@@ -80,8 +84,6 @@ namespace Chess
 
             clock.ActiveController.Update();
 
-            
-            
             // TODO: Add your update logic here
 
             base.Update(gameTime);
@@ -91,6 +93,7 @@ namespace Chess
         {
             GraphicsDevice.Clear(Color.CornflowerBlue);
 
+
             _spriteBatch.Begin();
             _spriteBatch.Draw(chessboard.Model.RawTexture, chessboard.Position, chessboard.Model.TextureRect, Color.White);
             List<DrawableObject> overlays = OverlayManager.GetOverlays();
@@ -98,13 +101,14 @@ namespace Chess
             {
                 _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);
             }
-            foreach (var controller in controllers) {
+            foreach (var controller in controllers)
+            {
                 foreach (var obj in controller.Pieces)
                 {
                     _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);
-                    if(controller is HumanController hc)
+                    if (controller is HumanController hc)
                     {
-                        if(hc.DragedPiece.PieceTexture != null)
+                        if (hc.DragedPiece.PieceTexture != null)
                         {
                             _spriteBatch.Draw(hc.DragedPiece.PieceTexture.RawTexture, hc.DragedPiece.Position, hc.DragedPiece.PieceTexture.TextureRect, Color.White);
                         }
@@ -117,5 +121,5 @@ namespace Chess
 
             base.Draw(gameTime);
         }
-    }
+    } 
 }

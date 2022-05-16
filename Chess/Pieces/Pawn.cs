@@ -35,9 +35,9 @@ namespace Chess.Pieces
         public override void Update()
         {
             moves.Clear();
-            CheckPossibleMoves();
-            if (enPassant && Chessboard.Instance.ToMove == team)
+            if (enPassant)
                 enPassant = false;
+            CheckPossibleMoves();           
         }
         public override void CheckPossibleMoves() //refactor
         {
@@ -56,7 +56,7 @@ namespace Chess.Pieces
                     if (teamOnTheSquare == Team.Empty)
                     {
                         Move moveToAdd = new Move(this.square, square, "moves");
-                        if (Chessboard.Instance.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                        if (Owner.King.CheckMoveAgainstThreats(this, moveToAdd))
                             moves.Add(moveToAdd);
                     }
                 }
@@ -67,7 +67,7 @@ namespace Chess.Pieces
             if (teamOnTheSquare == Team.Empty)
             {
                 Move moveToAdd = new Move(this.square, square, "moves");
-                if (Chessboard.Instance.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                if (Owner.King.CheckMoveAgainstThreats(this, moveToAdd))
                     moves.Add(moveToAdd);
             }
             //takes
@@ -80,7 +80,7 @@ namespace Chess.Pieces
                 if (Chessboard.Instance.GetAPiece(square) is Pawn p && p.enPassant == true)
                 {
                     Move moveToAdd = new Move(this.square, new Square((char)(Square.Number.letter + 1), this.square.Number.digit + (1 * direction)), "en passant");
-                    if (Chessboard.Instance.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                    if (Owner.King.CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
             }
@@ -92,7 +92,7 @@ namespace Chess.Pieces
                 if (Chessboard.Instance.GetAPiece(square) is Pawn p && p.enPassant == true)
                 {
                     Move moveToAdd = new Move(this.square, new Square((char)(Square.Number.letter - 1), this.square.Number.digit + (1 * direction)), "en passant");
-                    if (Chessboard.Instance.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                    if (Owner.King.CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
             }
@@ -101,9 +101,9 @@ namespace Chess.Pieces
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
 
-            if (Math.Abs(this.square.Number.digit - square.Number.digit) == 2)
+            if (Math.Abs(square.Number.digit - move.Latter.Number.digit) == 2)
                 enPassant = true;
-            this.square = move.Latter;
+            square = move.Latter;
             hasMoved = true;
 
             if (square.Number.digit == promotionSquareNumber)

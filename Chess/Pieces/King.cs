@@ -206,8 +206,8 @@ namespace Chess.Pieces
         } //refactor
         public bool CheckIfSquareIsThreatened(Square checkedSquare)
         {
-            Square kingSquare = this.Square;
-            this.Square = checkedSquare;
+            Square kingSquare = square;
+            square = checkedSquare;
             List<Square> squareThreats = new List<Square>();
 
             List<(MoveSets set, List<Move> moves)> groupedMoves = new List<(MoveSets, List<Move>)>();
@@ -221,7 +221,7 @@ namespace Chess.Pieces
                 if (item.moves.Count == 0)
                     continue;
                 Piece piece = Chessboard.Instance.GetAPiece(item.moves[^1].Latter);
-                if (piece != null && (item.set & piece.MoveSet) != 0)
+                if (piece != null && item.moves[^1].Description == "takes" && (item.set & piece.MoveSet) != 0)
                 {
                     List<Square> squares = new List<Square>();
                     foreach (var move in item.moves)
@@ -232,7 +232,7 @@ namespace Chess.Pieces
                 }
             }
 
-            this.Square = kingSquare;
+            square = kingSquare;
             return squareThreats.Count > 0;
         } //refactor
         public override void MovePiece(Move move)

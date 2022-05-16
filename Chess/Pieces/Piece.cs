@@ -72,7 +72,7 @@ namespace Chess.Pieces
             {
                 foreach (var move in group.Item2)
                 {
-                    if (Chessboard.Instance.GetKing(team).CheckMoveAgainstThreats(this, move))
+                    if (Owner.King.CheckMoveAgainstThreats(this, move))
                         moves.Add(move);
                 }
             }

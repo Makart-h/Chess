@@ -2,12 +2,13 @@
 using System.Collections.Generic;
 using System.Text;
 using Chess.Pieces;
+using Chess.Board;
 
 namespace Chess.AI
 {
     internal class AIController : Controller
     {
-        public AIController(Team team, Piece[] pieces, CastlingRights castlingRights) : base(team, pieces, castlingRights)
+        public AIController(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant) : base(team, pieces, castlingRights, enPassant)
         {
 
         }
