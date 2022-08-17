@@ -18,6 +18,12 @@ namespace Chess.Movement
             Latter = latter;
             Description = description;
         }
+        public Move(Move other)
+        {
+            Former = other.Former;
+            Latter = other.Latter;
+            Description = other.Description;
+        }
         public static List<(MoveSets, List<Move>)> GenerateEveryMove(Piece piece, MoveSets set)
         {
             List<(MoveSets, List<Move>)> movesGroupedByDirection = new List<(MoveSets, List<Move>)>();
@@ -77,7 +83,7 @@ namespace Chess.Movement
             {
                 current = cordsIterator(current);
                 Team occupiedSquare = Chessboard.Instance.IsSquareOccupied(current);
-                Piece pieceOnTheWay = Chessboard.Instance.GetAPiece(current);
+                Chessboard.Instance.GetAPiece(current, out Piece pieceOnTheWay);
                 if (occupiedSquare != Team.Empty && pieceOnTheWay != piece)
                 {
                     if (excludeMove != "takes" && occupiedSquare != piece.Team && occupiedSquare != Team.Void)

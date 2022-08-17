@@ -10,23 +10,20 @@ namespace Chess.Pieces
 {
     class Bishop : Piece
     {
-        public Bishop(Team team, Square square, Texture2D rawTexture) : base(team, square)
+        public Bishop(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
-            model = new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Bishop, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Bishop, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Bishop;
-            Value = 3;
+            Value = team == Team.White ? 3 : -3;
         }
-        public Bishop(Bishop other) : base(other.team, other.square)
+        public Bishop(Bishop other, bool isRaw = false) : base(other.team, other.square)
         {
-            model = other.model;
-            moves = new List<Move>(other.moves);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : other.model;
+            moves = other.CopyMoves();
             moveSet = other.moveSet;
             Value = other.Value;
-        }
-        public override void Update()
-        {
-            moves.Clear();
-            CheckPossibleMoves();
         }
         public override void CheckPossibleMoves()
         {

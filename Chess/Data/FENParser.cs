@@ -56,7 +56,7 @@ namespace Chess.Data
                 {
                     try
                     {
-                        Piece piece = PieceFactory.Instance.CreateAPiece(c, new Square((char)y, x));
+                        Piece piece = PieceFactory.CreateAPiece(c, new Square((char)y, x));
                         if (piece.Team == Team.White)
                             white.Add(piece);
                         else

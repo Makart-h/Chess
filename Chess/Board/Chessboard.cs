@@ -15,6 +15,7 @@ namespace Chess.Board
     {
         public static Chessboard Instance;
         private readonly Dictionary<Square, Piece> pieces;
+        public Dictionary<Square, Piece> Pieces { get { return pieces; } }
         static readonly int numberOfSquares = 8;
         public static int NumberOfSquares {get => numberOfSquares;}
         public static event EventHandler<PieceRemovedFromTheBoardEventArgs> PieceRemovedFromTheBoard;
@@ -91,8 +92,18 @@ namespace Chess.Board
                 pieces[square] = null;
             }
         }
-        public Piece GetAPiece(Square square) => pieces.TryGetValue(square, out Piece piece) ? piece : null;
-        public Team IsSquareOccupied(Square square)
+        public bool GetAPiece(Square square, out Piece piece)
+        {
+            if (pieces.ContainsKey(square))
+            {
+                piece = pieces[square];
+                return true;
+            }
+
+            piece = null;
+            return false;
+        }
+            public Team IsSquareOccupied(Square square)
         {
             (int y, int x) = ConvertSquareToIndexes(square);
             if (x < 0 || y < 0 || x >= numberOfSquares || y >= numberOfSquares)
@@ -112,7 +123,8 @@ namespace Chess.Board
                 int direction = first.Square.Number.digit > second.Square.Number.digit ? -1 : 1;
                 for (int i = first.Square.Number.digit + direction; ; i += direction)
                 {
-                    Piece pieceOnTheWay = GetAPiece(new Square(first.Square.Number.letter, i));
+                    if (!GetAPiece(new Square(first.Square.Number.letter, i), out Piece pieceOnTheWay))
+                        return false;
                     if (pieceOnTheWay == null)
                         continue;
 
@@ -124,7 +136,8 @@ namespace Chess.Board
                 int direction = first.Square.Number.letter > second.Square.Number.letter ? -1 : 1;
                 for (int i = first.Square.Number.letter + direction; ; i += direction)
                 {
-                    Piece pieceOnTheWay = GetAPiece(new Square((char)i, first.Square.Number.digit));
+                    if (!GetAPiece(new Square((char)i, first.Square.Number.digit), out Piece pieceOnTheWay))
+                        return false;
                     if (pieceOnTheWay == null)
                         continue;
 
@@ -137,11 +150,14 @@ namespace Chess.Board
                 int directionDigit = first.Square.Number.digit > second.Square.Number.digit ? -1 : 1;
                 for (int i = first.Square.Number.letter + directionLetter, j = first.Square.Number.digit + directionDigit; ; i += directionLetter, j += directionDigit)
                 {
-                    Piece pieceOnTheWay = GetAPiece(new Square((char)i, j));
+
+                    if (!GetAPiece(new Square((char)i, j), out Piece pieceOnTheWay))
+                        return false;
                     if (pieceOnTheWay == null)
                         continue;
 
                     return pieceOnTheWay == second;
+
                 }
             }
             return false;
@@ -169,7 +185,7 @@ namespace Chess.Board
             RemoveAPiece(square);
             try
             {
-                Piece newPiece = PieceFactory.Instance.CreateAPiece(type, square, team);
+                Piece newPiece = PieceFactory.CreateAPiece(type, square, team);
                 AddAPiece(newPiece);
             }
             catch(NotImplementedException)

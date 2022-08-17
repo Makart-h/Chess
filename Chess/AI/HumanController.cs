@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using System.Linq;
 using Chess.Pieces;
 using Chess.Board;
 using Chess.Movement;
@@ -19,10 +20,18 @@ namespace Chess.AI
         {
 
         }
-        public override void Update()
+        public override bool Update()
         {
-            base.Update();
-
+            if (base.Update())
+            {
+                ChooseAMove();
+                return true;
+            }
+            else
+                return false;
+        }
+        public override void ChooseAMove()
+        {
             MouseState mouseState = Mouse.GetState();
             if (mouseState.LeftButton == ButtonState.Pressed && previousState.LeftButton != ButtonState.Pressed)
             {
@@ -42,9 +51,9 @@ namespace Chess.AI
                     {
                         OnMoveChosen(new MoveChosenEventArgs(this, targetedPiece, move));
                     }
-                        DragedPiece.PieceTexture = null;
-                        targetedPiece.IsSelected = false;
-                        targetedPiece = null;
+                    DragedPiece.PieceTexture = null;
+                    targetedPiece.IsSelected = false;
+                    targetedPiece = null;
                 }
             }
             if (DragedPiece.PieceTexture != null)
@@ -53,10 +62,6 @@ namespace Chess.AI
                 DragedPiece.Position = new Vector2(x - DragedPiece.PieceTexture.TextureRect.Width / 2, y - DragedPiece.PieceTexture.TextureRect.Height / 2);
             }
             previousState = mouseState;
-        }
-        public override void ChooseAMove()
-        {
-            throw new NotImplementedException();
         }
     }
 }

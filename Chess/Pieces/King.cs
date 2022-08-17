@@ -13,29 +13,41 @@ namespace Chess.Pieces
         public CastlingRights CastlingRights { get; set; }
         private readonly List<List<Square>> threats;
         public static event EventHandler Check;
-        public King(Team team, Square square, Texture2D rawTexture) : base(team, square)
+        public bool Threatened { get => threats.Count > 0; }
+        public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
-            model = new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
             moves = new List<Move>();
             threats = new List<List<Square>>();
             moveSet = MoveSets.King;
             CastlingRights = CastlingRights.None;
             Value = 0;
         }
-        public King(King other) : base(other.team, other.square)
+        public King(King other, bool isRaw = false) : base(other.team, other.square)
         {
-            model = other.model;
-            moves = new List<Move>(other.moves);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : other.model;
+            moves = other.CopyMoves();
+            threats = other.CopyThreats();
             CastlingRights = other.CastlingRights;
             Value = other.Value;
             moveSet = other.MoveSet;
         }
-        public override void Update()
+        public override int Update()
         {
-            moves.Clear();
             threats.Clear();
             FindAllThreats();
-            CheckPossibleMoves();
+            return base.Update();
+        }
+        private List<List<Square>> CopyThreats()
+        {
+            List<List<Square>> copy = new List<List<Square>>();
+            foreach(var list in threats)
+            {
+                copy.Add(new List<Square>(list));
+            }
+            return copy;
         }
         public override void CheckPossibleMoves()
         {
@@ -43,10 +55,16 @@ namespace Chess.Pieces
             
             if (threats.Count == 0)
             {
-                if((CastlingRights & CastlingRights.KingSide) == CastlingRights.KingSide)
-                    CheckCastling(GetKingSideCastleSquares(), Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter + 3), square.Number.digit)));
-                if((CastlingRights & CastlingRights.QueenSide) == CastlingRights.QueenSide)
-                    CheckCastling(GetQueenSideCastleSquares(), Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter - 4), square.Number.digit)));
+                if ((CastlingRights & CastlingRights.KingSide) == CastlingRights.KingSide)
+                {
+                    if(Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter + 3), square.Number.digit), out Piece piece))
+                        CheckCastling(GetKingSideCastleSquares(), piece);
+                }
+                if ((CastlingRights & CastlingRights.QueenSide) == CastlingRights.QueenSide)
+                {
+                    if(Chessboard.Instance.GetAPiece(new Square((char)(square.Number.letter - 4), square.Number.digit), out Piece piece))
+                        CheckCastling(GetQueenSideCastleSquares(), piece);
+                }
             }
         }
         private void CheckRegularMoves()
@@ -128,7 +146,7 @@ namespace Chess.Pieces
                 moves = Move.GenerateMovesInADirection(piece, (s => new Square(s.Number.letter, s.Number.digit + y)), excludeMove:"moves");
                 if (moves.Count == 0)
                     return false;
-                Piece attackingPiece = Chessboard.Instance.GetAPiece(moves[^1].Latter);
+                Chessboard.Instance.GetAPiece(moves[^1].Latter, out Piece attackingPiece);
                 if (((attackingPiece?.MoveSet & MoveSets.Rook) != 0) && attackingPiece.Square != move.Latter)
                     return true;
                 else
@@ -141,7 +159,7 @@ namespace Chess.Pieces
                 moves = Move.GenerateMovesInADirection(piece, (s => new Square((char)(s.Number.letter + x), s.Number.digit)), excludeMove: "moves");
                 if (moves.Count == 0)
                     return false;
-                Piece attackingPiece = Chessboard.Instance.GetAPiece(moves[^1].Latter);
+                Chessboard.Instance.GetAPiece(moves[^1].Latter, out Piece attackingPiece);
                 if (((attackingPiece?.MoveSet & MoveSets.Rook) != 0) && attackingPiece.Square != move.Latter)
                     return true;
                 else
@@ -156,7 +174,7 @@ namespace Chess.Pieces
                 moves = Move.GenerateMovesInADirection(piece, (s => new Square((char)(s.Number.letter+x), s.Number.digit + y)), excludeMove: "moves");
                 if (moves.Count == 0)
                     return false;
-                Piece attackingPiece = Chessboard.Instance.GetAPiece(moves[^1].Latter);
+                Chessboard.Instance.GetAPiece(moves[^1].Latter, out Piece attackingPiece);
                 if (((attackingPiece?.MoveSet & MoveSets.Bishop) != 0) && attackingPiece.Square != move.Latter)
                     return true;
                 else
@@ -190,7 +208,7 @@ namespace Chess.Pieces
             {
                 if (item.moves.Count == 0)
                     continue;
-                Piece piece = Chessboard.Instance.GetAPiece(item.moves[^1].Latter);
+                Chessboard.Instance.GetAPiece(item.moves[^1].Latter, out Piece piece);
                 if (piece != null && (item.set & piece.MoveSet) != 0)
                 {
                     List<Square> squares = new List<Square>();
@@ -220,7 +238,7 @@ namespace Chess.Pieces
             {
                 if (item.moves.Count == 0)
                     continue;
-                Piece piece = Chessboard.Instance.GetAPiece(item.moves[^1].Latter);
+                Chessboard.Instance.GetAPiece(item.moves[^1].Latter, out Piece piece);
                 if (piece != null && item.moves[^1].Description == "takes" && (item.set & piece.MoveSet) != 0)
                 {
                     List<Square> squares = new List<Square>();
@@ -238,12 +256,14 @@ namespace Chess.Pieces
         public override void MovePiece(Move move)
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
-            this.square = move.Latter;
+            square = move.Latter;
             CastlingRights = CastlingRights.None;
         }
-
         public void OnCheck(EventArgs e)
         {
+            if (IsRawPiece)
+                return;
+
             Check?.Invoke(this, e);
         }
     }

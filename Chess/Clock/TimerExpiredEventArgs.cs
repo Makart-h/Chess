@@ -2,16 +2,17 @@
 using System.Collections.Generic;
 using System.Text;
 using Chess.AI;
+using Chess.Pieces;
 
 namespace Chess.Clock
 {
     internal class TimerExpiredEventArgs : EventArgs
     {
-        public readonly Controller controller;
+        public readonly Controller VictoriousController;
 
-        public TimerExpiredEventArgs(Controller controller)
+        public TimerExpiredEventArgs(Controller victoriousController)
         {
-            this.controller = controller;
+            VictoriousController = victoriousController;
         }
     }
 }

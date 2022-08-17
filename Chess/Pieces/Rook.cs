@@ -11,24 +11,21 @@ namespace Chess.Pieces
     class Rook : Piece
     {
         public bool HasMoved { get; private set; }
-        public Rook(Team team, Square square, Texture2D rawTexture) : base(team, square)
+        public Rook(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
-            model = new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Rook;
-            Value = 5;
+            Value = team == Team.White ? 5 : -5;
         }
-        public Rook(Rook other) : base(other.team, other.square)
+        public Rook(Rook other, bool isRaw = false) : base(other.team, other.square)
         {
-            model = other.model;
-            moves = new List<Move>(other.moves);
+            IsRawPiece = isRaw;
+            model = IsRawPiece ? null : other.model;
+            moves = other.CopyMoves();
             HasMoved = other.HasMoved;
             moveSet = other.moveSet;
             Value = other.Value;
-        }
-        public override void Update()
-        {
-            moves.Clear();
-            CheckPossibleMoves();
         }
         public override void CheckPossibleMoves()
         {

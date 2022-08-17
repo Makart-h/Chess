@@ -25,6 +25,13 @@
 /processorParam:TextureFormat=Color
 /build:chessboard.png
 
+#begin ChessClock.spritefont
+/importer:FontDescriptionImporter
+/processor:FontDescriptionProcessor
+/processorParam:PremultiplyAlpha=True
+/processorParam:TextureFormat=Compressed
+/build:ChessClock.spritefont
+
 #begin Tpieces.png
 /importer:TextureImporter
 /processor:TextureProcessor
