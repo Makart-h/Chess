@@ -36,7 +36,7 @@ namespace Chess.Pieces
             }
         }
         public bool IsRawPiece { get; protected set; }
-        public override Vector2 Position { get => Chessboard.ToCordsFromSquare(square); }
+        public override Vector2 Position { get => Chessboard.Instance.ToCordsFromSquare(square); }
         public Square Square { get => square; set => square = value; }
         protected List<Move> moves;
 

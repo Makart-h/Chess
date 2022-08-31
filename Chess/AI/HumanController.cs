@@ -47,7 +47,7 @@ namespace Chess.AI
                 if (targetedPiece != null && targetedPiece.Team == team)
                 {
                     (int x, int y) = mouseState.Position;
-                    if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.FromCords(x, y), out Move move))
+                    if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.Instance.FromCords(x, y), out Move move))
                     {
                         OnMoveChosen(new MoveChosenEventArgs(this, targetedPiece, move));
                     }

@@ -19,14 +19,15 @@ namespace Chess.Board
         static readonly int numberOfSquares = 8;
         public static int NumberOfSquares {get => numberOfSquares;}
         public static event EventHandler<PieceRemovedFromTheBoardEventArgs> PieceRemovedFromTheBoard;
+        private bool inverted;
 
-        public Chessboard(Texture2D rawTexture)
+        public Chessboard(Texture2D rawTexture, bool inverted = false)
         {
             model = new Graphics.Model(rawTexture, 0, 0, numberOfSquares * Square.SquareWidth, numberOfSquares * Square.SquareHeight);
             position = new Vector2(0, 0);
             Instance = this;
             pieces = new Dictionary<Square, Piece>();
-            foreach(var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
+            foreach (var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
             {
                 foreach (var number in from n in Enumerable.Range(1, numberOfSquares)
                                        select int.Parse(n.ToString()))
@@ -34,6 +35,7 @@ namespace Chess.Board
                     pieces[new Square(letter, number)] = null;
                 }
             }
+            this.inverted = inverted;
         }
         public void InitilizeBoard(Piece[] pieces)
         {
@@ -51,6 +53,10 @@ namespace Chess.Board
             Square square = FromCords(x, y);
 
             return pieces[square];
+        }
+        public void ToggleInversion()
+        {
+            inverted = !inverted;
         }
         public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)
         {
@@ -162,19 +168,38 @@ namespace Chess.Board
             }
             return false;
         }
-        public static Square FromCords(int x, int y)
+        public Square FromCords(int x, int y)
         {
             int indexX = x / Square.SquareWidth;
             int indexY = Chessboard.numberOfSquares - 1 - y / Square.SquareHeight;
 
-            char letter = (char)('A' + indexX);
-            int number = indexY + 1;
+            int number;
+            char letter;
+
+            if(inverted)
+            {
+                double middle = (numberOfSquares-1) / 2.0;
+                number = (int)(middle + (middle - indexY)) + 1;
+                indexX = (int)(middle + (middle - indexX));
+                letter = (char)('A' + indexX);
+            }
+            else
+            {
+                letter = (char)('A' + indexX);
+                number = indexY + 1;
+            }
 
             return new Square(letter, number);
         }
-        public static Vector2 ToCordsFromSquare(Square square)
+        public Vector2 ToCordsFromSquare(Square square)
         {
             (int i, int j) = Chessboard.Instance.ConvertSquareToIndexes(square);
+            if(inverted)
+            {
+                double middle = (numberOfSquares-1) / 2.0;
+                j = (int)(middle + (middle - j));
+                i = (int)(middle + (middle - i));
+            }
             return new Vector2(j * Square.SquareWidth, (Chessboard.NumberOfSquares - i - 1) * Square.SquareHeight);
         }
         public void OnPromotion(Piece piece)

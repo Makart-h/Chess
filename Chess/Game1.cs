@@ -27,6 +27,7 @@ namespace Chess
         private SpriteFont clockTimeFont;
         private bool isRunning;
         private string endgameMessage;
+        bool tabPressed = false;
 
         public Game1()
         {
@@ -112,6 +113,15 @@ namespace Chess
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+            if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !tabPressed)
+            {
+                tabPressed = true;
+                Chessboard.Instance.ToggleInversion();
+            }
+            else if(Keyboard.GetState().IsKeyUp(Keys.Tab))
+            {
+                tabPressed = false;
+            }
 
             if (isRunning)
             {
