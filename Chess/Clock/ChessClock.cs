@@ -38,14 +38,14 @@ namespace Chess.Clock
 
         public void OnTimerExpired(object sender, ElapsedEventArgs args)
         {
-            activeTeam = activeTeam == Team.White ? Team.Black : Team.White;
+            activeTeam = ~activeTeam;
             timers[activeTeam].Stop();
             TimerExpired?.Invoke(this, new TimerExpiredEventArgs(controllers[activeTeam]));
         }
         private void OnNoMovesAvailable(object sender, NoMovesEventArgs args)
         {
             timers[args.Team].Pause();
-            activeTeam = args.Team == Team.White ? Team.Black : Team.White;
+            activeTeam = ~args.Team;
             timers[activeTeam].Pause();
         }
         public void Start()
@@ -56,7 +56,7 @@ namespace Chess.Clock
         {
             timers[activeTeam].Pause();
             timers[activeTeam].Increment(increment[activeTeam]);
-            activeTeam = activeTeam == Team.White ? Team.Black : Team.White;
+            activeTeam = ~activeTeam;
             timers[activeTeam].Resume();
         }
 

@@ -17,7 +17,7 @@ namespace Chess.Pieces
         public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moves = new List<Move>();
             threats = new List<List<Square>>();
             moveSet = MoveSets.King;

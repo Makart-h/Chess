@@ -2,8 +2,8 @@
 
 namespace Chess.Pieces
 {
-    public enum Team
+    public enum Team : byte
     {
-        Black, White, Empty, Void
+        Black, Empty, Void, White = 255
     }
 }

@@ -17,7 +17,7 @@ namespace Chess.Pieces
         public Pawn(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Pawn, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Pawn, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             enPassant = false;
             moveSet = MoveSets.Pawn;
             promotionSquareNumber = team == Team.White ? 8 : 1;

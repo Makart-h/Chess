@@ -13,7 +13,7 @@ namespace Chess.Pieces
         public Knight(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Knight, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Knight, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Knight;
             Value = team == Team.White ? 3 : -3;
         }

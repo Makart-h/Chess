@@ -14,7 +14,7 @@ namespace Chess.Pieces
         public Rook(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * (int)team, Square.SquareWidth, Square.SquareHeight);
+            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Rook;
             Value = team == Team.White ? 5 : -5;
         }
