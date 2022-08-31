@@ -34,7 +34,7 @@ namespace Chess.Positions
 
         public Position(Position other, Move move) : this()
         {
-            activeTeam = other.activeTeam == Team.White ? Team.Black : Team.White;
+            activeTeam = ~other.activeTeam;
             halfMoves = other.halfMoves;
             Parallel.ForEach(other.pieces.Keys, 
                 square => {
