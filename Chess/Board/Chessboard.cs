@@ -173,21 +173,15 @@ namespace Chess.Board
             int indexX = x / Square.SquareWidth;
             int indexY = Chessboard.numberOfSquares - 1 - y / Square.SquareHeight;
 
-            int number;
-            char letter;
-
-            if(inverted)
+            if (inverted)
             {
-                double middle = (numberOfSquares-1) / 2.0;
-                number = (int)(middle + (middle - indexY)) + 1;
+                double middle = (numberOfSquares - 1) / 2.0;
+                indexY = (int)(middle + (middle - indexY));
                 indexX = (int)(middle + (middle - indexX));
-                letter = (char)('A' + indexX);
             }
-            else
-            {
-                letter = (char)('A' + indexX);
-                number = indexY + 1;
-            }
+
+            char letter = (char)('A' + indexX);
+            int number = indexY + 1;
 
             return new Square(letter, number);
         }
