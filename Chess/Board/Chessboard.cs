@@ -19,7 +19,8 @@ namespace Chess.Board
         static readonly int numberOfSquares = 8;
         public static int NumberOfSquares {get => numberOfSquares;}
         public static event EventHandler<PieceRemovedFromTheBoardEventArgs> PieceRemovedFromTheBoard;
-        private bool inverted;
+        public static event EventHandler BoardInverted;
+        public bool Inverted { get; private set; }
 
         public Chessboard(Texture2D rawTexture, bool inverted = false)
         {
@@ -35,7 +36,7 @@ namespace Chess.Board
                     pieces[new Square(letter, number)] = null;
                 }
             }
-            this.inverted = inverted;
+            Inverted = inverted;
         }
         public void InitilizeBoard(Piece[] pieces)
         {
@@ -56,7 +57,8 @@ namespace Chess.Board
         }
         public void ToggleInversion()
         {
-            inverted = !inverted;
+            Inverted = !Inverted;
+            OnBoardInverted(EventArgs.Empty);
         }
         public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)
         {
@@ -173,7 +175,7 @@ namespace Chess.Board
             int indexX = x / Square.SquareWidth;
             int indexY = Chessboard.numberOfSquares - 1 - y / Square.SquareHeight;
 
-            if (inverted)
+            if (Inverted)
             {
                 double middle = (numberOfSquares - 1) / 2.0;
                 indexY = (int)(middle + (middle - indexY));
@@ -188,7 +190,7 @@ namespace Chess.Board
         public Vector2 ToCordsFromSquare(Square square)
         {
             (int i, int j) = Chessboard.Instance.ConvertSquareToIndexes(square);
-            if(inverted)
+            if(Inverted)
             {
                 double middle = (numberOfSquares-1) / 2.0;
                 j = (int)(middle + (middle - j));
@@ -221,6 +223,11 @@ namespace Chess.Board
         public void OnPieceRemovedFromTheBoard(PieceRemovedFromTheBoardEventArgs args)
         {
             PieceRemovedFromTheBoard?.Invoke(this, args);
+        }
+
+        public void OnBoardInverted(EventArgs args)
+        {
+            BoardInverted?.Invoke(this, args);
         }
     }
 }

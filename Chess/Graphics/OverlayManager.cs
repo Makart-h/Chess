@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Chess.Pieces;
+using Chess.Board;
 using Chess.Movement;
 
 namespace Chess.Graphics
@@ -17,6 +18,7 @@ namespace Chess.Graphics
             Piece.PieceSelected += OnPieceSelected;
             Piece.PieceDeselected += OnPieceDeselected;
             Piece.PieceMoved += OnPieceMoved;
+            Chessboard.BoardInverted += OnBoardInverted;
             King.Check += OnCheck;
         }
         public static List<DrawableObject> GetOverlays()
@@ -24,6 +26,13 @@ namespace Chess.Graphics
             List<DrawableObject> overlays = new List<DrawableObject>(selections);
             overlays.AddRange(moves);
             return overlays;
+        }
+        public static void OnBoardInverted(object sender, EventArgs args)
+        {
+            foreach(var overlay in moves)
+            {
+                overlay.Reposition();
+            }
         }
         public static void OnPieceSelected(object sender, PieceSelectedEventArgs args)
         {

@@ -10,16 +10,15 @@ namespace Chess.Graphics
 {
     class SquareOverlay : DrawableObject
     {
+        private Square square;
         public SquareOverlayType Type { get; private set; }
         public SquareOverlay(SquareOverlayType type, Square square)
         {
             this.Type = type;
             this.model = new Model(Game1.Instance.Overlays, Square.SquareWidth * (int)type, 0, Square.SquareWidth, Square.SquareHeight);
             this.position = Chessboard.Instance.ToCordsFromSquare(square);
+            this.square = square;
         }
-        public void Move(Square square)
-        {
-            this.position = Chessboard.Instance.ToCordsFromSquare(square);
-        }
+        public void Reposition() => position = Chessboard.Instance.ToCordsFromSquare(square);
     }
 }
