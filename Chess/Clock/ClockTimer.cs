@@ -8,53 +8,54 @@ namespace Chess.Clock
 {
     internal class ClockTimer : Timer
     {
-        public double RemainingTime { get => paused ? remainingTime : Interval - stopwatch.Elapsed.TotalMilliseconds; }
-        private double remainingTime;
-        private readonly Stopwatch stopwatch;
-        private bool paused;
-        private bool initilized;
+        public double RemainingTime { get => _isPaused ? _remainingTime : Interval - _stopwatch.Elapsed.TotalMilliseconds; }
+        private double _remainingTime;
+        private readonly Stopwatch _stopwatch;
+        private bool _isPaused;
+        private bool _isInitialized;
 
         public ClockTimer(double interval) : base(interval)
         {
-            stopwatch = new Stopwatch();
+            _stopwatch = new Stopwatch();
         }
 
         public new void Start()
         {
             ResetStopwatch();
-            initilized = true;
+            _isInitialized = true;
             base.Start();
         }
 
         private void ResetStopwatch()
         {
-            stopwatch.Reset();
-            stopwatch.Start();
+            _stopwatch.Reset();
+            _stopwatch.Start();
         }
 
         public void Pause()
         {
             Stop();
-            stopwatch.Stop();
-            paused = true;
-            remainingTime = Interval - stopwatch.Elapsed.TotalMilliseconds;
+            _stopwatch.Stop();
+            _isPaused = true;
+            double delta = Interval - _stopwatch.Elapsed.TotalMilliseconds;
+            _remainingTime = delta < 0 ? 0 : delta;
         }
 
         public void Increment(double increment)
         {
-            remainingTime += increment;
+            _remainingTime += increment;
         }
 
         public void Resume()
         {
-            if (!initilized)
+            if (!_isInitialized)
                 Start();
             else
             {
-                Interval = remainingTime;
-                remainingTime = 0;
+                Interval = _remainingTime;
+                _remainingTime = 0;
                 Start();
-                paused = false;
+                _isPaused = false;
             }
         }
     }
