@@ -20,17 +20,8 @@ namespace Chess.AI
         {
 
         }
-        public override bool Update()
-        {
-            if (base.Update())
-            {
-                ChooseAMove();
-                return true;
-            }
-            else
-                return false;
-        }
-        public override void ChooseAMove()
+        public override void Update() => base.Update();
+        public override void MakeMove()
         {
             MouseState mouseState = Mouse.GetState();
             if (mouseState.LeftButton == ButtonState.Pressed && previousState.LeftButton != ButtonState.Pressed)
@@ -49,7 +40,7 @@ namespace Chess.AI
                     (int x, int y) = mouseState.Position;
                     if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.Instance.FromCords(x, y), out Move move))
                     {
-                        OnMoveChosen(new MoveChosenEventArgs(this, targetedPiece, move));
+                        OnMoveMade(new MoveMadeEventArgs(this, targetedPiece, move));
                     }
                     DragedPiece.PieceTexture = null;
                     targetedPiece.IsSelected = false;

@@ -14,10 +14,8 @@ namespace Chess.AI
         protected readonly Team team;
         public Team Team { get => team; }
         public Piece[] Pieces { get { return pieces.ToArray(); } }
-        public static event EventHandler<MoveChosenEventArgs> MoveChosen;
-        public static event EventHandler<NoMovesEventArgs> NoMovesAvailable;
-        private bool updatePieces;
-        private int legalMoves;
+        public static event EventHandler<MoveMadeEventArgs> MoveMade;
+
 
         public Controller(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant)
         {
@@ -37,41 +35,44 @@ namespace Chess.AI
                 this.pieces.Add(piece);
             }
             this.pieces.Sort();
-            updatePieces = true;
-            Chessboard.PieceRemovedFromTheBoard += OnPieceRomovedFromTheBoard;
+            Chessboard.PieceRemovedFromTheBoard += OnPieceRemovedFromTheBoard;
+            Chessboard.PieceAddedToTheBoard += OnPieceAddedToTheBoard;
         }
         public King GetKing(Team team) => King;
-        public virtual bool Update()
+        public virtual void Update()
         {
-            if (updatePieces)
-            {
-                legalMoves = 0;
-                foreach (var piece in pieces)
-                    legalMoves += piece.Update();
-                updatePieces = false;
-            }
-
-            if (legalMoves == 0)
-            {
-                OnNoMovesAvailable(new NoMovesEventArgs(this.team, King.Threatened));
-                return false;
-            }
-            return true;
+            foreach (var piece in pieces)
+                piece.Update();
         }
-        public abstract void ChooseAMove();
-
-        protected void OnMoveChosen(MoveChosenEventArgs args)
+        public abstract void MakeMove();
+        protected virtual void OnMoveMade(MoveMadeEventArgs e)
         {
-            updatePieces = true;
-            MoveChosen?.Invoke(this, args);
+            MoveMade?.Invoke(this, e);
         }
-        protected void OnPieceRomovedFromTheBoard(object sender, PieceRemovedFromTheBoardEventArgs args)
+        protected void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e)
         {
-            pieces.Remove(args.Piece);
+            pieces.Remove(e.Piece);
         }
-        protected void OnNoMovesAvailable(NoMovesEventArgs args)
+        protected void OnPieceAddedToTheBoard(object sender, PieceEventArgs e)
         {
-            NoMovesAvailable?.Invoke(this, args);
+            if(e.Piece.Team == team)
+                pieces.Add(e.Piece);
+        }
+        public bool GetPiece(Square square, out Piece piece)
+        {
+            return Chessboard.Instance.GetAPiece(square, out piece);
+        }
+        public Team IsSquareOccupied(Square square)
+        {
+            return Chessboard.Instance.IsSquareOccupied(square);
+        }
+        public bool ArePiecesFacingEachOther(Piece first, Piece second)
+        {
+            return Chessboard.Instance.ArePiecesFacingEachOther(first, second);
+        }
+        public void OnPromotion(Piece piece)
+        {
+            Chessboard.Instance.OnPromotion(piece);
         }
     }
 }

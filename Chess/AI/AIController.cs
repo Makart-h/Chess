@@ -1,143 +1,117 @@
 ﻿using System;
-using System.Threading.Tasks;
 using System.Collections.Generic;
-using System.Text;
-using Chess.Pieces;
-using Chess.Board;
-using Chess.Movement;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using Chess.Board;
+using Chess.Clock;
+using Chess.Movement;
+using Chess.Pieces;
 using Chess.Positions;
 
 namespace Chess.AI
 {
     internal class AIController : Controller
     {
+        private readonly List<Move> _movesToConsider;
+        private bool _isAlreadyThinking;
         public AIController(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant) : base(team, pieces, castlingRights, enPassant)
         {
-
+            _movesToConsider = new List<Move>();
+            _isAlreadyThinking = false;
         }
-        public override bool Update()
+        public override void Update()
         {
-            if (base.Update())
-            {
-                ChooseAMove();
-                return true;
-            }
-            else
-                return false;
+            base.Update();
+            foreach (Piece piece in pieces)
+                _movesToConsider.AddRange(piece.Moves);
         }
-        public override void ChooseAMove()
+        public override void MakeMove()
         {
-            (Move mov, double eval)?[] options = new (Move mov, double eval)?[pieces.Count];
-            for(int i = 0; i < options.Length; ++i)
+            if (!_isAlreadyThinking)
             {
-                options[i] = ConsiderAPiece(pieces[i]);
+                _isAlreadyThinking = true;
+                _ = MakeMoveAsync();
             }
-            int max = 0;
-            for (int i = 0; i < options.Length; i++)
-            {
-                if (team == Team.White)
-                {
-                    if (options[i]?.eval > options[max]?.eval || !options[max].HasValue)
-                        max = i;
-                }
-                else
-                {
-                    if (options[i]?.eval < options[max]?.eval || !options[max].HasValue)
-                        max = i;
-                }
-            }
-
-            if (Chessboard.Instance.MovePiece(pieces[max], options[max].Value.mov.Latter, out Move move))
-                OnMoveChosen(new MoveChosenEventArgs(this, pieces[max], move));
-            else
-                throw new ArgumentOutOfRangeException("AI chose invalid move!");
         }
-        private (Move move, double eval)? ConsiderAPiece(Piece piece)
+        public async Task MakeMoveAsync()
         {
-            if (piece.Moves.Count == 0)
-                return null;
-
-            double[] evaluations = new double[piece.Moves.Count];
-
-            for(int i = 0; i < evaluations.Length; ++i)
+            CancellationToken token = ChessClock.GetCancelletionToken(this) ?? CancellationToken.None;
+            (double evaluation, int depthOfSearching)[] evaluations = new (double, int)[_movesToConsider.Count];
+            try
             {
-                evaluations[i] = ConsiderAMove(piece.Moves[i]);
+                await Task.WhenAll(Enumerable.Range(0, evaluations.Length).Select(async i => evaluations[i] = await GetMoveEvaluationAsync(move: _movesToConsider[i], token: token)));
+                Move bestMove = PickBestMove(evaluations: evaluations, movesToConsider: _movesToConsider.ToArray());
+                if (token.IsCancellationRequested)
+                    return;
+                ApplyMove(move: bestMove);
             }
-
-            int max = 0;
-            for (int i = 0; i < evaluations.Length; i++)
+            catch(OperationCanceledException)
             {
-                if (team == Team.White)
-                {
-                    if (evaluations[i] > evaluations[max])
-                        max = i;
-                }
-                else
-                {
-                    if (evaluations[i] < evaluations[max])
-                        max = i;
-                }
+                return;
             }
-            return (piece.Moves[max], evaluations[max]);
-        }
-        private double ConsiderAMove(Move move)
-        {
-            return PositionEvaluator.EvaluatePosition(new Position(Chessboard.Instance, team, move));
-        }
-        public void ChooseAMoveAsync() //needs override!!!
-        {
-            (Move mov, double eval)?[] options = new (Move mov, double eval)?[pieces.Count];
-            Task.WhenAll(Enumerable.Range(0, options.Length).Select(async i => options[i] = await ConsiderAPieceAsync(pieces[i])));
-            int max = 0;
-            for (int i = 0; i < options.Length; i++)
+            catch (ArgumentOutOfRangeException)
             {
-                if (team == Team.White)
+                throw;
+            }     
+        }
+        private Move PickBestMove((double evaluation, int depthOfSearching)[] evaluations, Move[] movesToConsider)
+        {
+            if (evaluations.Length != movesToConsider.Length)
+                throw new ArgumentOutOfRangeException("The count of evaluations doesn't match the count of moves!");
+
+            (double, int) bestOutcome = team == Team.White ? evaluations.Max() : evaluations.Min();
+            var bestOptions = new List<Move>();
+            for (var i = 0; i < evaluations.Length; ++i)
+            {
+                if (evaluations[i] == bestOutcome)
+                    bestOptions.Add(movesToConsider[i]);
+            }
+            int moveIndex = 0;
+
+            if (bestOptions.Count < 1)
+                throw new ArgumentOutOfRangeException("No best move chosen!");
+
+            else if (bestOptions.Count > 1)
+            {
+                var rand = new Random();
+                moveIndex = rand.Next(0, bestOptions.Count);
+            }
+            return bestOptions[moveIndex];
+        }
+        private void ApplyMove(Move move)
+        {
+            if (Chessboard.Instance.GetAPiece(move.Former, out Piece piece))
+            {
+                if (Chessboard.Instance.MovePiece(piece, move.Latter, out Move _))
                 {
-                    if (options[i]?.eval > options[max]?.eval || !options[max].HasValue)
-                        max = i;
-                }
-                else
-                {
-                    if (options[i]?.eval < options[max]?.eval || !options[max].HasValue)
-                        max = i;
+                    OnMoveMade(new MoveMadeEventArgs(this, piece, move));
+                    return;
                 }
             }
-
-            if (Chessboard.Instance.MovePiece(pieces[max], options[max].Value.mov.Latter, out Move move))
-                OnMoveChosen(new MoveChosenEventArgs(this, pieces[max], move));
-            else
-                throw new ArgumentOutOfRangeException("AI chose invalid move!");
+            throw new ArgumentOutOfRangeException("AI didn't manage to chose a valid move!");
         }
-
-        private async Task<(Move move, double eval)?> ConsiderAPieceAsync(Piece piece)
+        private  Task<(double, int)> GetMoveEvaluationAsync(Move move, CancellationToken token)
         {
-            if(piece.Moves.Count == 0)
-                return null;
-
-            double[] evaluations = new double[piece.Moves.Count];
-
-            await Task.WhenAll(Enumerable.Range(0, evaluations.Length).Select(async i => evaluations[i] = await ConsiderAMoveAsync(piece.Moves[i])));
-            int max = 0;
-            for(int i = 0; i < evaluations.Length; i++)
+            return Task.Run(async () =>
             {
-                if (team == Team.White)
+                try
                 {
-                    if (evaluations[i] > evaluations[max])
-                        max = i;
+                    var position = await Position.CreateAsync(board: Chessboard.Instance, activeTeam: team, move: move, token: token);
+                    var node = await PositionNode.CreateAsync(position: position, rank: 2, team: team, depth: 1, token: token);
+                    return await node.FindBestOutcomeAsync(token: token);
                 }
-                else
+                catch(OperationCanceledException)
                 {
-                    if (evaluations[i] < evaluations[max])
-                        max = i;
+                    throw;
                 }
-            }
-            return (piece.Moves[max], evaluations[max]);
+            }, token);
         }
-
-        private Task<double> ConsiderAMoveAsync(Move move)
+        protected override void OnMoveMade(MoveMadeEventArgs e)
         {
-            return Task.Run(() => PositionEvaluator.EvaluatePosition(new Position(Chessboard.Instance, team, move)));
+            _movesToConsider.Clear();
+            _isAlreadyThinking = false;
+            base.OnMoveMade(e);
         }
     }
 }
