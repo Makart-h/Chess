@@ -12,25 +12,25 @@ namespace Chess.AI
     internal static class Arbiter
     {
         
-        private static readonly int maxHalfMoves;
-        private static int halfMoves;
-        private static Dictionary<string, int> occuredPositions;
+        private static readonly int _maxHalfMoves;
+        private static int _halfMoves;
+        private static Dictionary<string, int> _occuredPositions;
         public static EventHandler<GameResultEventArgs> GameConcluded;
         static Arbiter()
         {
-            maxHalfMoves = 50;
-            halfMoves = 0;
-            occuredPositions = new Dictionary<string, int>();
-            Controller.MoveMade += OnMoveChosen;
+            _maxHalfMoves = 50;
+            _halfMoves = 0;
+            _occuredPositions = new Dictionary<string, int>();
+            Controller.MoveMade += OnMoveMade;
         }
         public static void Initilize(string fen, int halfMoves)
         {
-            Arbiter.halfMoves = halfMoves;
+            Arbiter._halfMoves = halfMoves;
             int index = fen.LastIndexOf(' ');
             fen = fen[..index];
             index = fen.LastIndexOf(' ');
             fen = fen[..index];
-            occuredPositions[fen] = 1;
+            _occuredPositions[fen] = 1;
         }
         private static GameResult AnalyzeBoard(Dictionary<Square, Piece> piecesOnTheBoard, Team toMove, int halfMoves, ref Dictionary<string, int> occuredPositions)
         {
@@ -68,7 +68,7 @@ namespace Chess.AI
             if (result != GameResult.InProgress)
                 return result;
 
-            if(halfMoves == maxHalfMoves)
+            if(halfMoves == _maxHalfMoves)
                 return GameResult.Draw;
 
             result = CheckMaterial(whitePieces, blackPieces);
@@ -116,25 +116,29 @@ namespace Chess.AI
             Array.Sort(whitePieces);
             Array.Sort(blackPieces);
 
-            if (whitePieces.Length == 1 && blackPieces.Length == 1) //king vs king is a draw
+            // King vs king is a draw.
+            if (whitePieces.Length == 1 && blackPieces.Length == 1)
                 return GameResult.Draw;
             else if (whitePieces.Length == 1 && blackPieces.Length == 2)
             {
                 var secondPiece = blackPieces[^1];
-                if (secondPiece is Knight || secondPiece is Bishop) //king vs king + bishop/knight is a draw
+                // King vs king + bishop/knight is a draw.
+                if (secondPiece is Knight || secondPiece is Bishop)
                     return GameResult.Draw;
             }
             else if(blackPieces.Length == 1 && whitePieces.Length == 2)
             {
                 var secondPiece = whitePieces[^1];
-                if (secondPiece is Knight || secondPiece is Bishop) //king vs king + bishop/knight is a draw
+                // King vs king + bishop/knight is a draw.
+                if (secondPiece is Knight || secondPiece is Bishop)
                     return GameResult.Draw;
             }
             else if(whitePieces.Length == 2 && blackPieces.Length == 2)
             {
                 var secondWhitePiece = whitePieces[^1];
                 var secondBlackPiece = blackPieces[^1];
-                if(secondWhitePiece is Bishop && secondBlackPiece is Bishop) //king + bishop vs king + bishop is a draw when both bishops are on the squares of the same color
+                // King + bishop vs king + bishop is a draw when both bishops are on the squares of the same color.
+                if (secondWhitePiece is Bishop && secondBlackPiece is Bishop) 
                 {
                     bool isWhiteOnLightSquare = 
                         ((secondWhitePiece.Square.Number.letter - 'A') % 2 != 0 && secondWhitePiece.Square.Number.digit % 2 != 0) ||
@@ -151,15 +155,16 @@ namespace Chess.AI
             }
             return GameResult.InProgress;
         }
-        private static void OnGameConcluded(GameResultEventArgs args) => GameConcluded?.Invoke(null, args);
-        private static void OnMoveChosen(object sender, MoveMadeEventArgs args)
+        private static void OnGameConcluded(GameResultEventArgs e) => GameConcluded?.Invoke(null, e);
+        private static void OnMoveMade(object sender, MoveMadeEventArgs e)
         {
-            if (args.Piece is Pawn || args.Move.Description == 'x') //halfmove is any move that is not a caputre or a pawn advance
-                halfMoves = 0;
+            // Half move is any move that is not a caputre or a pawn advance.
+            if (e.Piece is Pawn || e.Move.Description == 'x')
+                _halfMoves = 0;
             else
-                halfMoves++;
+                _halfMoves++;
 
-            GameResult result = AnalyzeBoard(Chessboard.Instance.Pieces, ~args.Controller.Team, halfMoves, ref occuredPositions);
+            GameResult result = AnalyzeBoard(Chessboard.Instance.Pieces, ~e.Controller.Team, _halfMoves, ref _occuredPositions);
             if (result != GameResult.InProgress)
                 OnGameConcluded(new GameResultEventArgs(result));
         }
