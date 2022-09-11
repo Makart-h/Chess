@@ -2,7 +2,7 @@
 
 namespace Chess.AI
 {
-    public enum GameResult : byte
+    public enum GameResult
     {
         White,
         Black,
