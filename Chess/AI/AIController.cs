@@ -23,7 +23,7 @@ namespace Chess.AI
         public override void Update()
         {
             base.Update();
-            foreach (Piece piece in pieces)
+            foreach (Piece piece in _pieces)
                 _movesToConsider.AddRange(piece.Moves);
         }
         public override void MakeMove()
@@ -60,7 +60,7 @@ namespace Chess.AI
             if (evaluations.Length != movesToConsider.Length)
                 throw new ArgumentOutOfRangeException("The count of evaluations doesn't match the count of moves!");
 
-            (double, int) bestOutcome = team == Team.White ? evaluations.Max() : evaluations.Min();
+            (double, int) bestOutcome = _team == Team.White ? evaluations.Max() : evaluations.Min();
             var bestOptions = new List<Move>();
             for (var i = 0; i < evaluations.Length; ++i)
             {
@@ -97,8 +97,8 @@ namespace Chess.AI
             {
                 try
                 {
-                    var position = await Position.CreateAsync(board: Chessboard.Instance, activeTeam: team, move: move, token: token);
-                    var node = await PositionNode.CreateAsync(position: position, rank: 2, team: team, depth: 1, token: token);
+                    var position = await Position.CreateAsync(board: Chessboard.Instance, activeTeam: _team, move: move, token: token);
+                    var node = await PositionNode.CreateAsync(position: position, rank: 2, team: _team, depth: 1, token: token);
                     return await node.FindBestOutcomeAsync(token: token);
                 }
                 catch(OperationCanceledException)

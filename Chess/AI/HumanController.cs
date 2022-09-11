@@ -27,7 +27,7 @@ namespace Chess.AI
             if (mouseState.LeftButton == ButtonState.Pressed && previousState.LeftButton != ButtonState.Pressed)
             {
                 targetedPiece = Chessboard.Instance.CheckCollisions(mouseState.Position.X, mouseState.Position.Y);
-                if (targetedPiece != null && targetedPiece.Team == team)
+                if (targetedPiece != null && targetedPiece.Team == _team)
                 {
                     targetedPiece.IsSelected = true;
                     DragedPiece.PieceTexture = new Graphics.Model(targetedPiece.Model);
@@ -35,7 +35,7 @@ namespace Chess.AI
             }
             else if (mouseState.LeftButton == ButtonState.Released && previousState.LeftButton == ButtonState.Pressed)
             {
-                if (targetedPiece != null && targetedPiece.Team == team)
+                if (targetedPiece != null && targetedPiece.Team == _team)
                 {
                     (int x, int y) = mouseState.Position;
                     if (Chessboard.Instance.MovePiece(targetedPiece, Chessboard.Instance.FromCords(x, y), out Move move))
