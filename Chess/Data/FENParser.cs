@@ -129,5 +129,93 @@ namespace Chess.Data
             }
             return value;
         }
+        public static string ToFullFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves, int moves)
+        {
+            string shortFen = ToShortFenString(pieces, white, black, toMove);
+            return shortFen + $" {(halfMoves == 0 ? "-" : halfMoves.ToString())} {(moves == 0 ? "-" : moves.ToString())}";
+        }
+        public static string ToLongFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves)
+        {
+            string shortFen = ToShortFenString(pieces, white, black, toMove);
+            return shortFen + $" {(halfMoves == 0 ? "-" : halfMoves.ToString())}";
+        }
+        public static string ToShortFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove)
+        {
+            StringBuilder sb = new StringBuilder();
+
+            sb.Append(PiecesToString(pieces));
+            sb.Append(' ');
+            sb.Append(TeamTostring(toMove));
+            sb.Append(' ');
+            sb.Append(CastlingRightsToString(white, black));
+            sb.Append(' ');
+            sb.Append(EnPassantToString(pieces));
+
+            return sb.ToString();
+        }
+        private static string PiecesToString(Dictionary<Square, Piece> pieces)
+        {
+            StringBuilder sb = new StringBuilder();
+            int blanks = 0;
+            for (int number = 8; number >= 1; --number)
+            {
+                for (int letter = 'a'; letter <= 'h'; ++letter)
+                {
+                    Piece p = pieces[new Square((char)letter, number)];
+                    if (p != null)
+                    {
+                        if (blanks > 0)
+                        {
+                            sb.Append(blanks);
+                        }
+                        sb.Append(PieceFactory.GetPieceType(p));
+                        blanks = 0;
+                    }
+                    else
+                    {
+                        blanks++;
+                    }
+                }
+                if (blanks != 0)
+                {
+                    sb.Append(blanks);
+                    blanks = 0;
+                }
+                if(number != 1)
+                    sb.Append('/');
+            }
+            return sb.ToString();
+        }
+        private static string TeamTostring(Team toMove) => toMove == Team.White ? "w" : "b";
+        private static string CastlingRightsToString(CastlingRights white, CastlingRights black)
+        {
+            StringBuilder sb = new StringBuilder();
+            if ((white & CastlingRights.KingSide) != 0)
+                sb.Append('K');
+            if ((white & CastlingRights.QueenSide) != 0)
+                sb.Append('Q');
+            if ((black & CastlingRights.KingSide) != 0)
+                sb.Append('k');
+            if ((black & CastlingRights.QueenSide) != 0)
+                sb.Append('q');
+
+            if (sb.Length == 0)
+                sb.Append('-');
+
+            return sb.ToString();
+        }
+        private static string EnPassantToString(Dictionary<Square, Piece> pieces)
+        {
+            foreach(var piece in pieces.Values)
+            {
+                if(piece is Pawn p && p.EnPassant == true)
+                {
+                    int direction = p.Team == Team.White ? 1 : -1;
+                    int digit = p.Square.Number.digit - (1 * direction);
+                    return p.Square.Number.letter + digit.ToString();
+                }               
+            }
+            return "-";
+        }
     }
 }
