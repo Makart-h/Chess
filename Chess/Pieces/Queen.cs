@@ -17,7 +17,7 @@ namespace Chess.Pieces
             moveSet = MoveSets.Queen;
             Value = team == Team.White ? 9 : -9;
         }
-        public Queen(Queen other, bool isRaw = false) : base(other.team, other.square)
+        public Queen(Queen other, bool isRaw = false) : base(other.team, other.Square)
         {
             IsRawPiece = isRaw;
             model = IsRawPiece ? null : other.model;
@@ -32,7 +32,7 @@ namespace Chess.Pieces
         public override void MovePiece(Move move)
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
-            square = move.Latter;
+            Square = move.Latter;
         }
     }
 }

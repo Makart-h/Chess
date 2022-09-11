@@ -18,7 +18,7 @@ namespace Chess.Pieces
             moveSet = MoveSets.Rook;
             Value = team == Team.White ? 5 : -5;
         }
-        public Rook(Rook other, bool isRaw = false) : base(other.team, other.square)
+        public Rook(Rook other, bool isRaw = false) : base(other.team, other.Square)
         {
             IsRawPiece = isRaw;
             model = IsRawPiece ? null : other.model;
@@ -34,7 +34,7 @@ namespace Chess.Pieces
         public override void MovePiece(Move move)
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
-            square = move.Latter;
+            Square = move.Latter;
             HasMoved = true;
         }
     }

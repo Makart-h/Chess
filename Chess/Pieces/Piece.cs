@@ -14,13 +14,12 @@ namespace Chess.Pieces
     {
         protected readonly Team team;
         public Team Team { get => team; }
-        protected Square square;
         protected bool isSelected;
         protected MoveSets moveSet;
         public IPieceOwner Owner { get; set; }
 
         public static event EventHandler<PieceMovedEventArgs> PieceMoved;
-        public static event EventHandler<PieceSelectedEventArgs> PieceSelected;
+        public static event EventHandler<PieceEventArgs> PieceSelected;
         public static event EventHandler PieceDeselected;
         public int Value { get; protected set; }
         public MoveSets MoveSet { get => moveSet; }
@@ -29,22 +28,21 @@ namespace Chess.Pieces
             set {
                 isSelected = value;
                 if (isSelected)
-                    OnPieceSelected(new PieceSelectedEventArgs(this));
+                    OnPieceSelected(new PieceEventArgs(this));
                 else
                     OnPieceDeselected(EventArgs.Empty);
                 color.A = isSelected ? (byte)100 : (byte)255;
             }
         }
         public bool IsRawPiece { get; protected set; }
-        public override Vector2 Position { get => Chessboard.Instance.ToCordsFromSquare(square); }
-        public Square Square { get => square; set => square = value; }
+        public Square Square { get; set; }
         protected List<Move> moves;
 
-        //methods
         protected Piece(Team team, Square square)
         {
             this.team = team;
-            this.square = square;
+            Square = square;
+            position = Chessboard.Instance.ToCordsFromSquare(square);
             moves = new List<Move>();
         }
         public List<Move> Moves { get => moves; set => moves = value; }
@@ -66,21 +64,12 @@ namespace Chess.Pieces
             }
             return null;
         }
-        public bool CanMoveToSquare(Square square)
-        {
-            foreach(var move in moves)
-            {
-                if (move.Latter == square)
-                    return true;
-            }
-            return false;
-        }
         public virtual void CheckPossibleMoves()
         {
-            List<(MoveSets, List<Move>)> groupedMoves = Move.GenerateEveryMove(this, moveSet);
+            (MoveSets sets, Move[] moves)[] groupedMoves = Move.GenerateEveryMove(Square, moveSet, Owner);
             foreach (var group in groupedMoves)
             {
-                foreach (var move in group.Item2)
+                foreach (var move in group.moves)
                 {
                     if (Owner.GetKing(team).CheckMoveAgainstThreats(this, move))
                         moves.Add(move);
@@ -101,7 +90,7 @@ namespace Chess.Pieces
 
             PieceMoved?.Invoke(this, e);
         }
-        protected virtual void OnPieceSelected(PieceSelectedEventArgs e)
+        protected virtual void OnPieceSelected(PieceEventArgs e)
         {
             if (IsRawPiece)
                 return;
