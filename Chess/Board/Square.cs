@@ -6,7 +6,7 @@ namespace Chess.Board
 {
     internal struct Square
     {
-        public static readonly int SquareWidth = 72; //???
+        public static readonly int SquareWidth = 72;
         public static readonly int SquareHeight = SquareWidth;
         private static readonly Regex _regex;
         static Square()
