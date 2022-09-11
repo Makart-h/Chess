@@ -14,14 +14,14 @@ namespace Chess.Pieces
         public Rook(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
+            Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Rook, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Rook;
             Value = team == Team.White ? 5 : -5;
         }
         public Rook(Rook other, bool isRaw = false) : base(other.team, other.Square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : other.model;
+            Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
             HasMoved = other.HasMoved;
             moveSet = other.moveSet;

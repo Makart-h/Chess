@@ -8,13 +8,16 @@ namespace Chess.Graphics
 {
     static class OverlayManager
     {
-        private static readonly List<SquareOverlay> selections;
-        private static readonly List<SquareOverlay> moves;
-
+        private static readonly List<SquareOverlay> _selections;
+        private static readonly List<SquareOverlay> _moves;
         static OverlayManager()
         {
-            selections = new List<SquareOverlay>();
-            moves = new List<SquareOverlay>();
+            _selections = new List<SquareOverlay>();
+            _moves = new List<SquareOverlay>();
+            SubscribeToEvents();          
+        }
+        private static void SubscribeToEvents()
+        {
             Piece.PieceSelected += OnPieceSelected;
             Piece.PieceDeselected += OnPieceDeselected;
             Piece.PieceMoved += OnPieceMoved;
@@ -23,55 +26,52 @@ namespace Chess.Graphics
         }
         public static List<DrawableObject> GetOverlays()
         {
-            List<DrawableObject> overlays = new List<DrawableObject>(selections);
-            overlays.AddRange(moves);
+            List<DrawableObject> overlays = new List<DrawableObject>(_selections);
+            overlays.AddRange(_moves);
             return overlays;
         }
-        public static void OnBoardInverted(object sender, EventArgs args)
+        public static void OnBoardInverted(object sender, EventArgs e)
         {
-            foreach(var overlay in moves)
+            foreach(SquareOverlay overlay in _moves)
             {
                 overlay.RecalculatePosition();
             }
         }
-        public static void OnPieceSelected(object sender, PieceEventArgs args)
+        public static void OnPieceSelected(object sender, PieceEventArgs e)
         {
-            Piece piece = args.Piece;
-            selections.Add(new SquareOverlay(SquareOverlayType.Selected, piece.Square));
-            foreach (var item in piece.Moves)
+            Piece piece = e.Piece;
+            _selections.Add(new SquareOverlay(SquareOverlayType.Selected, piece.Square));
+            foreach (Move move in piece.Moves)
             {
-                switch (item.Description)
+                switch (move.Description)
                 {
                     default:
                     case 'm':
-                        selections.Add(new SquareOverlay(SquareOverlayType.CanMove, item.Latter));
+                        _selections.Add(new SquareOverlay(SquareOverlayType.CanMove, move.Latter));
                         break;
                     case 'x':
                     case 'p':
-                        selections.Add(new SquareOverlay(SquareOverlayType.CanTake, item.Latter));
+                        _selections.Add(new SquareOverlay(SquareOverlayType.CanTake, move.Latter));
                         break;
                 }
             }
         }
-        public static void OnPieceDeselected(object sender, EventArgs args)
+        public static void OnPieceDeselected(object sender, EventArgs e) => _selections.Clear();
+        public static void OnPieceMoved(object sender, PieceMovedEventArgs e)
         {
-            selections.Clear();
-        }
-        public static void OnPieceMoved(object sender, PieceMovedEventArgs args)
-        {
-            if (args.Move.Description != 'c')
+            if (e.Move.Description != 'c')
             {
-                Move move = args.Move;
-                moves.Clear();
-                moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
-                moves.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
+                Move move = e.Move;
+                _moves.Clear();
+                _moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
+                _moves.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
             }
         }
-        public static void OnCheck(object sender, EventArgs args)
+        public static void OnCheck(object sender, EventArgs e)
         {
             if (sender is Piece p)
             {
-                moves.Add(new SquareOverlay(SquareOverlayType.Check, p.Square));
+                _moves.Add(new SquareOverlay(SquareOverlayType.Check, p.Square));
             }
         }
     }

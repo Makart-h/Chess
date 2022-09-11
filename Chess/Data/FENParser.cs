@@ -206,7 +206,7 @@ namespace Chess.Data
         }
         private static string EnPassantToString(Dictionary<Square, Piece> pieces)
         {
-            foreach(var piece in pieces.Values)
+            foreach(Piece piece in pieces.Values)
             {
                 if(piece is Pawn p && p.EnPassant == true)
                 {

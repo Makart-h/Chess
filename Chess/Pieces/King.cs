@@ -38,7 +38,7 @@ namespace Chess.Pieces
         public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
+            Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moves = new List<Move>();
             threats = new List<Square[]>();
             moveSet = MoveSets.King;
@@ -48,7 +48,7 @@ namespace Chess.Pieces
         public King(King other, bool isRaw = false) : base(other.team, other.Square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : other.model;
+            Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
             threats = other.CopyThreats();
             CastlingRights = other.CastlingRights;

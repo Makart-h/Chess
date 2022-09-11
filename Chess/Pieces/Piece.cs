@@ -31,7 +31,7 @@ namespace Chess.Pieces
                     OnPieceSelected(new PieceEventArgs(this));
                 else
                     OnPieceDeselected(EventArgs.Empty);
-                color.A = isSelected ? (byte)100 : (byte)255;
+                _color.A = isSelected ? (byte)100 : (byte)255;
             }
         }
         public bool IsRawPiece { get; protected set; }
@@ -42,7 +42,7 @@ namespace Chess.Pieces
         {
             this.team = team;
             Square = square;
-            position = Chessboard.Instance.ToCordsFromSquare(square);
+            Position = Chessboard.Instance.ToCordsFromSquare(square);
             moves = new List<Move>();
         }
         public List<Move> Moves { get => moves; set => moves = value; }

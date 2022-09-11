@@ -13,14 +13,14 @@ namespace Chess.Pieces
         public Bishop(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Bishop, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
+            Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Bishop, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moveSet = MoveSets.Bishop;
             Value = team == Team.White ? 3 : -3;
         }
         public Bishop(Bishop other, bool isRaw = false) : base(other.team, other.Square)
         {
             IsRawPiece = isRaw;
-            model = IsRawPiece ? null : other.model;
+            Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
             moveSet = other.moveSet;
             Value = other.Value;

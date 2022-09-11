@@ -1,15 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Chess.Movement;
-using Chess.Graphics;
-using Chess.Pieces;
-using Chess.Data;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
-using System.Numerics;
+using Microsoft.Xna.Framework.Graphics;
+using Chess.Graphics;
+using Chess.Movement;
+using Chess.Pieces;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Chess.Board
@@ -17,10 +12,10 @@ namespace Chess.Board
     class Chessboard : DrawableObject
     {
         public static Chessboard Instance;
-        private readonly Dictionary<Square, Piece> pieces;
-        public Dictionary<Square, Piece> Pieces { get { return pieces; } }
-        static readonly int numberOfSquares = 8;
-        public static int NumberOfSquares {get => numberOfSquares;}
+        private readonly Dictionary<Square, Piece> _pieces;
+        public Dictionary<Square, Piece> Pieces { get { return _pieces; } }
+        private static readonly int s_numberOfSquares = 8;
+        public static int NumberOfSquares {get => s_numberOfSquares;}
         public static event EventHandler<PieceEventArgs> PieceRemovedFromTheBoard;
         public static event EventHandler<PieceEventArgs> PieceAddedToTheBoard;
         public static event EventHandler BoardInverted;
@@ -28,37 +23,36 @@ namespace Chess.Board
 
         public Chessboard(Texture2D rawTexture, bool inverted = false)
         {
-            model = new Graphics.Model(rawTexture, 0, 0, numberOfSquares * Square.SquareWidth, numberOfSquares * Square.SquareHeight);
-            position = new Vector2(0, 0);
+            Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
+            Position = new Vector2(0, 0);
             Instance = this;
-            pieces = new Dictionary<Square, Piece>();
+            _pieces = new Dictionary<Square, Piece>();
             foreach (var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
             {
-                foreach (var number in from n in Enumerable.Range(1, numberOfSquares)
+                foreach (var number in from n in Enumerable.Range(1, s_numberOfSquares)
                                        select int.Parse(n.ToString()))
                 {
-                    pieces[new Square(letter, number)] = null;
+                    _pieces[new Square(letter, number)] = null;
                 }
             }
             Inverted = inverted;
         }
         public void InitilizeBoard(Piece[] pieces)
         {
-            foreach (var piece in pieces)
+            foreach (Piece piece in pieces)
             {
-                this.pieces[piece.Square] = piece;
+                _pieces[piece.Square] = piece;
             }
         }
         public void AddAPiece(Piece piece)
         {
-            pieces[piece.Square] = piece;
-            OnPieceAddedToTheBoard(new PieceEventArgs(pieces[piece.Square]));
+            _pieces[piece.Square] = piece;
+            OnPieceAddedToTheBoard(new PieceEventArgs(_pieces[piece.Square]));
         }
         public Piece CheckCollisions(int x, int y)
         {
             Square square = FromCords(x, y);
-
-            return pieces[square];
+            return _pieces[square];
         }
         public void ToggleInversion()
         {
@@ -74,8 +68,8 @@ namespace Chess.Board
                 {
                     RemoveAPiece(move.Latter);
                 }
-                pieces[move.Former] = null;
-                pieces[move.Latter] = targetedPiece;
+                _pieces[move.Former] = null;
+                _pieces[move.Latter] = targetedPiece;
                 if (move.Description == 'p')
                     RemoveAPiece(new Square(move.Latter.Number.letter, move.Former.Number.digit));
                 else if(move.Description == 'k' || move.Description == 'q')
@@ -83,11 +77,10 @@ namespace Chess.Board
                     int direction = move.Former.Number.letter > move.Latter.Number.letter ? 1 : -1;
                     Square originalRookPosition = King.GetCastlingRookSquare(move.Description, targetedPiece.Team);
                     Square newRookPosition = new Square((char)(move.Latter.Number.letter + direction), move.Latter.Number.digit);
-                    Move rookMove = new Move(pieces[originalRookPosition].Square, newRookPosition, 'c');
-                    pieces[originalRookPosition].MovePiece(rookMove);
-                    pieces[newRookPosition] = pieces[originalRookPosition];
-                    pieces[originalRookPosition] = null;
-                    
+                    Move rookMove = new Move(_pieces[originalRookPosition].Square, newRookPosition, 'c');
+                    _pieces[originalRookPosition].MovePiece(rookMove);
+                    _pieces[newRookPosition] = _pieces[originalRookPosition];
+                    _pieces[originalRookPosition] = null;                  
                 }
                 targetedPiece.MovePiece(move);
                 return true;
@@ -96,19 +89,19 @@ namespace Chess.Board
         }
         public void RemoveAPiece(Square square)
         {
-            if(pieces[square] != null)
+            if(_pieces[square] != null)
             {         
-                OnPieceRemovedFromTheBoard(new PieceEventArgs(pieces[square]));
-                pieces[square] = null;
+                OnPieceRemovedFromTheBoard(new PieceEventArgs(_pieces[square]));
+                _pieces[square] = null;
             }
         }
         public bool GetAPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece);
         public Team IsSquareOccupied(Square square)
         {
             (int y, int x) = ConvertSquareToIndexes(square);
-            if (x < 0 || y < 0 || x >= numberOfSquares || y >= numberOfSquares)
+            if (x < 0 || y < 0 || x >= s_numberOfSquares || y >= s_numberOfSquares)
                 return Team.Void;
-            return pieces[square] == null ? Team.Empty : pieces[square].Team;
+            return _pieces[square] == null ? Team.Empty : _pieces[square].Team;
         }
         public static (int, int) ConvertSquareToIndexes(Square square)
         {
@@ -157,7 +150,6 @@ namespace Chess.Board
                         continue;
 
                     return pieceOnTheWay == second;
-
                 }
             }
             return false;
@@ -166,11 +158,11 @@ namespace Chess.Board
         public Square FromCords(int x, int y)
         {
             int indexX = x / Square.SquareWidth;
-            int indexY = Chessboard.numberOfSquares - 1 - y / Square.SquareHeight;
+            int indexY = Chessboard.s_numberOfSquares - 1 - y / Square.SquareHeight;
 
             if (Inverted)
             {
-                double middle = (numberOfSquares - 1) / 2.0;
+                double middle = (s_numberOfSquares - 1) / 2.0;
                 indexY = (int)(middle + (middle - indexY));
                 indexX = (int)(middle + (middle - indexX));
             }
@@ -185,7 +177,7 @@ namespace Chess.Board
             (int i, int j) = ConvertSquareToIndexes(square);
             if(Inverted)
             {
-                double middle = (numberOfSquares-1) / 2.0;
+                double middle = (s_numberOfSquares-1) / 2.0;
                 j = (int)(middle + (middle - j));
                 i = (int)(middle + (middle - i));
             }
@@ -205,7 +197,7 @@ namespace Chess.Board
             }
             catch(NotImplementedException)
             {
-                //log the exception and probbably shutdown the game
+                throw;
             }
         }
         public PieceType GetPromotionType()
@@ -222,7 +214,7 @@ namespace Chess.Board
         }
         public void OnBoardInverted(EventArgs args)
         {
-            foreach (var piece in pieces.Values)
+            foreach (Piece piece in _pieces.Values)
                 piece?.RecalculatePosition();
 
             BoardInverted?.Invoke(this, args);
