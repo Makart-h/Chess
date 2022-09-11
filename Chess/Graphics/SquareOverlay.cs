@@ -19,6 +19,5 @@ namespace Chess.Graphics
             this.position = Chessboard.Instance.ToCordsFromSquare(square);
             this.square = square;
         }
-        public void Reposition() => position = Chessboard.Instance.ToCordsFromSquare(square);
     }
 }

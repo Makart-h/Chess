@@ -31,23 +31,23 @@ namespace Chess.Graphics
         {
             foreach(var overlay in moves)
             {
-                overlay.Reposition();
+                overlay.RecalculatePosition();
             }
         }
-        public static void OnPieceSelected(object sender, PieceSelectedEventArgs args)
+        public static void OnPieceSelected(object sender, PieceEventArgs args)
         {
-            Piece piece = args.piece;
+            Piece piece = args.Piece;
             selections.Add(new SquareOverlay(SquareOverlayType.Selected, piece.Square));
             foreach (var item in piece.Moves)
             {
                 switch (item.Description)
                 {
                     default:
-                    case "moves":
+                    case 'm':
                         selections.Add(new SquareOverlay(SquareOverlayType.CanMove, item.Latter));
                         break;
-                    case "takes":
-                    case "en passant":
+                    case 'x':
+                    case 'p':
                         selections.Add(new SquareOverlay(SquareOverlayType.CanTake, item.Latter));
                         break;
                 }
@@ -59,10 +59,13 @@ namespace Chess.Graphics
         }
         public static void OnPieceMoved(object sender, PieceMovedEventArgs args)
         {
-            Move move = args.Move;
-            moves.Clear();
-            moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
-            moves.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
+            if (args.Move.Description != 'c')
+            {
+                Move move = args.Move;
+                moves.Clear();
+                moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
+                moves.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
+            }
         }
         public static void OnCheck(object sender, EventArgs args)
         {
