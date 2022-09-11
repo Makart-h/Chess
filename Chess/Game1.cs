@@ -9,6 +9,8 @@ using System;
 using Chess.AI;
 using Chess.Data;
 using Chess.Clock;
+using System.Runtime;
+using Chess.Movement;
 
 namespace Chess
 {
@@ -22,10 +24,10 @@ namespace Chess
         private Chessboard chessboard;
         public Texture2D Overlays { get; private set; }
         private readonly List<Controller> controllers;
-        private ChessClock clock;
         private FENObject fenObject;
         private SpriteFont clockTimeFont;
         private bool isRunning;
+        private bool updateController;
         private string endgameMessage;
         bool tabPressed = false;
 
@@ -37,34 +39,32 @@ namespace Chess
             Instance = this;
             controllers = new List<Controller>();
             isRunning = true;
+            updateController = true;
         }
 
         private void SubscribeToEvents()
         {
             ChessClock.TimerExpired += OnChessClockExpired;
-            Controller.NoMovesAvailable += OnNoMovesAvailable;
+            Arbiter.GameConcluded += OnGameConcluded;
+            Controller.MoveMade += OnMoveChosen;
         }
-
+        private void OnMoveChosen(object sender, MoveMadeEventArgs args) => updateController = true;
         private void OnChessClockExpired(object sender, TimerExpiredEventArgs args)
         {
             isRunning = false;
             endgameMessage = $"{args.VictoriousController.Team} is victorious!";
         }
-
-        private void OnNoMovesAvailable(object sender, NoMovesEventArgs args)
+        private void OnGameConcluded(object sender, GameResultEventArgs args)
         {
             isRunning = false;
-            if (args.KingThreatened)
-            {
-                Team victoriousTeam = args.Team == Team.White ? Team.Black : Team.White;
-                endgameMessage = $"{victoriousTeam} is victorious!";
-            }
+            if(args.GameResult != GameResult.White && args.GameResult != GameResult.Black)
+                endgameMessage = endgameMessage = "Game ended in a draw!";
             else
             {
-                endgameMessage = "Game ended in a draw!";
+                Team victoriousTeam = args.GameResult == GameResult.White ? Team.White : Team.Black;
+                endgameMessage = $"{victoriousTeam} is victorious!";
             }
         }
-
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
@@ -80,23 +80,41 @@ namespace Chess
             //"r1bk1q2/pp4pB/4pn2/3p4/3P3Q/2P3P1/PP1N2PP/R5K1 b - - 6 18"
             //5k2/1q6/8/8/4n3/4K3/8/8 w - - 0 1
             //2r2k2/8/8/8/Q7/6b1/6PP/7K w - - 0 1  mate in one test
+            //5r2/p2b2k1/4p3/2p1R3/5B1b/2P5/PP1N3P/R5K1 w - - 2 23 real game
+            //6k1/3b3r/1p1p4/p1n2p2/1PPNpP1q/P3Q1p1/1R1RB1P1/5K2 b - - 0 1 mate in 5
+            //4r1k1/3n1ppp/4r3/3n3q/Q2P4/5P2/PP2BP1P/R1B1R1K1 b - - 0 1 mate in 3
+            //rn3rk1/pbppq1pp/1p2pb2/4N2Q/3PN3/3B4/PPP2PPP/R3K2R w KQ - 7 11 mate in 7
+            //3k4/6R1/4K3/8/8/8/8/8 b - - 9 5 mate in 4 king+rook endgame
+            //8/8/4k3/8/3K4/5R2/8/8 w - - 0 1 mate in 12 king+rook endgame
+            //5r1k/5p2/1p4rN/2nQ4/P6R/6P1/5P2/5K2 w - - 0 1
+            //5r1k/5p2/6rN/3Q4/7R/6P1/8/5K2 w - - 0 1
+            //2k2r2/3R4/4Qp2/8/8/6P1/8/5K2 w - - 0 1
+            //1k6/8/8/4bn2/4K3/8/8/8 w - - 0 1 material draw knight/bishop
+            //1k6/8/8/4b3/4K3/8/8/8 w - - 0 1 material draw king vs king
+            //1k6/8/5b2/8/4K3/8/4R3/8 w - - 0 1 3fold, 5fold
+            //1k6/8/5b2/8/4K3/8/5B2/8 w - - 0 1 both bishops same colors
+            //k7/2Q5/8/8/4K3/8/8/8 w - - 0 1 stalemate
             try
             {
-                fenObject = FENParser.Parse("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+                string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
+                fenObject = FENParser.Parse(fen.Trim());
+                Arbiter.Initilize(fen, fenObject.HalfMoves);            
             }
             catch (ArgumentException)
             {
                 throw;
             }
-            Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
-            //Controller white = new AIController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
+            //Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
+            Controller white = new AIController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
             Controller black = new AIController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
+            //Controller black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
             controllers.Add(white);
             controllers.Add(black);
-            clock = new ChessClock(white, black, new TimeSpan(0, 10, 0), new TimeSpan(0), fenObject.TeamToMove);
+            ChessClock.Initialize(white, black, new TimeSpan(0, 0, 10), new TimeSpan(0,0,0), fenObject.TeamToMove);
             chessboard.InitilizeBoard(fenObject.AllPieces);
-            clock.Start();
+            ChessClock.ActiveController.Update();
             SubscribeToEvents();
+            ChessClock.Start();
         }
 
         protected override void LoadContent()
@@ -122,10 +140,12 @@ namespace Chess
             {
                 tabPressed = false;
             }
+            MovementManager.Update(gameTime);
 
-            if (isRunning)
+            if (isRunning && (updateController || ChessClock.ActiveController is HumanController))
             {
-                clock.ActiveController.Update();
+                updateController = false;
+                ChessClock.ActiveController.MakeMove();
             }
 
             base.Update(gameTime);
@@ -157,9 +177,22 @@ namespace Chess
                     }
                 }
             }
-            (TimeSpan white, TimeSpan black) = clock.GetTimers();
-            _spriteBatch.DrawString(clockTimeFont, $"{black.Minutes:d2}:{black.Seconds:d2}", new Vector2(100, 200), Color.Black);
-            _spriteBatch.DrawString(clockTimeFont, $"{white.Minutes:d2}:{white.Seconds:d2}", new Vector2(100, 300), Color.Black);
+            (TimeSpan white, TimeSpan black) = ChessClock.GetTimers();
+            Vector2 topClock = new Vector2(15, 216);
+            Vector2 bottomClock = new Vector2(15, 288);
+            Vector2 whiteClock, blackClock;
+            if (Chessboard.Instance.Inverted)
+            {
+                whiteClock = topClock;
+                blackClock = bottomClock;
+            }
+            else
+            {
+                whiteClock = bottomClock;
+                blackClock = topClock;
+            }
+            _spriteBatch.DrawString(clockTimeFont, $"{black.Minutes:d2}:{black.Seconds:d2}:{black.Milliseconds:d2}", blackClock, Color.Black);
+            _spriteBatch.DrawString(clockTimeFont, $"{white.Minutes:d2}:{white.Seconds:d2}:{white.Milliseconds:d2}", whiteClock, Color.Black);
 
             if(!isRunning)
             {
