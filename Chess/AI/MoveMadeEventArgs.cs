@@ -6,13 +6,13 @@ using Chess.Pieces;
 
 namespace Chess.AI
 {
-    internal class MoveChosenEventArgs : EventArgs
+    internal class MoveMadeEventArgs : EventArgs
     {
         public readonly Controller Controller;
         public readonly Piece Piece;
         public readonly Move Move;
 
-        public MoveChosenEventArgs(Controller controller, Piece piece, Move move)
+        public MoveMadeEventArgs(Controller controller, Piece piece, Move move)
         {
             Controller = controller;
             Piece = piece;
