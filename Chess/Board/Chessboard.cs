@@ -8,6 +8,9 @@ using Chess.Graphics;
 using Chess.Pieces;
 using Chess.Data;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
+using System.Numerics;
+using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Chess.Board
 {
@@ -18,7 +21,8 @@ namespace Chess.Board
         public Dictionary<Square, Piece> Pieces { get { return pieces; } }
         static readonly int numberOfSquares = 8;
         public static int NumberOfSquares {get => numberOfSquares;}
-        public static event EventHandler<PieceRemovedFromTheBoardEventArgs> PieceRemovedFromTheBoard;
+        public static event EventHandler<PieceEventArgs> PieceRemovedFromTheBoard;
+        public static event EventHandler<PieceEventArgs> PieceAddedToTheBoard;
         public static event EventHandler BoardInverted;
         public bool Inverted { get; private set; }
 
@@ -48,6 +52,7 @@ namespace Chess.Board
         public void AddAPiece(Piece piece)
         {
             pieces[piece.Square] = piece;
+            OnPieceAddedToTheBoard(new PieceEventArgs(pieces[piece.Square]));
         }
         public Piece CheckCollisions(int x, int y)
         {
@@ -62,26 +67,23 @@ namespace Chess.Board
         }
         public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)
         {
-            List<Move> moves = targetedPiece.Moves;
             move = targetedPiece.GetAMove(newSquare);
             if (move != null)
             {
-                if (move.Description == "takes")
+                if (move.Description == 'x')
                 {
                     RemoveAPiece(move.Latter);
                 }
                 pieces[move.Former] = null;
                 pieces[move.Latter] = targetedPiece;
-                moves.Clear();
-                if (move.Description == "en passant")
+                if (move.Description == 'p')
                     RemoveAPiece(new Square(move.Latter.Number.letter, move.Former.Number.digit));
-                else if(move.Description.Contains("castle"))
+                else if(move.Description == 'k' || move.Description == 'q')
                 {
                     int direction = move.Former.Number.letter > move.Latter.Number.letter ? 1 : -1;
-                    string square = move.Description.Split(':')[1];
-                    Square originalRookPosition = new Square(square[0], int.Parse(square[1].ToString()));
+                    Square originalRookPosition = King.GetCastlingRookSquare(move.Description, targetedPiece.Team);
                     Square newRookPosition = new Square((char)(move.Latter.Number.letter + direction), move.Latter.Number.digit);
-                    Move rookMove = new Move(pieces[originalRookPosition].Square, newRookPosition, "castle");
+                    Move rookMove = new Move(pieces[originalRookPosition].Square, newRookPosition, 'c');
                     pieces[originalRookPosition].MovePiece(rookMove);
                     pieces[newRookPosition] = pieces[originalRookPosition];
                     pieces[originalRookPosition] = null;
@@ -96,29 +98,19 @@ namespace Chess.Board
         {
             if(pieces[square] != null)
             {         
-                OnPieceRemovedFromTheBoard(new PieceRemovedFromTheBoardEventArgs(pieces[square]));
+                OnPieceRemovedFromTheBoard(new PieceEventArgs(pieces[square]));
                 pieces[square] = null;
             }
         }
-        public bool GetAPiece(Square square, out Piece piece)
-        {
-            if (pieces.ContainsKey(square))
-            {
-                piece = pieces[square];
-                return true;
-            }
-
-            piece = null;
-            return false;
-        }
-            public Team IsSquareOccupied(Square square)
+        public bool GetAPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece);
+        public Team IsSquareOccupied(Square square)
         {
             (int y, int x) = ConvertSquareToIndexes(square);
             if (x < 0 || y < 0 || x >= numberOfSquares || y >= numberOfSquares)
                 return Team.Void;
             return pieces[square] == null ? Team.Empty : pieces[square].Team;
         }
-        public (int, int) ConvertSquareToIndexes(Square square)
+        public static (int, int) ConvertSquareToIndexes(Square square)
         {
             int x = square.Number.letter - 'A';
             int y = square.Number.digit - 1;
@@ -170,6 +162,7 @@ namespace Chess.Board
             }
             return false;
         }
+        public Square FromVector(Vector2 vector) => FromCords((int)vector.X, (int)vector.Y);
         public Square FromCords(int x, int y)
         {
             int indexX = x / Square.SquareWidth;
@@ -189,7 +182,7 @@ namespace Chess.Board
         }
         public Vector2 ToCordsFromSquare(Square square)
         {
-            (int i, int j) = Chessboard.Instance.ConvertSquareToIndexes(square);
+            (int i, int j) = ConvertSquareToIndexes(square);
             if(Inverted)
             {
                 double middle = (numberOfSquares-1) / 2.0;
@@ -207,26 +200,31 @@ namespace Chess.Board
             try
             {
                 Piece newPiece = PieceFactory.CreateAPiece(type, square, team);
-                AddAPiece(newPiece);
+                newPiece.Owner = piece.Owner;
+                AddAPiece(newPiece);               
             }
             catch(NotImplementedException)
             {
                 //log the exception and probbably shutdown the game
             }
         }
-
         public PieceType GetPromotionType()
         {
             return PieceType.Queen;
         }
-
-        public void OnPieceRemovedFromTheBoard(PieceRemovedFromTheBoardEventArgs args)
+        public void OnPieceRemovedFromTheBoard(PieceEventArgs args)
         {
             PieceRemovedFromTheBoard?.Invoke(this, args);
         }
-
+        public void OnPieceAddedToTheBoard(PieceEventArgs args)
+        {
+            PieceAddedToTheBoard?.Invoke(this, args);
+        }
         public void OnBoardInverted(EventArgs args)
         {
+            foreach (var piece in pieces.Values)
+                piece?.RecalculatePosition();
+
             BoardInverted?.Invoke(this, args);
         }
     }
