@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Chess.AI
+﻿namespace Chess.AI
 {
     public enum GameResult
     {
