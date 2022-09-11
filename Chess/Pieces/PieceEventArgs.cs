@@ -4,13 +4,13 @@ using System.Text;
 
 namespace Chess.Pieces
 {
-    internal class PieceRemovedFromTheBoardEventArgs : EventArgs
+    class PieceEventArgs : EventArgs
     {
         public readonly Piece Piece;
 
-        public PieceRemovedFromTheBoardEventArgs(Piece piece)
+        public PieceEventArgs(Piece piece)
         {
-            this.Piece = piece;
+            Piece = piece;
         }
     }
 }
