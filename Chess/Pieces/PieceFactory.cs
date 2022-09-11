@@ -71,5 +71,54 @@ namespace Chess.Pieces
             }
             return null;
         }
+        public static char GetPieceType(Piece piece)
+        {
+            if(piece is King k)
+            {
+                if (k.Team == Team.White)
+                    return 'K';
+                else
+                    return 'k';
+            }
+            else if (piece is Queen q)
+            {
+                if (q.Team == Team.White)
+                    return 'Q';
+                else
+                    return 'q';
+            }
+            else if (piece is Bishop b)
+            {
+                if (b.Team == Team.White)
+                    return 'B';
+                else
+                    return 'b';
+            }
+            else if (piece is Knight n)
+            {
+                if (n.Team == Team.White)
+                    return 'N';
+                else
+                    return 'n';
+            }
+            else if (piece is Rook r)
+            {
+                if (r.Team == Team.White)
+                    return 'R';
+                else
+                    return 'r';
+            }
+            else if (piece is Pawn p)
+            {
+                if (p.Team == Team.White)
+                    return 'P';
+                else
+                    return 'p';
+            }
+            else
+            {
+                throw new NotImplementedException();
+            }
+        }
     }
 }
