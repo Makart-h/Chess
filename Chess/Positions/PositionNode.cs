@@ -1,28 +1,25 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Collections.Concurrent;
-using System.Text;
-using Chess.Pieces;
-using Chess.AI;
+﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using System.Threading;
+using Chess.AI;
 using Chess.Movement;
+using Chess.Pieces;
 
 namespace Chess.Positions
 {
     internal class PositionNode
     {
-        private double value;
-        private readonly int depth;
-        private readonly Team team;
-        private readonly List<PositionNode> children;
+        private double _value;
+        private readonly int _depth;
+        private readonly Team _team;
+        private readonly List<PositionNode> _children;
 
         private PositionNode(Team team, int depth)
         {
-            this.team = team;
-            this.depth = depth;
-            children = new List<PositionNode>();
+            _team = team;
+            _depth = depth;
+            _children = new List<PositionNode>();
         }
         public static async Task<PositionNode> CreateAsync(Position position, int rank, Team team, int depth, CancellationToken token)
         {
@@ -36,30 +33,30 @@ namespace Chess.Positions
             token.ThrowIfCancellationRequested();
             if (rank > 0 && position.NextMoves.Count > 0)
             {
-                foreach (var move in position.NextMoves)
+                foreach (Move move in position.NextMoves)
                 {
                     token.ThrowIfCancellationRequested();
                     Position pos = await Position.CreateAsync(token, position, move);
-                    PositionNode node = await CreateAsync(pos, rank - (position.Check ? 0 : 1), ~team, depth + 1, token);
-                    children.Add(node);
+                    PositionNode node = await CreateAsync(pos, rank - (position.Check ? 0 : 1), ~_team, _depth + 1, token);
+                    _children.Add(node);
                 }
             }
             else
-                value = PositionEvaluator.EvaluatePosition(position);
+                _value = PositionEvaluator.EvaluatePosition(position);
         }
         public async Task<(double, int)> FindBestOutcomeAsync(CancellationToken token)
         {
             token.ThrowIfCancellationRequested();
-            if (children?.Count > 0)
+            if (_children?.Count > 0)
             {
-                (double eval, int depth)[] evals = new (double, int)[children.Count];
-                for (int i = 0; i < children.Count; i++)
+                (double eval, int depth)[] evals = new (double, int)[_children.Count];
+                for (int i = 0; i < _children.Count; i++)
                 {
                     token.ThrowIfCancellationRequested();
                     int index = i;
-                    evals[index] = await children[index].FindBestOutcomeAsync(token);
+                    evals[index] = await _children[index].FindBestOutcomeAsync(token);
                 }
-                if (team == Team.Black)
+                if (_team == Team.Black)
                 {
                     return evals.Max();
                 }
@@ -69,7 +66,7 @@ namespace Chess.Positions
                 }
             }
             else
-                return team == Team.White ? (value, -depth) : (value, depth);
+                return _team == Team.White ? (_value, -_depth) : (_value, _depth);
         }
     }
 }

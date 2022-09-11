@@ -1,59 +1,56 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Chess.Movement;
-using Chess.Board;
 using System.Linq;
+using Microsoft.Xna.Framework.Graphics;
+using Chess.Board;
+using Chess.Movement;
 
 namespace Chess.Pieces
 {
     class King : Piece
     {
         public CastlingRights CastlingRights { get; set; }
-        private readonly static Dictionary<char, Square> castlingRookSquares;
-        private readonly static Dictionary<Team, Square[]> kingsideCastlingSquares;
-        private readonly static Dictionary<Team, Square[]> queensideCastlingSquares;
-        private readonly List<Square[]> threats;
+        private readonly static Dictionary<char, Square> s_castlingRookSquares;
+        private readonly static Dictionary<Team, Square[]> s_kingsideCastlingSquares;
+        private readonly static Dictionary<Team, Square[]> s_queensideCastlingSquares;
+        private readonly List<Square[]> _threats;
         public static event EventHandler Check;
-        public bool Threatened { get => threats.Count > 0; }
+        public bool Threatened { get => _threats.Count > 0; }
         static King()
         {
-            castlingRookSquares = new Dictionary<char, Square>();
-            castlingRookSquares['K'] = new Square("H1");
-            castlingRookSquares['Q'] = new Square("A1");
-            castlingRookSquares['k'] = new Square("H8");
-            castlingRookSquares['q'] = new Square("A8");
+            s_castlingRookSquares = new Dictionary<char, Square>();
+            s_castlingRookSquares['K'] = new Square("H1");
+            s_castlingRookSquares['Q'] = new Square("A1");
+            s_castlingRookSquares['k'] = new Square("H8");
+            s_castlingRookSquares['q'] = new Square("A8");
 
-            kingsideCastlingSquares = new Dictionary<Team, Square[]>();
-            queensideCastlingSquares = new Dictionary<Team, Square[]>();
+            s_kingsideCastlingSquares = new Dictionary<Team, Square[]>();
+            s_queensideCastlingSquares = new Dictionary<Team, Square[]>();
 
-            kingsideCastlingSquares[Team.White] = new[] { new Square("F1"), new Square("G1")};
-            kingsideCastlingSquares[Team.Black] = new[] { new Square("F8"), new Square("G8")};
-            queensideCastlingSquares[Team.White] = new[] { new Square("B1"), new Square("C1"), new Square("D1") };
-            queensideCastlingSquares[Team.Black] = new[] { new Square("B8"), new Square("C8"), new Square("D8") };
-
+            s_kingsideCastlingSquares[Team.White] = new[] { new Square("F1"), new Square("G1")};
+            s_kingsideCastlingSquares[Team.Black] = new[] { new Square("F8"), new Square("G8")};
+            s_queensideCastlingSquares[Team.White] = new[] { new Square("B1"), new Square("C1"), new Square("D1") };
+            s_queensideCastlingSquares[Team.Black] = new[] { new Square("B8"), new Square("C8"), new Square("D8") };
         }
         public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             moves = new List<Move>();
-            threats = new List<Square[]>();
-            moveSet = MoveSets.King;
+            _threats = new List<Square[]>();
+            _moveSet = MoveSets.King;
             CastlingRights = CastlingRights.None;
             Value = 0;
         }
-        public King(King other, bool isRaw = false) : base(other.team, other.Square)
+        public King(King other, bool isRaw = false) : base(other._team, other.Square)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
-            threats = other.CopyThreats();
+            _threats = other.CopyThreats();
             CastlingRights = other.CastlingRights;
             Value = other.Value;
-            moveSet = other.MoveSet;
+            _moveSet = other.MoveSet;
         }
         public override int Update()
         {          
@@ -63,7 +60,7 @@ namespace Chess.Pieces
         private List<Square[]> CopyThreats()
         {
             List<Square[]> copy = new List<Square[]>();
-            foreach(var threat in threats)
+            foreach(var threat in _threats)
             {
                 copy.Add(threat);
             }
@@ -73,10 +70,10 @@ namespace Chess.Pieces
         {
             return (team, sideOfCastling) switch
             {
-                (Team.White, 'k') => castlingRookSquares['K'],
-                (Team.White, 'q') => castlingRookSquares['Q'],
-                (Team.Black, 'k') => castlingRookSquares['k'],
-                (Team.Black, 'q') => castlingRookSquares['q'],
+                (Team.White, 'k') => s_castlingRookSquares['K'],
+                (Team.White, 'q') => s_castlingRookSquares['Q'],
+                (Team.Black, 'k') => s_castlingRookSquares['k'],
+                (Team.Black, 'q') => s_castlingRookSquares['q'],
                 _ => throw new ArgumentOutOfRangeException()
             };
         }
@@ -106,7 +103,7 @@ namespace Chess.Pieces
 
                 Team teamOnTheSquare = Owner.IsSquareOccupied(square);
 
-                if (teamOnTheSquare == team || CheckIfSquareIsThreatened(square))
+                if (teamOnTheSquare == _team || CheckIfSquareIsThreatened(square))
                     continue;
 
                 if (teamOnTheSquare == Team.Empty)
@@ -121,18 +118,18 @@ namespace Chess.Pieces
         }
         public void CheckCastlingMoves()
         {
-            if (threats.Count == 0)
+            if (_threats.Count == 0)
             {
                 if ((CastlingRights & CastlingRights.KingSide) == CastlingRights.KingSide)
                 {
-                    char kingSideLetter = team == Team.White ? 'K' : 'k';
-                    if (Owner.GetPiece(castlingRookSquares[kingSideLetter], out Piece piece))
+                    char kingSideLetter = _team == Team.White ? 'K' : 'k';
+                    if (Owner.GetPiece(s_castlingRookSquares[kingSideLetter], out Piece piece))
                         CheckCastling(GetKingSideCastleSquares(), piece);
                 }
                 if ((CastlingRights & CastlingRights.QueenSide) == CastlingRights.QueenSide)
                 {
-                    char queenSideLetter = team == Team.White ? 'Q' : 'q';
-                    if (Owner.GetPiece(castlingRookSquares[queenSideLetter], out Piece piece))
+                    char queenSideLetter = _team == Team.White ? 'Q' : 'q';
+                    if (Owner.GetPiece(s_castlingRookSquares[queenSideLetter], out Piece piece))
                         CheckCastling(GetQueenSideCastleSquares(), piece);
                 }
             }
@@ -165,7 +162,7 @@ namespace Chess.Pieces
                     return;
             }
 
-            moves.Add(new Move(Square, squaresToCheck[1], GetCastlingSideFromRookSquare(r.Square, team)));
+            moves.Add(new Move(Square, squaresToCheck[1], GetCastlingSideFromRookSquare(r.Square, _team)));
         }
         public Square[] GetSquaresAroundTheKing()
         {
@@ -180,8 +177,8 @@ namespace Chess.Pieces
                 new Square(Square.Number.letter, Square.Number.digit - 1),
             };
         }
-        public Square[] GetKingSideCastleSquares() => kingsideCastlingSquares[team];
-        public Square[] GetQueenSideCastleSquares() => queensideCastlingSquares[team];
+        public Square[] GetKingSideCastleSquares() => s_kingsideCastlingSquares[_team];
+        public Square[] GetQueenSideCastleSquares() => s_queensideCastlingSquares[_team];
         public bool CheckMoveAgainstThreats(Piece piece, Move move) => !WouldTheMoveGenerateAThreat(piece, move) && WouldTheMoveSolveAllTheThreats(move);
         public bool WouldTheMoveGenerateAThreat(Piece piece, Move move)
         {
@@ -236,13 +233,13 @@ namespace Chess.Pieces
                     return false;
             }
             return false;
-        } //refactor
+        }
         public bool WouldTheMoveSolveAllTheThreats(Move move)
         {
-            if (threats.Count == 0)
+            if (_threats.Count == 0)
                 return true;
 
-            foreach (var threat in threats)
+            foreach (var threat in _threats)
             {
                 if(!threat.Contains(move.Latter))
                     return false;
@@ -250,7 +247,7 @@ namespace Chess.Pieces
 
             return true;
         }
-        public void ClearThreats() => threats.Clear();
+        public void ClearThreats() => _threats.Clear();
         public void FindAllThreats()
         {
             ClearThreats();
@@ -268,13 +265,13 @@ namespace Chess.Pieces
                     if (piece != null && (grouping.set & piece.MoveSet) != 0)
                     {
                         var squares = (from m in grouping.moves select m.Latter).ToArray();
-                        threats.Add(squares);
+                        _threats.Add(squares);
                     }
                 }
             }
-            if (threats.Count > 0)
+            if (_threats.Count > 0)
                 OnCheck(EventArgs.Empty);
-        } //refactor
+        }
         public bool CheckIfSquareIsThreatened(Square checkedSquare)
         {
             List<Square> squareThreats = new List<Square>();
@@ -301,7 +298,7 @@ namespace Chess.Pieces
                 }
             }
             return squareThreats.Count > 0;
-        } //refactor
+        }
         public override void MovePiece(Move move)
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));

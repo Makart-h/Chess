@@ -1,8 +1,7 @@
-﻿using Chess.AI;
-using Microsoft.Xna.Framework;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.Text;
+using Microsoft.Xna.Framework;
+using Chess.AI;
 using Chess.Board;
 using Chess.Pieces;
 
@@ -10,17 +9,16 @@ namespace Chess.Movement
 {
     internal static class MovementManager
     {
-        public static List<Initiator> initiators;
-        public static Stack<Initiator> toRemove;
+        public static List<Initiator> _initiators;
+        public static Stack<Initiator> _toRemove;
         public static float MovementVelocity { get; private set; }
         static MovementManager()
         {
-            initiators = new List<Initiator>();
-            toRemove = new Stack<Initiator>();
+            _initiators = new List<Initiator>();
+            _toRemove = new Stack<Initiator>();
             MovementVelocity = 0.4f;
             Piece.PieceMoved += OnPieceMoved;
         }
-
         public static void OnPieceMoved(object sender, PieceMovedEventArgs args)
         {
             Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
@@ -30,7 +28,7 @@ namespace Chess.Movement
             }
             else
             {
-                initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
+                _initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
             }
         }
         public static void OnDestinationReached(object sender, EventArgs args)
@@ -38,18 +36,18 @@ namespace Chess.Movement
             if(sender is Initiator i)
             {
                 i.Dispose();
-                toRemove.Push(i);
+                _toRemove.Push(i);
             }
         }
         public static void Update(GameTime gameTime)
         {
-            foreach(var initiator in initiators)
+            foreach(Initiator initiator in _initiators)
             {
                 initiator.Update(gameTime);
             }
-            while(toRemove.TryPop(out Initiator i))
+            while(_toRemove.TryPop(out Initiator i))
             {
-                initiators.Remove(i);
+                _initiators.Remove(i);
             }
         }
         public static Vector2 RecalculateVector(Vector2 vector)

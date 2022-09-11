@@ -1,25 +1,24 @@
 using System;
 using System.Collections.Generic;
-using Chess.Pieces;
-using Chess.Movement;
-using Chess.Board;
-using System.Linq;
 using System.Threading.Tasks;
-using Chess.Data;
 using System.Threading;
+using Chess.Board;
+using Chess.Data;
+using Chess.Movement;
+using Chess.Pieces;
 
 namespace Chess.Positions
 {
     internal class Position : IPieceOwner
     {
-        private readonly int halfMoves;
-        private King white;
-        private King black;
+        private readonly int _halfMoves;
+        private King _white;
+        private King _black;
         public string ShortFEN { get; private set; } 
-        public King White { get => white; }
-        public King Black { get => black; }
+        public King White { get => _white; }
+        public King Black { get => _black; }
         public Team ActiveTeam { get; private set; }
-        public int HalfMoves { get => halfMoves; }
+        public int HalfMoves { get => _halfMoves; }
         public bool Check { get; private set; }
         public Dictionary<Square, Piece> Pieces { get; private set; }
         public List<Move> NextMoves{ get; private set; }
@@ -28,13 +27,13 @@ namespace Chess.Positions
             Pieces = new Dictionary<Square, Piece>(Chessboard.NumberOfSquares*Chessboard.NumberOfSquares);
             NextMoves = new List<Move>();
             ActiveTeam = activeTeam;
-            this.halfMoves = halfMoves;
+            this._halfMoves = halfMoves;
             Check = false;
             CopyDictionary(pieces);
             ApplyMove(move);
             Update();
         }
-        private Position(Position other, Move move) : this(other.Pieces, other.ActiveTeam, move, other.halfMoves) { }
+        private Position(Position other, Move move) : this(other.Pieces, other.ActiveTeam, move, other._halfMoves) { }
         private Position(Chessboard board, Team activeTeam, Move move, int halfMoves = 0) : this(board.Pieces, activeTeam, move, halfMoves) { }
         public static Task<Position> CreateAsync(Chessboard board, Team activeTeam, Move move, CancellationToken token, int halfMoves = 0)
         {
@@ -67,9 +66,9 @@ namespace Chess.Positions
                     if (createdPiece is King k)
                     {
                         if (k.Team == Team.White)
-                            white = k;
+                            _white = k;
                         else
-                            black = k;
+                            _black = k;
                     }
                 }
                 else
@@ -82,8 +81,8 @@ namespace Chess.Positions
         {
             return team switch
             {
-                Team.White => white,
-                Team.Black => black,
+                Team.White => _white,
+                Team.Black => _black,
                 _ => null
             };
         }
@@ -118,26 +117,26 @@ namespace Chess.Positions
         private void Update()
         {
             ActiveTeam = ~ActiveTeam;
-            if (white.Team == ActiveTeam)
+            if (_white.Team == ActiveTeam)
             {
-                white.Update();
-                black.CheckCastlingMoves();
-                if (white.Moves.Count > 0)
+                _white.Update();
+                _black.CheckCastlingMoves();
+                if (_white.Moves.Count > 0)
                 {
-                    NextMoves.AddRange(white.Moves);
+                    NextMoves.AddRange(_white.Moves);
                 }
-                if (white.Threatened)
+                if (_white.Threatened)
                     Check = true;
             }
-            else if (black.Team == ActiveTeam)
+            else if (_black.Team == ActiveTeam)
             {
-                black.Update();
-                white.CheckCastlingMoves();
-                if (black.Moves.Count > 0)
+                _black.Update();
+                _white.CheckCastlingMoves();
+                if (_black.Moves.Count > 0)
                 {
-                    NextMoves.AddRange(black.Moves);
+                    NextMoves.AddRange(_black.Moves);
                 }
-                if (black.Threatened)
+                if (_black.Threatened)
                     Check = true;
             }
             foreach (var piece in Pieces.Values)
@@ -151,17 +150,17 @@ namespace Chess.Positions
                         NextMoves.AddRange(piece.Moves);
                 }
             }       
-            ShortFEN = FENParser.ToShortFenString(Pieces, white.CastlingRights, black.CastlingRights, ActiveTeam);
+            ShortFEN = FENParser.ToShortFenString(Pieces, _white.CastlingRights, _black.CastlingRights, ActiveTeam);
         }
         public void PrepareForEvaluation()
         {
             if(ActiveTeam == Team.White)
             {
-                black.FindAllThreats();
+                _black.FindAllThreats();
             }
             else
             {
-                white.FindAllThreats();
+                _white.FindAllThreats();
             }
         }
         public bool GetPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece);

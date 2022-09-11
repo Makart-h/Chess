@@ -1,54 +1,53 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
-using Chess.Movement;
 using Chess.Board;
+using Chess.Movement;
 
 namespace Chess.Pieces
 {
     class Pawn : Piece
     {
-        private bool hasMoved;
-        private bool enPassant;
-        public bool EnPassant { get { return enPassant; } set { enPassant = value; } }
-        private int promotionSquareNumber;
+        private bool _hasMoved;
+        private bool _enPassant;
+        private readonly int _promotionSquareNumber;
+        public bool EnPassant { get { return _enPassant; } set { _enPassant = value; } }
+
         public Pawn(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Pawn, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
-            enPassant = false;
-            moveSet = MoveSets.Pawn;
-            promotionSquareNumber = team == Team.White ? 8 : 1;
+            _enPassant = false;
+            _moveSet = MoveSets.Pawn;
+            _promotionSquareNumber = team == Team.White ? 8 : 1;
             Value = team == Team.White ? 1 : -1;
-            if (promotionSquareNumber == 8 && square.Number.digit != 2 || promotionSquareNumber == 1 && square.Number.digit != 7)
-                hasMoved = true;
+            if (_promotionSquareNumber == 8 && square.Number.digit != 2 || _promotionSquareNumber == 1 && square.Number.digit != 7)
+                _hasMoved = true;
         }
-        public Pawn(Pawn other, bool isRaw = false) : base(other.team, other.Square)
+        public Pawn(Pawn other, bool isRaw = false) : base(other._team, other.Square)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
-            enPassant = other.enPassant;
-            hasMoved = other.hasMoved;
-            moveSet = other.moveSet;
+            _enPassant = other._enPassant;
+            _hasMoved = other._hasMoved;
+            _moveSet = other._moveSet;
             Value = other.Value;
-            promotionSquareNumber = other.promotionSquareNumber;
+            _promotionSquareNumber = other._promotionSquareNumber;
         }
         public override int Update()
         {
-            if (enPassant)
-                enPassant = false;
+            if (_enPassant)
+                _enPassant = false;
             return base.Update();
         }
-        public override void CheckPossibleMoves() //refactor
+        public override void CheckPossibleMoves()
         {
             Team teamOnTheSquare;
             Square square;
-            int direction = team == Team.White ? 1 : -1;
+            int direction = _team == Team.White ? 1 : -1;
 
-            if(!hasMoved) //double move
+            // Double move that's available at the start position.
+            if(!_hasMoved)
             {
                 square = new Square(Square.Number.letter, Square.Number.digit + 1 * direction);
                 teamOnTheSquare = Owner.IsSquareOccupied(square);
@@ -59,43 +58,47 @@ namespace Chess.Pieces
                     if (teamOnTheSquare == Team.Empty)
                     {
                         Move moveToAdd = new Move(Square, square, 'm');
-                        if (Owner.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                        if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                             moves.Add(moveToAdd);
                     }
                 }
             }
 
-            square = new Square(Square.Number.letter, Square.Number.digit + (1 * direction)); //regular move
+            // Regular move.
+            square = new Square(Square.Number.letter, Square.Number.digit + (1 * direction));
             teamOnTheSquare = Owner.IsSquareOccupied(square);
             if (teamOnTheSquare == Team.Empty)
             {
                 Move moveToAdd = new Move(Square, square, 'm');
-                if (Owner.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                     moves.Add(moveToAdd);
             }
-            //takes
+
+            // Captures.
             base.CheckPossibleMoves();
 
-            square = new Square((char)(Square.Number.letter + 1), Square.Number.digit); //en passant to the right
+            // En passant to the right.
+            square = new Square((char)(Square.Number.letter + 1), Square.Number.digit);
             teamOnTheSquare = Owner.IsSquareOccupied(square);
-            if (teamOnTheSquare != Team.Void && teamOnTheSquare != team && teamOnTheSquare != Team.Empty)
+            if (teamOnTheSquare != Team.Void && teamOnTheSquare != _team && teamOnTheSquare != Team.Empty)
             {
-                if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p.enPassant == true)
+                if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p._enPassant == true)
                 {
                     Move moveToAdd = new Move(Square, new Square((char)(Square.Number.letter + 1), Square.Number.digit + (1 * direction)), 'p');
-                    if (Owner.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                    if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
             }
 
-            square = new Square((char)(Square.Number.letter - 1), Square.Number.digit); //en passant to the left
+            // En passant to the left.
+            square = new Square((char)(Square.Number.letter - 1), Square.Number.digit);
             teamOnTheSquare = Owner.IsSquareOccupied(square);
-            if (teamOnTheSquare != Team.Void && teamOnTheSquare != Team.Empty && teamOnTheSquare != team)
+            if (teamOnTheSquare != Team.Void && teamOnTheSquare != Team.Empty && teamOnTheSquare != _team)
             {
-                if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p.enPassant == true)
+                if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p._enPassant == true)
                 {
                     Move moveToAdd = new Move(Square, new Square((char)(Square.Number.letter - 1), Square.Number.digit + (1 * direction)), 'p');
-                    if (Owner.GetKing(team).CheckMoveAgainstThreats(this, moveToAdd))
+                    if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
             }
@@ -103,11 +106,11 @@ namespace Chess.Pieces
         public override void MovePiece(Move move)
         {         
             if (Math.Abs(Square.Number.digit - move.Latter.Number.digit) == 2)
-                enPassant = true;
+                _enPassant = true;
             Square = move.Latter;
-            hasMoved = true;
+            _hasMoved = true;
 
-            if (Square.Number.digit == promotionSquareNumber)
+            if (Square.Number.digit == _promotionSquareNumber)
                 Owner.OnPromotion(this);
             OnPieceMoved(new PieceMovedEventArgs(this, move));
         }

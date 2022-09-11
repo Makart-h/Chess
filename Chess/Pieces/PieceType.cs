@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace Chess.Pieces
+﻿namespace Chess.Pieces
 {
     public enum PieceType
     {

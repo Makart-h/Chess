@@ -1,7 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Chess.Board;
 using Chess.Movement;
 
 namespace Chess.Pieces
@@ -10,7 +7,6 @@ namespace Chess.Pieces
     {
         public readonly Piece Piece;
         public readonly Move Move;
-
         public PieceMovedEventArgs(Piece piece, Move move)
         {
             Piece = piece;

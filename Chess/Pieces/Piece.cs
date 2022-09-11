@@ -1,37 +1,32 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Chess.Movement;
-using Chess.Graphics;
 using Chess.Board;
-using Chess.AI;
+using Chess.Graphics;
+using Chess.Movement;
 
 namespace Chess.Pieces
 {
     abstract class Piece : DrawableObject, IComparable<Piece>
     {
-        protected readonly Team team;
-        public Team Team { get => team; }
-        protected bool isSelected;
-        protected MoveSets moveSet;
+        protected readonly Team _team;
+        protected bool _isSelected;
+        protected MoveSets _moveSet;
+        public Team Team { get => _team; }
         public IPieceOwner Owner { get; set; }
-
         public static event EventHandler<PieceMovedEventArgs> PieceMoved;
         public static event EventHandler<PieceEventArgs> PieceSelected;
         public static event EventHandler PieceDeselected;
         public int Value { get; protected set; }
-        public MoveSets MoveSet { get => moveSet; }
+        public MoveSets MoveSet { get => _moveSet; }
         public bool IsSelected { 
-            get => isSelected;
+            get => _isSelected;
             set {
-                isSelected = value;
-                if (isSelected)
+                _isSelected = value;
+                if (_isSelected)
                     OnPieceSelected(new PieceEventArgs(this));
                 else
                     OnPieceDeselected(EventArgs.Empty);
-                _color.A = isSelected ? (byte)100 : (byte)255;
+                _color.A = _isSelected ? (byte)100 : (byte)255;
             }
         }
         public bool IsRawPiece { get; protected set; }
@@ -40,7 +35,7 @@ namespace Chess.Pieces
 
         protected Piece(Team team, Square square)
         {
-            this.team = team;
+            _team = team;
             Square = square;
             Position = Chessboard.Instance.ToCordsFromSquare(square);
             moves = new List<Move>();
@@ -55,23 +50,23 @@ namespace Chess.Pieces
             }
             return copy;
         }
-        public Move GetAMove(Square move)
+        public Move GetAMove(Square targetedSquare)
         {
-            foreach (var item in moves)
+            foreach (Move move in moves)
             {
-                if (item.Latter == move)
-                    return item;
+                if (move.Latter == targetedSquare)
+                    return move;
             }
             return null;
         }
         public virtual void CheckPossibleMoves()
         {
-            (MoveSets sets, Move[] moves)[] groupedMoves = Move.GenerateEveryMove(Square, moveSet, Owner);
+            (MoveSets sets, Move[] moves)[] groupedMoves = Move.GenerateEveryMove(Square, _moveSet, Owner);
             foreach (var group in groupedMoves)
             {
-                foreach (var move in group.moves)
+                foreach (Move move in group.moves)
                 {
-                    if (Owner.GetKing(team).CheckMoveAgainstThreats(this, move))
+                    if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, move))
                         moves.Add(move);
                 }
             }

@@ -1,16 +1,15 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using System.Collections.Generic;
-using Chess.Board;
-using Chess.Graphics;
-using Chess.Pieces;
 using System;
+using System.Collections.Generic;
 using Chess.AI;
-using Chess.Data;
+using Chess.Board;
 using Chess.Clock;
-using System.Runtime;
+using Chess.Data;
+using Chess.Graphics;
 using Chess.Movement;
+using Chess.Pieces;
 
 namespace Chess
 {
@@ -18,18 +17,16 @@ namespace Chess
     {
         private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;
-        public SpriteBatch SpriteBatch { get => _spriteBatch; }
         public static Game1 Instance;
-
-        private Chessboard chessboard;
+        private Chessboard _chessboard;
         public Texture2D Overlays { get; private set; }
-        private readonly List<Controller> controllers;
-        private FENObject fenObject;
-        private SpriteFont clockTimeFont;
-        private bool isRunning;
-        private bool updateController;
-        private string endgameMessage;
-        bool tabPressed = false;
+        private readonly List<Controller> _controllers;
+        private FENObject _fenObject;
+        private SpriteFont _clockTimeFont;
+        private bool _isRunning;
+        private bool _updateController;
+        private string _endgameMessage;
+        private bool _tabPressed = false;
 
         public Game1()
         {
@@ -37,9 +34,9 @@ namespace Chess
             Content.RootDirectory = "Content";
             IsMouseVisible = true;
             Instance = this;
-            controllers = new List<Controller>();
-            isRunning = true;
-            updateController = true;
+            _controllers = new List<Controller>();
+            _isRunning = true;
+            _updateController = true;
         }
 
         private void SubscribeToEvents()
@@ -48,21 +45,21 @@ namespace Chess
             Arbiter.GameConcluded += OnGameConcluded;
             Controller.MoveMade += OnMoveChosen;
         }
-        private void OnMoveChosen(object sender, MoveMadeEventArgs args) => updateController = true;
+        private void OnMoveChosen(object sender, MoveMadeEventArgs args) => _updateController = true;
         private void OnChessClockExpired(object sender, TimerExpiredEventArgs args)
         {
-            isRunning = false;
-            endgameMessage = $"{args.VictoriousController.Team} is victorious!";
+            _isRunning = false;
+            _endgameMessage = $"{args.VictoriousController.Team} is victorious!";
         }
         private void OnGameConcluded(object sender, GameResultEventArgs args)
         {
-            isRunning = false;
+            _isRunning = false;
             if(args.GameResult != GameResult.White && args.GameResult != GameResult.Black)
-                endgameMessage = endgameMessage = "Game ended in a draw!";
+                _endgameMessage = _endgameMessage = "Game ended in a draw!";
             else
             {
                 Team victoriousTeam = args.GameResult == GameResult.White ? Team.White : Team.Black;
-                endgameMessage = $"{victoriousTeam} is victorious!";
+                _endgameMessage = $"{victoriousTeam} is victorious!";
             }
         }
         protected override void Initialize()
@@ -97,21 +94,21 @@ namespace Chess
             try
             {
                 string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-                fenObject = FENParser.Parse(fen.Trim());
-                Arbiter.Initilize(fen, fenObject.HalfMoves);            
+                _fenObject = FENParser.Parse(fen.Trim());
+                Arbiter.Initilize(fen, _fenObject.HalfMoves);            
             }
             catch (ArgumentException)
             {
                 throw;
             }
             //Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
-            Controller white = new AIController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
-            Controller black = new AIController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
+            Controller white = new AIController(Team.White, _fenObject.WhitePieces, _fenObject.WhiteCastling, _fenObject.EnPassantSquare);
+            Controller black = new AIController(Team.Black, _fenObject.BlackPieces, _fenObject.BlackCastling, _fenObject.EnPassantSquare);
             //Controller black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
-            controllers.Add(white);
-            controllers.Add(black);
-            ChessClock.Initialize(white, black, new TimeSpan(0, 0, 10), new TimeSpan(0,0,0), fenObject.TeamToMove);
-            chessboard.InitilizeBoard(fenObject.AllPieces);
+            _controllers.Add(white);
+            _controllers.Add(black);
+            ChessClock.Initialize(white, black, new TimeSpan(0, 0, 10), new TimeSpan(0,0,0), _fenObject.TeamToMove);
+            _chessboard.InitilizeBoard(_fenObject.AllPieces);
             ChessClock.ActiveController.Update();
             SubscribeToEvents();
             ChessClock.Start();
@@ -120,9 +117,9 @@ namespace Chess
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            chessboard = new Chessboard(this.Content.Load<Texture2D>("chessboard"));
+            _chessboard = new Chessboard(this.Content.Load<Texture2D>("chessboard"));
             Overlays = this.Content.Load<Texture2D>("Tsquares");
-            clockTimeFont = this.Content.Load<SpriteFont>("ChessClock");
+            _clockTimeFont = this.Content.Load<SpriteFont>("ChessClock");
 
             // TODO: use this.Content to load your game content here
         }
@@ -131,20 +128,20 @@ namespace Chess
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !tabPressed)
+            if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_tabPressed)
             {
-                tabPressed = true;
+                _tabPressed = true;
                 Chessboard.Instance.ToggleInversion();
             }
             else if(Keyboard.GetState().IsKeyUp(Keys.Tab))
             {
-                tabPressed = false;
+                _tabPressed = false;
             }
             MovementManager.Update(gameTime);
 
-            if (isRunning && (updateController || ChessClock.ActiveController is HumanController))
+            if (_isRunning && (_updateController || ChessClock.ActiveController is HumanController))
             {
-                updateController = false;
+                _updateController = false;
                 ChessClock.ActiveController.MakeMove();
             }
 
@@ -157,13 +154,13 @@ namespace Chess
 
 
             _spriteBatch.Begin();
-            _spriteBatch.Draw(chessboard.Model.RawTexture, chessboard.Position, chessboard.Model.TextureRect, Color.White);
+            _spriteBatch.Draw(_chessboard.Model.RawTexture, _chessboard.Position, _chessboard.Model.TextureRect, Color.White);
             List<DrawableObject> overlays = OverlayManager.GetOverlays();
             foreach (var obj in overlays)
             {
                 _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);
             }
-            foreach (var controller in controllers)
+            foreach (var controller in _controllers)
             {
                 foreach (var obj in controller.Pieces)
                 {
@@ -191,12 +188,12 @@ namespace Chess
                 whiteClock = bottomClock;
                 blackClock = topClock;
             }
-            _spriteBatch.DrawString(clockTimeFont, $"{black.Minutes:d2}:{black.Seconds:d2}:{black.Milliseconds:d2}", blackClock, Color.Black);
-            _spriteBatch.DrawString(clockTimeFont, $"{white.Minutes:d2}:{white.Seconds:d2}:{white.Milliseconds:d2}", whiteClock, Color.Black);
+            _spriteBatch.DrawString(_clockTimeFont, $"{black.Minutes:d2}:{black.Seconds:d2}:{black.Milliseconds:d2}", blackClock, Color.Black);
+            _spriteBatch.DrawString(_clockTimeFont, $"{white.Minutes:d2}:{white.Seconds:d2}:{white.Milliseconds:d2}", whiteClock, Color.Black);
 
-            if(!isRunning)
+            if(!_isRunning)
             {
-                _spriteBatch.DrawString(clockTimeFont, $"{endgameMessage}", new Vector2(100, 400), Color.Red);
+                _spriteBatch.DrawString(_clockTimeFont, $"{_endgameMessage}", new Vector2(100, 400), Color.Red);
             }
             _spriteBatch.End();
 

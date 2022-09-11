@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
-using Chess.Movement;
+﻿using Microsoft.Xna.Framework.Graphics;
 using Chess.Board;
+using Chess.Movement;
 
 namespace Chess.Pieces
 {
@@ -14,15 +10,15 @@ namespace Chess.Pieces
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Bishop, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
-            moveSet = MoveSets.Bishop;
+            _moveSet = MoveSets.Bishop;
             Value = team == Team.White ? 3 : -3;
         }
-        public Bishop(Bishop other, bool isRaw = false) : base(other.team, other.Square)
+        public Bishop(Bishop other, bool isRaw = false) : base(other._team, other.Square)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;
             moves = other.CopyMoves();
-            moveSet = other.moveSet;
+            _moveSet = other._moveSet;
             Value = other.Value;
         }
         public override void CheckPossibleMoves()
@@ -32,7 +28,7 @@ namespace Chess.Pieces
         public override void MovePiece(Move move)
         {
             OnPieceMoved(new PieceMovedEventArgs(this, move));
-            this.Square = move.Latter;
+            Square = move.Latter;
         }
     }
 }

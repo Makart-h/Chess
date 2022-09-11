@@ -1,63 +1,61 @@
-﻿using Microsoft.Xna.Framework.Graphics;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using Chess.Board;
+﻿using System;
 using System.Reflection;
+using Microsoft.Xna.Framework.Graphics;
+using Chess.Board;
 
 namespace Chess.Pieces
 {
     static class PieceFactory
     {
-        private static bool isInitilized;
-        private static Texture2D piecesRawTexture;
+        private static bool _isInitilized;
+        private static Texture2D _piecesRawTexture;
 
         public static void Initilize(Texture2D piecesRawTexture)
         {
-            PieceFactory.piecesRawTexture = piecesRawTexture;
-            isInitilized = true;
+            PieceFactory._piecesRawTexture = piecesRawTexture;
+            _isInitilized = true;
         }
         public static Piece CreateAPiece(char type, Square square, bool isRaw = false)
         {
-            if (!isInitilized)
+            if (!_isInitilized)
                 throw new TypeInitializationException("Factory not initilized!", null);
 
             return type switch
             {
-                'p' => new Pawn(Team.Black, square, piecesRawTexture, isRaw),
-                'r' => new Rook(Team.Black, square, piecesRawTexture, isRaw),
-                'n' => new Knight(Team.Black, square, piecesRawTexture, isRaw),
-                'b' => new Bishop(Team.Black, square, piecesRawTexture, isRaw),
-                'k' => new King(Team.Black, square, piecesRawTexture, isRaw),
-                'q' => new Queen(Team.Black, square, piecesRawTexture, isRaw),
-                'P' => new Pawn(Team.White, square, piecesRawTexture, isRaw),
-                'R' => new Rook(Team.White, square, piecesRawTexture, isRaw),
-                'N' => new Knight(Team.White, square, piecesRawTexture, isRaw),
-                'B' => new Bishop(Team.White, square, piecesRawTexture, isRaw),
-                'K' => new King(Team.White, square, piecesRawTexture, isRaw),
-                'Q' => new Queen(Team.White, square, piecesRawTexture, isRaw),
+                'p' => new Pawn(Team.Black, square, _piecesRawTexture, isRaw),
+                'r' => new Rook(Team.Black, square, _piecesRawTexture, isRaw),
+                'n' => new Knight(Team.Black, square, _piecesRawTexture, isRaw),
+                'b' => new Bishop(Team.Black, square, _piecesRawTexture, isRaw),
+                'k' => new King(Team.Black, square, _piecesRawTexture, isRaw),
+                'q' => new Queen(Team.Black, square, _piecesRawTexture, isRaw),
+                'P' => new Pawn(Team.White, square, _piecesRawTexture, isRaw),
+                'R' => new Rook(Team.White, square, _piecesRawTexture, isRaw),
+                'N' => new Knight(Team.White, square, _piecesRawTexture, isRaw),
+                'B' => new Bishop(Team.White, square, _piecesRawTexture, isRaw),
+                'K' => new King(Team.White, square, _piecesRawTexture, isRaw),
+                'Q' => new Queen(Team.White, square, _piecesRawTexture, isRaw),
                 _ => throw new NotImplementedException()
             };
         }
         public static Piece CreateAPiece(PieceType type, Square square, Team team, bool isRaw = false)
         {
-            if (!isInitilized)
+            if (!_isInitilized)
                 throw new TypeInitializationException("Factory not initilized!", null);
 
             return type switch
             {
-                PieceType.Queen => new Queen(team, square, piecesRawTexture, isRaw),
-                PieceType.Rook => new Rook(team, square, piecesRawTexture, isRaw),
-                PieceType.Pawn => new Pawn(team, square, piecesRawTexture, isRaw),
-                PieceType.Knight => new Knight(team, square, piecesRawTexture, isRaw),
-                PieceType.Bishop => new Bishop(team, square, piecesRawTexture, isRaw),
-                PieceType.King => new King(team, square, piecesRawTexture, isRaw),
+                PieceType.Queen => new Queen(team, square, _piecesRawTexture, isRaw),
+                PieceType.Rook => new Rook(team, square, _piecesRawTexture, isRaw),
+                PieceType.Pawn => new Pawn(team, square, _piecesRawTexture, isRaw),
+                PieceType.Knight => new Knight(team, square, _piecesRawTexture, isRaw),
+                PieceType.Bishop => new Bishop(team, square, _piecesRawTexture, isRaw),
+                PieceType.King => new King(team, square, _piecesRawTexture, isRaw),
                 _ => throw new NotImplementedException()
             };
         }
         public static Piece CopyAPiece(Piece piece, IPieceOwner owner, bool isRaw = false)
         {
-            if (!isInitilized)
+            if (!_isInitilized)
                 throw new TypeInitializationException("Factory not initilized!", null);
 
             Type type = piece.GetType();
