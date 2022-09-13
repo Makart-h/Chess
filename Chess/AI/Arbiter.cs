@@ -32,6 +32,22 @@ namespace Chess.AI
             fen = fen[..index];
             _occuredPositions[fen] = 1;
         }
+        public static string ExplainGameResult(GameResult result)
+        {
+            return result switch
+            {
+                GameResult.Black => "checkmate",
+                GameResult.White => ExplainGameResult(GameResult.Black),
+                GameResult.Stalemate => "stalemate",
+                GameResult.Draw => "insufficient material",
+                GameResult.ThreefoldRepetition => "threefold repetition claim",
+                GameResult.FivefoldRepetition => "fivefold repetition",
+                GameResult.DrawByAgreement => "both parties agreement",
+                GameResult.HalfMoves => "reaching 50 half-moves",
+                GameResult.InProgress => "game is in progress",
+                _ => throw new NotImplementedException()
+            };
+        }
         private static GameResult AnalyzeBoard(Dictionary<Square, Piece> piecesOnTheBoard, Team toMove, int halfMoves, ref Dictionary<string, int> occuredPositions)
         {
             var notNullPieces = (from piece in piecesOnTheBoard.Values
@@ -69,7 +85,7 @@ namespace Chess.AI
                 return result;
 
             if(halfMoves == _maxHalfMoves)
-                return GameResult.Draw;
+                return GameResult.HalfMoves;
 
             result = CheckMaterial(whitePieces, blackPieces);
             if (result != GameResult.InProgress)

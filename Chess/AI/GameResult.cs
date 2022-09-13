@@ -8,6 +8,8 @@
         Draw,
         InProgress,
         ThreefoldRepetition,
-        FivefoldRepetition
+        FivefoldRepetition,
+        DrawByAgreement,
+        HalfMoves
     }
 }
