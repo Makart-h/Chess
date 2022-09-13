@@ -6,14 +6,14 @@ namespace Chess.Pieces
 {
     class Knight : Piece
     {
-        public Knight(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
+        public Knight(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Knight, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             _moveSet = MoveSets.Knight;
             Value = team == Team.White ? 3 : -3;
         }
-        public Knight(Knight other, bool isRaw = false) : base(other._team, other.Square)
+        public Knight(Knight other, bool isRaw = false) : base(other._team, other.Square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;

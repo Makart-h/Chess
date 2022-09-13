@@ -32,7 +32,7 @@ namespace Chess.Pieces
             s_queensideCastlingSquares[Team.White] = new[] { new Square("B1"), new Square("C1"), new Square("D1") };
             s_queensideCastlingSquares[Team.Black] = new[] { new Square("B8"), new Square("C8"), new Square("D8") };
         }
-        public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
+        public King(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.King, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
@@ -42,7 +42,7 @@ namespace Chess.Pieces
             CastlingRights = CastlingRights.None;
             Value = 0;
         }
-        public King(King other, bool isRaw = false) : base(other._team, other.Square)
+        public King(King other, bool isRaw = false) : base(other._team, other.Square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;

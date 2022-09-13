@@ -12,7 +12,7 @@ namespace Chess.Pieces
         private readonly int _promotionSquareNumber;
         public bool EnPassant { get { return _enPassant; } set { _enPassant = value; } }
 
-        public Pawn(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
+        public Pawn(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Pawn, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
@@ -23,7 +23,7 @@ namespace Chess.Pieces
             if (_promotionSquareNumber == 8 && square.Number.digit != 2 || _promotionSquareNumber == 1 && square.Number.digit != 7)
                 _hasMoved = true;
         }
-        public Pawn(Pawn other, bool isRaw = false) : base(other._team, other.Square)
+        public Pawn(Pawn other, bool isRaw = false) : base(other._team, other.Square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;

@@ -7,14 +7,14 @@ namespace Chess.Pieces
 {
     class Queen : Piece
     {
-        public Queen(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square)
+        public Queen(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : new Graphics.Model(rawTexture, Square.SquareWidth * (int)PieceType.Queen, Square.SquareHeight * ((byte)team & 1), Square.SquareWidth, Square.SquareHeight);
             _moveSet = MoveSets.Queen;
             Value = team == Team.White ? 9 : -9;
         }
-        public Queen(Queen other, bool isRaw = false) : base(other._team, other.Square)
+        public Queen(Queen other, bool isRaw = false) : base(other._team, other.Square, null)
         {
             IsRawPiece = isRaw;
             Model = IsRawPiece ? null : other.Model;

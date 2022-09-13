@@ -33,11 +33,10 @@ namespace Chess.Pieces
         public Square Square { get; set; }
         protected List<Move> moves;
 
-        protected Piece(Team team, Square square)
+        protected Piece(Team team, Square square, Model model) : base(model, Chessboard.Instance.ToCordsFromSquare(square))
         {
             _team = team;
             Square = square;
-            Position = Chessboard.Instance.ToCordsFromSquare(square);
             moves = new List<Move>();
         }
         public List<Move> Moves { get => moves; set => moves = value; }
