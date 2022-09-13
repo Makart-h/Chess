@@ -36,6 +36,10 @@ namespace Chess.Graphics
             {
                 overlay.RecalculatePosition();
             }
+            foreach(SquareOverlay overlay in _selections)
+            {
+                overlay.RecalculatePosition();
+            }
         }
         public static void OnPieceSelected(object sender, PieceEventArgs e)
         {
