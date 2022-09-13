@@ -23,8 +23,6 @@ namespace Chess.Board
 
         private Chessboard(Texture2D rawTexture, bool inverted = false) : base(null, new Vector2())
         {
-            Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
-            Position = new Vector2(0, 0);
             Instance = this;
             Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
             _pieces = new Dictionary<Square, Piece>();
@@ -167,8 +165,8 @@ namespace Chess.Board
         public Square FromVector(Vector2 vector) => FromCords((int)vector.X, (int)vector.Y);
         public Square FromCords(int x, int y)
         {
-            int indexX = x / Square.SquareWidth;
-            int indexY = Chessboard.s_numberOfSquares - 1 - y / Square.SquareHeight;
+            int indexX = x < 0 ? -1 : x / Square.SquareWidth;
+            int indexY = y < 0 ? -1 : Chessboard.s_numberOfSquares - 1 - y / Square.SquareHeight;
 
             if (Inverted)
             {
