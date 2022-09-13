@@ -9,9 +9,10 @@ namespace Chess.Movement
 {
     internal static class MovementManager
     {
-        public static List<Initiator> _initiators;
-        public static Stack<Initiator> _toRemove;
+        private static List<Initiator> _initiators;
+        private static Stack<Initiator> _toRemove;
         public static EventHandler MovementConcluded;
+        private static bool _rapidMovement;
         public static float MovementVelocity { get; private set; }
         static MovementManager()
         {
@@ -19,6 +20,7 @@ namespace Chess.Movement
             _toRemove = new Stack<Initiator>();
             MovementVelocity = 0.4f;
             Piece.PieceMoved += OnPieceMoved;
+            _rapidMovement = false;
         }
         private static void OnPieceMoved(object sender, PieceMovedEventArgs args)
         {
@@ -26,6 +28,7 @@ namespace Chess.Movement
             if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
             {            
                 args.Piece.MoveObject(newPosition-args.Piece.Position);
+                _rapidMovement = true;
             }
             else
             {
@@ -52,8 +55,11 @@ namespace Chess.Movement
                 _initiators.Remove(i);
                 initiatorRemovedOnThisUpdate = true;
             }
-            if (_initiators.Count == 0 && initiatorRemovedOnThisUpdate)
+            if (_initiators.Count == 0 && (initiatorRemovedOnThisUpdate || _rapidMovement))
+            {
                 OnMovementConcluded(EventArgs.Empty);
+                _rapidMovement = false;
+            }
         }
         public static Vector2 RecalculateVector(Vector2 vector)
         {
