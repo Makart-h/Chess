@@ -10,6 +10,7 @@ namespace Chess.Graphics
     {
         private static readonly List<SquareOverlay> _selections;
         private static readonly List<SquareOverlay> _moves;
+        private static bool _showMoves;
         static OverlayManager()
         {
             _selections = new List<SquareOverlay>();
@@ -23,11 +24,13 @@ namespace Chess.Graphics
             Piece.PieceMoved += OnPieceMoved;
             Chessboard.BoardInverted += OnBoardInverted;
             King.Check += OnCheck;
+            MovementManager.MovementConcluded += OnMovementConcluded;
         }
         public static List<DrawableObject> GetOverlays()
         {
             List<DrawableObject> overlays = new List<DrawableObject>(_selections);
-            overlays.AddRange(_moves);
+            if(_showMoves)
+                overlays.AddRange(_moves);
             return overlays;
         }
         public static void OnBoardInverted(object sender, EventArgs e)
@@ -65,6 +68,7 @@ namespace Chess.Graphics
         {
             if (e.Move.Description != 'c')
             {
+                _showMoves = false;
                 Move move = e.Move;
                 _moves.Clear();
                 _moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
@@ -78,5 +82,6 @@ namespace Chess.Graphics
                 _moves.Add(new SquareOverlay(SquareOverlayType.Check, p.Square));
             }
         }
+        public static void OnMovementConcluded(object sender, EventArgs e) => _showMoves = true;
     }
 }

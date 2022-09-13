@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
 using Chess.AI;
+using Chess.Movement;
 using Chess.Pieces;
 
 namespace Chess.Clock
@@ -63,7 +64,7 @@ namespace Chess.Clock
         {
             _timers[Team.White].Elapsed += OnTimerExpired;
             _timers[Team.Black].Elapsed += OnTimerExpired;
-            Controller.MoveMade += OnMoveChosen;
+            MovementManager.MovementConcluded += OnMovementConcluded;
             Arbiter.GameConcluded += OnGameConcluded;
         }
         private static void CheckInitialization()
@@ -79,7 +80,7 @@ namespace Chess.Clock
                     _cancelletionTokenSources[controller] = new CancellationTokenSource();
             }
         }
-        private static void OnMoveChosen(object sender, MoveMadeEventArgs e) => Toggle();
+        private static void OnMovementConcluded(object sender, EventArgs e) => Toggle();
         private static void OnTimerExpired(object sender, ElapsedEventArgs e)
         {
             if (_cancelletionTokenSources.TryGetValue(_controllers[_activeTeam], out CancellationTokenSource source))

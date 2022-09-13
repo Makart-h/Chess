@@ -21,11 +21,12 @@ namespace Chess.Board
         public static event EventHandler BoardInverted;
         public bool Inverted { get; private set; }
 
-        private Chessboard(Texture2D rawTexture, bool inverted = false)
+        private Chessboard(Texture2D rawTexture, bool inverted = false) : base(null, new Vector2())
         {
             Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
             Position = new Vector2(0, 0);
             Instance = this;
+            Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
             _pieces = new Dictionary<Square, Piece>();
             foreach (var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
             {

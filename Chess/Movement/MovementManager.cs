@@ -11,6 +11,7 @@ namespace Chess.Movement
     {
         public static List<Initiator> _initiators;
         public static Stack<Initiator> _toRemove;
+        public static EventHandler MovementConcluded;
         public static float MovementVelocity { get; private set; }
         static MovementManager()
         {
@@ -19,7 +20,7 @@ namespace Chess.Movement
             MovementVelocity = 0.4f;
             Piece.PieceMoved += OnPieceMoved;
         }
-        public static void OnPieceMoved(object sender, PieceMovedEventArgs args)
+        private static void OnPieceMoved(object sender, PieceMovedEventArgs args)
         {
             Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
             if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
@@ -31,7 +32,7 @@ namespace Chess.Movement
                 _initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
             }
         }
-        public static void OnDestinationReached(object sender, EventArgs args)
+        private static void OnDestinationReached(object sender, EventArgs args)
         {
             if(sender is Initiator i)
             {
@@ -41,6 +42,7 @@ namespace Chess.Movement
         }
         public static void Update(GameTime gameTime)
         {
+            bool initiatorRemovedOnThisUpdate = false;
             foreach(Initiator initiator in _initiators)
             {
                 initiator.Update(gameTime);
@@ -48,7 +50,10 @@ namespace Chess.Movement
             while(_toRemove.TryPop(out Initiator i))
             {
                 _initiators.Remove(i);
+                initiatorRemovedOnThisUpdate = true;
             }
+            if (_initiators.Count == 0 && initiatorRemovedOnThisUpdate)
+                OnMovementConcluded(EventArgs.Empty);
         }
         public static Vector2 RecalculateVector(Vector2 vector)
         {
@@ -56,5 +61,6 @@ namespace Chess.Movement
             float height = Square.SquareHeight * (Chessboard.NumberOfSquares-1);
             return new Vector2(width - vector.X, height - vector.Y);
         }
+        private static void OnMovementConcluded(EventArgs e) => MovementConcluded?.Invoke(null, e);
     }
 }
