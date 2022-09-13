@@ -11,7 +11,7 @@ namespace Chess.Board
 {
     class Chessboard : DrawableObject
     {
-        public static Chessboard Instance;
+        public static Chessboard Instance { get; private set; }
         private readonly Dictionary<Square, Piece> _pieces;
         public Dictionary<Square, Piece> Pieces { get { return _pieces; } }
         private static readonly int s_numberOfSquares = 8;
@@ -21,7 +21,7 @@ namespace Chess.Board
         public static event EventHandler BoardInverted;
         public bool Inverted { get; private set; }
 
-        public Chessboard(Texture2D rawTexture, bool inverted = false)
+        private Chessboard(Texture2D rawTexture, bool inverted = false)
         {
             Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
             Position = new Vector2(0, 0);
@@ -36,6 +36,12 @@ namespace Chess.Board
                 }
             }
             Inverted = inverted;
+        }
+        public static Chessboard Create(Texture2D rawTexture, bool inverted = false)
+        {
+            if (Instance != null)
+                throw new InvalidOperationException($"{nameof(Chessboard)} is already created!");
+            return new Chessboard(rawTexture, inverted);
         }
         public void InitilizeBoard(Piece[] pieces)
         {
@@ -52,7 +58,10 @@ namespace Chess.Board
         public Piece CheckCollisions(int x, int y)
         {
             Square square = FromCords(x, y);
-            return _pieces[square];
+            if (_pieces.TryGetValue(square, out Piece piece))
+                return piece;
+            else
+                return null;
         }
         public void ToggleInversion()
         {
