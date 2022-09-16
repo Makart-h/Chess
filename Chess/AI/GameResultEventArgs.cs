@@ -1,6 +1,6 @@
 ﻿namespace Chess.AI
 {
-    internal class GameResultEventArgs
+    internal sealed class GameResultEventArgs
     {
         public GameResult GameResult;
 

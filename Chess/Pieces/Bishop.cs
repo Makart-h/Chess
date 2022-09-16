@@ -4,7 +4,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    class Bishop : Piece
+    internal sealed class Bishop : Piece
     {
         public Bishop(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {

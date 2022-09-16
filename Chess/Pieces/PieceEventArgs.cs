@@ -2,7 +2,7 @@
 
 namespace Chess.Pieces
 {
-    class PieceEventArgs : EventArgs
+    internal sealed class PieceEventArgs : EventArgs
     {
         public readonly Piece Piece;
 

@@ -3,7 +3,7 @@ using Chess.AI;
 
 namespace Chess.Clock
 {
-    internal class TimerExpiredEventArgs : EventArgs
+    internal sealed class TimerExpiredEventArgs : EventArgs
     {
         public readonly Controller VictoriousController;
 

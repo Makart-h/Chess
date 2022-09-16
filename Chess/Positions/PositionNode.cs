@@ -8,7 +8,7 @@ using Chess.Pieces;
 
 namespace Chess.Positions
 {
-    internal class PositionNode
+    internal sealed class PositionNode
     {
         private double _value;
         private readonly int _depth;

@@ -13,7 +13,7 @@ using Chess.Pieces;
 
 namespace Chess
 {
-    internal class Game1 : Game
+    internal sealed class Game1 : Game
     {
         private readonly GraphicsDeviceManager _graphics;
         private SpriteBatch _spriteBatch;

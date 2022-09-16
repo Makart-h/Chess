@@ -5,7 +5,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    class Pawn : Piece
+    internal sealed class Pawn : Piece
     {
         private bool _hasMoved;
         private bool _enPassant;

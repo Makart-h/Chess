@@ -2,7 +2,7 @@
 
 namespace Chess.Graphics
 {
-    class SquareOverlay : DrawableObject
+    internal sealed class SquareOverlay : DrawableObject
     {
         public SquareOverlayType Type { get; private set; }
         public SquareOverlay(SquareOverlayType type, Square square) : base(null, Chessboard.Instance.ToCordsFromSquare(square))

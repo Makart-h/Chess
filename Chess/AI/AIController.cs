@@ -11,7 +11,7 @@ using Chess.Positions;
 
 namespace Chess.AI
 {
-    internal class AIController : Controller
+    internal sealed class AIController : Controller
     {
         private readonly List<Move> _movesToConsider;
         private bool _isAlreadyThinking;

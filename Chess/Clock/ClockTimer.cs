@@ -3,7 +3,7 @@ using System.Diagnostics;
 
 namespace Chess.Clock
 {
-    internal class ClockTimer : Timer
+    internal sealed class ClockTimer : Timer
     {
         public double RemainingTime { get => _isPaused ? _remainingTime : Interval - _stopwatch.Elapsed.TotalMilliseconds; }
         private double _remainingTime;

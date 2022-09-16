@@ -6,7 +6,7 @@ using Chess.Board;
 
 namespace Chess.Data
 {
-    internal class FENObject
+    internal sealed class FENObject
     {
         public Piece[] WhitePieces { get; private set; }
         public Piece[] BlackPieces { get; private set; }

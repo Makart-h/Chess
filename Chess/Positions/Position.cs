@@ -9,7 +9,7 @@ using Chess.Pieces;
 
 namespace Chess.Positions
 {
-    internal class Position : IPieceOwner
+    internal sealed class Position : IPieceOwner
     {
         private readonly int _halfMoves;
         private King _white;

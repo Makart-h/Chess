@@ -4,7 +4,7 @@ using Chess.Pieces;
 
 namespace Chess.Movement
 {
-    class Move
+    internal sealed class Move
     {
         public Square Former { get; private set; }
         public Square Latter { get; private set; }

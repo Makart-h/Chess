@@ -9,7 +9,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Chess.Board
 {
-    class Chessboard : DrawableObject
+    internal sealed class Chessboard : DrawableObject
     {
         public static Chessboard Instance { get; private set; }
         private readonly Dictionary<Square, Piece> _pieces;

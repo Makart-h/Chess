@@ -3,7 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace Chess.Graphics
 {
-    class Model
+    internal sealed class Model
     {
         public Texture2D RawTexture { get; private set; }
         public Rectangle TextureRect { get; private set; }

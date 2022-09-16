@@ -4,7 +4,7 @@ using Chess.Pieces;
 
 namespace Chess.AI
 {
-    internal class MoveMadeEventArgs : EventArgs
+    internal sealed class MoveMadeEventArgs : EventArgs
     {
         public readonly Controller Controller;
         public readonly Piece Piece;

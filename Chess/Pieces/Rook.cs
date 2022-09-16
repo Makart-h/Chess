@@ -4,7 +4,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    class Rook : Piece
+    internal sealed class Rook : Piece
     {
         public bool HasMoved { get; private set; }
         public Rook(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)

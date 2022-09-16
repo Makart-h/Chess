@@ -7,7 +7,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    class King : Piece
+    internal sealed class King : Piece
     {
         public CastlingRights CastlingRights { get; set; }
         private readonly static Dictionary<char, Square> s_castlingRookSquares;

@@ -4,7 +4,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    class Knight : Piece
+    internal sealed class Knight : Piece
     {
         public Knight(Team team, Square square, Texture2D rawTexture, bool isRaw = false) : base(team, square, null)
         {
