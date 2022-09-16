@@ -167,14 +167,14 @@ namespace Chess.Pieces
         public Square[] GetSquaresAroundTheKing()
         {
             return new Square[] {
-                new Square((char)(Square.Number.letter + 1), Square.Number.digit + 1),
-                new Square((char)(Square.Number.letter + 1), Square.Number.digit - 1),
-                new Square((char)(Square.Number.letter - 1), Square.Number.digit + 1),
-                new Square((char)(Square.Number.letter - 1), Square.Number.digit - 1),
-                new Square((char)(Square.Number.letter + 1), Square.Number.digit),
-                new Square((char)(Square.Number.letter - 1), Square.Number.digit),
-                new Square(Square.Number.letter, Square.Number.digit + 1),
-                new Square(Square.Number.letter, Square.Number.digit - 1),
+                new Square((char)(Square.Letter + 1), Square.Digit + 1),
+                new Square((char)(Square.Letter + 1), Square.Digit - 1),
+                new Square((char)(Square.Letter - 1), Square.Digit + 1),
+                new Square((char)(Square.Letter - 1), Square.Digit - 1),
+                new Square((char)(Square.Letter + 1), Square.Digit),
+                new Square((char)(Square.Letter - 1), Square.Digit),
+                new Square(Square.Letter, Square.Digit + 1),
+                new Square(Square.Letter, Square.Digit - 1),
             };
         }
         public Square[] GetKingSideCastleSquares() => s_kingsideCastlingSquares[_team];
@@ -186,9 +186,9 @@ namespace Chess.Pieces
             if (!Owner.ArePiecesFacingEachOther(this, piece))
                 return false;
 
-            int x = move.Former.Number.letter - Square.Number.letter;
-            int y = move.Former.Number.digit - Square.Number.digit;
-            if(x == 0 && move.Former.Number.letter != move.Latter.Number.letter)
+            int x = move.Former.Letter - Square.Letter;
+            int y = move.Former.Digit - Square.Digit;
+            if(x == 0 && move.Former.Letter != move.Latter.Letter)
             {
                 y /= Math.Abs(y);
                 moves = Move.GenerateMovesInADirection(piece.Square, (0, y), Owner, excludeMove:"moves");
@@ -200,7 +200,7 @@ namespace Chess.Pieces
                 else
                     return false;
             }
-            else if(y == 0 && move.Former.Number.digit != move.Latter.Number.digit)
+            else if(y == 0 && move.Former.Digit != move.Latter.Digit)
             {
                 x /= Math.Abs(x);
                 moves = Move.GenerateMovesInADirection(piece.Square, (x, 0), Owner, excludeMove: "moves");
@@ -216,8 +216,8 @@ namespace Chess.Pieces
             {
                 x /= Math.Abs(x);               
                 y /= Math.Abs(y);
-                int directionX = move.Latter.Number.letter - move.Former.Number.letter;
-                int directionY = move.Latter.Number.digit - move.Former.Number.digit;
+                int directionX = move.Latter.Letter - move.Former.Letter;
+                int directionY = move.Latter.Digit - move.Former.Digit;
                 if (Math.Abs(directionY) == Math.Abs(directionX))
                 {
                     if (x == (directionX / Math.Abs(directionX)) && y == (directionY / Math.Abs(directionY)))

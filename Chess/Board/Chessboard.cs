@@ -79,12 +79,12 @@ namespace Chess.Board
                 _pieces[move.Former] = null;
                 _pieces[move.Latter] = targetedPiece;
                 if (move.Description == 'p')
-                    RemoveAPiece(new Square(move.Latter.Number.letter, move.Former.Number.digit));
+                    RemoveAPiece(new Square(move.Latter.Letter, move.Former.Digit));
                 else if(move.Description == 'k' || move.Description == 'q')
                 {
-                    int direction = move.Former.Number.letter > move.Latter.Number.letter ? 1 : -1;
+                    int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
                     Square originalRookPosition = King.GetCastlingRookSquare(move.Description, targetedPiece.Team);
-                    Square newRookPosition = new Square((char)(move.Latter.Number.letter + direction), move.Latter.Number.digit);
+                    Square newRookPosition = new Square((char)(move.Latter.Letter + direction), move.Latter.Digit);
                     Move rookMove = new Move(_pieces[originalRookPosition].Square, newRookPosition, 'c');
                     _pieces[originalRookPosition].MovePiece(rookMove);
                     _pieces[newRookPosition] = _pieces[originalRookPosition];
@@ -113,18 +113,18 @@ namespace Chess.Board
         }
         public static (int, int) ConvertSquareToIndexes(Square square)
         {
-            int x = square.Number.letter - 'A';
-            int y = square.Number.digit - 1;
+            int x = square.Letter - 'A';
+            int y = square.Digit - 1;
             return (y, x);
         }
         public bool ArePiecesFacingEachOther(Piece first, Piece second)
         {
-            if (first.Square.Number.letter == second.Square.Number.letter)
+            if (first.Square.Letter == second.Square.Letter)
             {
-                int direction = first.Square.Number.digit > second.Square.Number.digit ? -1 : 1;
-                for (int i = first.Square.Number.digit + direction; ; i += direction)
+                int direction = first.Square.Digit > second.Square.Digit ? -1 : 1;
+                for (int i = first.Square.Digit + direction; ; i += direction)
                 {
-                    if (!GetAPiece(new Square(first.Square.Number.letter, i), out Piece pieceOnTheWay))
+                    if (!GetAPiece(new Square(first.Square.Letter, i), out Piece pieceOnTheWay))
                         return false;
                     if (pieceOnTheWay == null)
                         continue;
@@ -132,12 +132,12 @@ namespace Chess.Board
                     return pieceOnTheWay == second;
                 }
             }
-            else if (first.Square.Number.digit == second.Square.Number.digit)
+            else if (first.Square.Digit == second.Square.Digit)
             {
-                int direction = first.Square.Number.letter > second.Square.Number.letter ? -1 : 1;
-                for (int i = first.Square.Number.letter + direction; ; i += direction)
+                int direction = first.Square.Letter > second.Square.Letter ? -1 : 1;
+                for (int i = first.Square.Letter + direction; ; i += direction)
                 {
-                    if (!GetAPiece(new Square((char)i, first.Square.Number.digit), out Piece pieceOnTheWay))
+                    if (!GetAPiece(new Square((char)i, first.Square.Digit), out Piece pieceOnTheWay))
                         return false;
                     if (pieceOnTheWay == null)
                         continue;
@@ -145,11 +145,11 @@ namespace Chess.Board
                     return pieceOnTheWay == second;
                 }
             }
-            else if (Math.Abs(first.Square.Number.digit - second.Square.Number.digit) == Math.Abs(first.Square.Number.letter - second.Square.Number.letter))
+            else if (Math.Abs(first.Square.Digit - second.Square.Digit) == Math.Abs(first.Square.Letter - second.Square.Letter))
             {
-                int directionLetter = first.Square.Number.letter > second.Square.Number.letter ? -1 : 1;
-                int directionDigit = first.Square.Number.digit > second.Square.Number.digit ? -1 : 1;
-                for (int i = first.Square.Number.letter + directionLetter, j = first.Square.Number.digit + directionDigit; ; i += directionLetter, j += directionDigit)
+                int directionLetter = first.Square.Letter > second.Square.Letter ? -1 : 1;
+                int directionDigit = first.Square.Digit > second.Square.Digit ? -1 : 1;
+                for (int i = first.Square.Letter + directionLetter, j = first.Square.Digit + directionDigit; ; i += directionLetter, j += directionDigit)
                 {
 
                     if (!GetAPiece(new Square((char)i, j), out Piece pieceOnTheWay))

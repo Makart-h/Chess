@@ -211,8 +211,8 @@ namespace Chess.Data
                 if(piece is Pawn p && p.EnPassant == true)
                 {
                     int direction = p.Team == Team.White ? 1 : -1;
-                    int digit = p.Square.Number.digit - (1 * direction);
-                    return p.Square.Number.letter + digit.ToString();
+                    int digit = p.Square.Digit - (1 * direction);
+                    return p.Square.Letter + digit.ToString();
                 }               
             }
             return "-";

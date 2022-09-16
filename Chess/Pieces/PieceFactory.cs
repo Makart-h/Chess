@@ -5,7 +5,7 @@ using Chess.Board;
 
 namespace Chess.Pieces
 {
-    static class PieceFactory
+    internal static class PieceFactory
     {
         private static bool _isInitilized;
         private static Texture2D _piecesRawTexture;

@@ -157,11 +157,11 @@ namespace Chess.AI
                 if (secondWhitePiece is Bishop && secondBlackPiece is Bishop) 
                 {
                     bool isWhiteOnLightSquare = 
-                        ((secondWhitePiece.Square.Number.letter - 'A') % 2 != 0 && secondWhitePiece.Square.Number.digit % 2 != 0) ||
-                        ((secondWhitePiece.Square.Number.letter - 'A') % 2 == 0 && secondWhitePiece.Square.Number.digit % 2 == 0);
+                        ((secondWhitePiece.Square.Letter - 'A') % 2 != 0 && secondWhitePiece.Square.Digit % 2 != 0) ||
+                        ((secondWhitePiece.Square.Letter - 'A') % 2 == 0 && secondWhitePiece.Square.Digit % 2 == 0);
                     bool isBlackOnLightSquare =
-                        ((secondBlackPiece.Square.Number.letter - 'A') % 2 != 0 && secondBlackPiece.Square.Number.digit % 2 != 0) ||
-                        ((secondBlackPiece.Square.Number.letter - 'A') % 2 == 0 && secondBlackPiece.Square.Number.digit % 2 == 0);
+                        ((secondBlackPiece.Square.Letter - 'A') % 2 != 0 && secondBlackPiece.Square.Digit % 2 != 0) ||
+                        ((secondBlackPiece.Square.Letter - 'A') % 2 == 0 && secondBlackPiece.Square.Digit % 2 == 0);
 
                     if (isWhiteOnLightSquare && isBlackOnLightSquare)
                         return GameResult.Draw;

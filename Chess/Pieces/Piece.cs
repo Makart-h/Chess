@@ -6,7 +6,7 @@ using Chess.Movement;
 
 namespace Chess.Pieces
 {
-    abstract class Piece : DrawableObject, IComparable<Piece>
+    internal abstract class Piece : DrawableObject, IComparable<Piece>
     {
         protected readonly Team _team;
         protected bool _isSelected;

@@ -20,7 +20,7 @@ namespace Chess.Pieces
             _moveSet = MoveSets.Pawn;
             _promotionSquareNumber = team == Team.White ? 8 : 1;
             Value = team == Team.White ? 1 : -1;
-            if (_promotionSquareNumber == 8 && square.Number.digit != 2 || _promotionSquareNumber == 1 && square.Number.digit != 7)
+            if (_promotionSquareNumber == 8 && square.Digit != 2 || _promotionSquareNumber == 1 && square.Digit != 7)
                 _hasMoved = true;
         }
         public Pawn(Pawn other, bool isRaw = false) : base(other._team, other.Square, null)
@@ -49,11 +49,11 @@ namespace Chess.Pieces
             // Double move that's available at the start position.
             if(!_hasMoved)
             {
-                square = new Square(Square.Number.letter, Square.Number.digit + 1 * direction);
+                square = new Square(Square.Letter, Square.Digit + 1 * direction);
                 teamOnTheSquare = Owner.IsSquareOccupied(square);
                 if (teamOnTheSquare == Team.Empty)
                 {
-                    square = new Square(Square.Number.letter, Square.Number.digit + 2 * direction);
+                    square = new Square(Square.Letter, Square.Digit + 2 * direction);
                     teamOnTheSquare = Owner.IsSquareOccupied(square);
                     if (teamOnTheSquare == Team.Empty)
                     {
@@ -65,7 +65,7 @@ namespace Chess.Pieces
             }
 
             // Regular move.
-            square = new Square(Square.Number.letter, Square.Number.digit + (1 * direction));
+            square = new Square(Square.Letter, Square.Digit + (1 * direction));
             teamOnTheSquare = Owner.IsSquareOccupied(square);
             if (teamOnTheSquare == Team.Empty)
             {
@@ -78,26 +78,26 @@ namespace Chess.Pieces
             base.CheckPossibleMoves();
 
             // En passant to the right.
-            square = new Square((char)(Square.Number.letter + 1), Square.Number.digit);
+            square = new Square((char)(Square.Letter + 1), Square.Digit);
             teamOnTheSquare = Owner.IsSquareOccupied(square);
             if (teamOnTheSquare != Team.Void && teamOnTheSquare != _team && teamOnTheSquare != Team.Empty)
             {
                 if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p._enPassant == true)
                 {
-                    Move moveToAdd = new Move(Square, new Square((char)(Square.Number.letter + 1), Square.Number.digit + (1 * direction)), 'p');
+                    Move moveToAdd = new Move(Square, new Square((char)(Square.Letter + 1), Square.Digit + (1 * direction)), 'p');
                     if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
             }
 
             // En passant to the left.
-            square = new Square((char)(Square.Number.letter - 1), Square.Number.digit);
+            square = new Square((char)(Square.Letter - 1), Square.Digit);
             teamOnTheSquare = Owner.IsSquareOccupied(square);
             if (teamOnTheSquare != Team.Void && teamOnTheSquare != Team.Empty && teamOnTheSquare != _team)
             {
                 if (Owner.GetPiece(square, out Piece piece) && piece is Pawn p && p._enPassant == true)
                 {
-                    Move moveToAdd = new Move(Square, new Square((char)(Square.Number.letter - 1), Square.Number.digit + (1 * direction)), 'p');
+                    Move moveToAdd = new Move(Square, new Square((char)(Square.Letter - 1), Square.Digit + (1 * direction)), 'p');
                     if (Owner.GetKing(_team).CheckMoveAgainstThreats(this, moveToAdd))
                         moves.Add(moveToAdd);
                 }
@@ -105,12 +105,12 @@ namespace Chess.Pieces
         }
         public override void MovePiece(Move move)
         {         
-            if (Math.Abs(Square.Number.digit - move.Latter.Number.digit) == 2)
+            if (Math.Abs(Square.Digit - move.Latter.Digit) == 2)
                 _enPassant = true;
             Square = move.Latter;
             _hasMoved = true;
 
-            if (Square.Number.digit == _promotionSquareNumber)
+            if (Square.Digit == _promotionSquareNumber)
                 Owner.OnPromotion(this);
             OnPieceMoved(new PieceMovedEventArgs(this, move));
         }
