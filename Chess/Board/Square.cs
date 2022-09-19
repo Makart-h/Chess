@@ -1,6 +1,6 @@
 ﻿using System;
-using System.Text.RegularExpressions;
 using System.Linq;
+using System.Text.RegularExpressions;
 
 namespace Chess.Board
 {
@@ -32,17 +32,21 @@ namespace Chess.Board
             var match = _regex.Match(square);
             if (match.Success)
             {
-                Letter = match.Groups["letter"].Value.First();
-                Digit = int.Parse(match.Groups["number"].Value);
+                Letter = char.ToUpper(match.Groups["letter"].Value.First());
+
+                if (int.TryParse(match.Groups["number"].Value, out int digit))
+                {
+                    Digit = digit;
+                    return;
+                }
             }
-            else
-                throw new ArgumentOutOfRangeException("Not a valid chess square!");
+            throw new ArgumentOutOfRangeException(nameof(square), "Not a valid chess square!");
         }
         public void Transform((int letter, int digit) iterator)
         {
             Letter = (char)(Letter + iterator.letter);
             Digit += iterator.digit;
-        } 
+        }
         public static bool operator ==(Square first, Square second) => first.Letter == second.Letter && first.Digit == second.Digit;
         public static bool Validate(Square square) => square.Digit >= 1 && square.Digit <= 8 && square.Letter >= 'A' && square.Letter <= 'H';
         public static bool operator !=(Square first, Square second) => !(first == second);
