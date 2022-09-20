@@ -17,13 +17,13 @@ namespace Chess.AI
         
         private static readonly int _maxHalfMoves;
         private static int _halfMoves;
-        private static Dictionary<string, int> _occuredPositions;
+        public static Dictionary<string, int> OccuredPositions { get; private set; }
         public static EventHandler<GameResultEventArgs> GameConcluded;
         static Arbiter()
         {
             _maxHalfMoves = 50;
             _halfMoves = 0;
-            _occuredPositions = new Dictionary<string, int>();
+            OccuredPositions = new Dictionary<string, int>();
             Controller.MoveMade += OnMoveMade;
         }
         public static void Initilize(string fen, int halfMoves)
@@ -33,7 +33,7 @@ namespace Chess.AI
             fen = fen[..index];
             index = fen.LastIndexOf(' ');
             fen = fen[..index];
-            _occuredPositions[fen] = 1;
+            OccuredPositions[fen] = 1;
         }
         public static string ExplainGameResult(GameResult result)
         {
