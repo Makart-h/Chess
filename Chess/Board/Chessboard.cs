@@ -5,6 +5,10 @@ using Microsoft.Xna.Framework.Graphics;
 using Chess.Graphics;
 using Chess.Movement;
 using Chess.Pieces;
+using Microsoft.Xna.Framework.Graphics;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace Chess.Board
