@@ -20,7 +20,7 @@ namespace Chess.Data
             Match validatedString = ValidateString(FEN.Trim());
 
             if (!validatedString.Success)
-                throw new ArgumentException("FEN string not in correct format!");
+                throw new ArgumentOutOfRangeException(nameof(FEN), "FEN string not in correct format!");
 
             try
             {
@@ -62,9 +62,9 @@ namespace Chess.Data
                         else
                             black.Add(piece);
                     }
-                    catch (NotImplementedException e)
+                    catch (NotImplementedException)
                     {
-                        throw new ArgumentException(e.Message);
+                        throw new ArgumentOutOfRangeException(nameof(c), $"'{c}' is not a valid character in FEN.");
                     }
                     finally
                     {
@@ -103,9 +103,7 @@ namespace Chess.Data
         }
         private static Square? ParseEnPassant(string fenGroup, Team toMove)
         {
-            Square? square = null;
-
-            if (!fenGroup.Contains('-'))
+            try
             {
                 if (fenGroup.Length != 2)
                     throw new ArgumentException($"{fenGroup.Length} is not a valid number of characters to describe a square!");
@@ -123,9 +121,9 @@ namespace Chess.Data
             {
                 value = int.Parse(fenGroup);
             }
-            catch(Exception e)
+            catch (Exception)
             {
-                throw new ArgumentException(e.Message);
+                throw new ArgumentOutOfRangeException(nameof(fenGroup), $"'{fenGroup}' is not an integer.");
             }
             return value;
         }
@@ -168,7 +166,14 @@ namespace Chess.Data
                         {
                             sb.Append(blanks);
                         }
+                        try
+                        {
                         sb.Append(PieceFactory.GetPieceType(p));
+                        }
+                        catch(NotImplementedException)
+                        {
+                            throw new ArgumentOutOfRangeException(nameof(p), "Not a valid piece type!");
+                        }
                         blanks = 0;
                     }
                     else
