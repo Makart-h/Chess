@@ -9,8 +9,8 @@ namespace Chess.Movement
 {
     internal static class MovementManager
     {
-        private static List<Initiator> _initiators;
-        private static Stack<Initiator> _toRemove;
+        private readonly static List<Initiator> _initiators;
+        private readonly static Stack<Initiator> _toRemove;
         public static EventHandler MovementConcluded;
         private static bool _rapidMovement;
         public static float MovementVelocity { get; private set; }
