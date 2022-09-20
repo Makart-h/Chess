@@ -1,5 +1,5 @@
-﻿using System;
-using Chess.Movement;
+﻿using Chess.Movement;
+using System;
 
 namespace Chess.Pieces
 {

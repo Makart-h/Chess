@@ -1,9 +1,7 @@
+﻿using Chess.Board;
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using Microsoft.Xna.Framework.Graphics;
-using Chess.Board;
-using Chess.Movement;
 
 namespace Chess.Pieces
 {

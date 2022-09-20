@@ -1,6 +1,6 @@
-﻿using Microsoft.Xna.Framework.Graphics;
 using Chess.Board;
 using Chess.Movement;
+using Microsoft.Xna.Framework.Graphics;
 
 namespace Chess.Pieces
 {

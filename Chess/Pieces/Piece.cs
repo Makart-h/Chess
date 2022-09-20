@@ -1,8 +1,8 @@
-﻿using System;
-using System.Collections.Generic;
 using Chess.Board;
 using Chess.Graphics;
 using Chess.Movement;
+using System;
+using System.Collections.Generic;
 
 namespace Chess.Pieces
 {

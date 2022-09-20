@@ -1,7 +1,7 @@
-﻿using System;
-using System.Reflection;
+﻿using Chess.Board;
 using Microsoft.Xna.Framework.Graphics;
-using Chess.Board;
+using System;
+using System.Reflection;
 
 namespace Chess.Pieces
 {
