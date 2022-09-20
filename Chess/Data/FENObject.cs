@@ -20,7 +20,7 @@ namespace Chess.Data
         {
             WhitePieces = whitePieces;
             BlackPieces = blackPieces;
-            List<Piece> temp = new List<Piece>(whitePieces);
+            List<Piece> temp = new(whitePieces);
             temp.AddRange(blackPieces);
             AllPieces = temp.ToArray();
             TeamToMove = teamToMove;
