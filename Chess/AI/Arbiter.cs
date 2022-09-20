@@ -51,7 +51,7 @@ namespace Chess.AI
                 _ => throw new NotImplementedException()
             };
         }
-        private static GameResult AnalyzeBoard(Dictionary<Square, Piece> piecesOnTheBoard, Team toMove, int halfMoves, ref Dictionary<string, int> occuredPositions)
+        public static GameResult AnalyzeBoard(Dictionary<Square, Piece> piecesOnTheBoard, Team toMove, int halfMoves, Dictionary<string, int> occuredPositions)
         {
             var notNullPieces = (from piece in piecesOnTheBoard.Values
                                  where piece != null
@@ -82,7 +82,7 @@ namespace Chess.AI
                     c.Update();
             }
 
-            var result = CheckForRepetition(piecesOnTheBoard, toMove, whiteKing.CastlingRights, blackKing.CastlingRights, ref occuredPositions);
+            var result = CheckForRepetition(piecesOnTheBoard, toMove, whiteKing.CastlingRights, blackKing.CastlingRights, occuredPositions);
             if (result != GameResult.InProgress)
                 return result;
 
@@ -99,7 +99,7 @@ namespace Chess.AI
 
             return GameResult.InProgress;
         }
-        private static GameResult CheckForRepetition(Dictionary<Square, Piece> pieces, Team toMove, CastlingRights white, CastlingRights black, ref Dictionary<string, int> occuredPositions)
+        private static GameResult CheckForRepetition(Dictionary<Square, Piece> pieces, Team toMove, CastlingRights white, CastlingRights black, Dictionary<string, int> occuredPositions)
         {
             string shortFen = FENParser.ToShortFenString(pieces, white, black, toMove);
             if (occuredPositions.TryGetValue(shortFen, out int value))
@@ -186,7 +186,7 @@ namespace Chess.AI
             else
                 _halfMoves++;
 
-            GameResult result = AnalyzeBoard(Chessboard.Instance.Pieces, ~e.Controller.Team, _halfMoves, ref _occuredPositions);
+            GameResult result = AnalyzeBoard(Chessboard.Instance.Pieces, ~e.Controller.Team, _halfMoves, OccuredPositions);
             if (result != GameResult.InProgress)
                 OnGameConcluded(new GameResultEventArgs(result));
         }
