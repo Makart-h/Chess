@@ -1,6 +1,7 @@
 ﻿using System;
 using Chess.Movement;
 using Chess.Pieces;
+using System;
 
 namespace Chess.AI
 {
