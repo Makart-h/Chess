@@ -1,5 +1,5 @@
-﻿using System.Timers;
-using System.Diagnostics;
+﻿using System.Diagnostics;
+using System.Timers;
 
 namespace Chess.Clock
 {
