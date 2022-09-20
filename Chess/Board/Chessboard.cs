@@ -80,7 +80,6 @@ namespace Chess.Board
             if (move != null)
             {
                 if (move.Description == 'x')
-                {
                     RemoveAPiece(move.Latter);
 
                 _pieces[move.Former] = null;
