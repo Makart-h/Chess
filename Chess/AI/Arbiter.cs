@@ -117,20 +117,15 @@ namespace Chess.AI
         }
         private static GameResult CheckMateOrStalemate(Team toMove, Piece[] whitePieces, Piece[] blackPieces, King whiteKing, King blackKing)
         {
-            if (toMove == Team.White)
-            {
-                int legalMoves = (from piece in whitePieces
+            Piece[] piecesToCheck = toMove == Team.White ? whitePieces : blackPieces;
+            King kingToCheck = toMove == Team.White ? whiteKing : blackKing;
+            GameResult potentialWinner = toMove == Team.White ? GameResult.Black : GameResult.White;
+
+            int legalMoves = (from piece in piecesToCheck
                                   select piece.Moves.Count).Sum();
                 if (legalMoves == 0)
-                    return whiteKing.Threatened ? GameResult.Black : GameResult.Stalemate;
-            }
-            else
-            {
-                int legalMoves = (from piece in blackPieces
-                                  select piece.Moves.Count).Sum();
-                if (legalMoves == 0)
-                    return blackKing.Threatened ? GameResult.White : GameResult.Stalemate;
-            }
+                return kingToCheck.Threatened ? potentialWinner : GameResult.Stalemate;
+
             return GameResult.InProgress;
         }
         private static GameResult CheckMaterial(Piece[] whitePieces, Piece[] blackPieces)
