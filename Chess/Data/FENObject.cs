@@ -6,15 +6,15 @@ namespace Chess.Data
 {
     internal sealed class FENObject
     {
-        public Piece[] WhitePieces { get; private set; }
-        public Piece[] BlackPieces { get; private set; }
-        public Piece[] AllPieces { get; private set; }
-        public Team TeamToMove { get; private set; }
-        public CastlingRights WhiteCastling { get; private set; }
-        public CastlingRights BlackCastling { get; private set; }
-        public Square? EnPassantSquare { get; private set; }
-        public int HalfMoves { get; private set; }
-        public int MoveNo { get; private set; }
+        public Piece[] WhitePieces { get; init; }
+        public Piece[] BlackPieces { get; init; }
+        public Piece[] AllPieces { get; init; }
+        public Team TeamToMove { get; init; }
+        public CastlingRights WhiteCastling { get; init; }
+        public CastlingRights BlackCastling { get; init; }
+        public Square? EnPassantSquare { get; init; }
+        public int HalfMoves { get; init; }
+        public int MoveNo { get; init; }
 
         public FENObject(Piece[] whitePieces, Piece[] blackPieces, Team teamToMove, CastlingRights whiteCastling, CastlingRights blackCastling, Square? enPassantSquare, int halfMoves, int moveNo)
         {
