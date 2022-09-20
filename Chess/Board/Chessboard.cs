@@ -26,7 +26,7 @@ namespace Chess.Board
         private readonly Dictionary<Square, Piece> _pieces;
         public Dictionary<Square, Piece> Pieces { get { return _pieces; } }
         private static readonly int s_numberOfSquares = 8;
-        public static int NumberOfSquares {get => s_numberOfSquares;}
+        public static int NumberOfSquares { get => s_numberOfSquares; }
         public static event EventHandler<PieceEventArgs> PieceRemovedFromTheBoard;
         public static event EventHandler<PieceEventArgs> PieceAddedToTheBoard;
         public static event EventHandler BoardInverted;
@@ -86,12 +86,12 @@ namespace Chess.Board
                 if (move.Description == 'x')
                 {
                     RemoveAPiece(move.Latter);
-                }
+
                 _pieces[move.Former] = null;
                 _pieces[move.Latter] = targetedPiece;
                 if (move.Description == 'p')
                     RemoveAPiece(new Square(move.Latter.Letter, move.Former.Digit));
-                else if(move.Description == 'k' || move.Description == 'q')
+                else if (move.Description == 'k' || move.Description == 'q')
                 {
                     int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
                     Square originalRookPosition = King.GetCastlingRookSquare(move.Description, targetedPiece.Team);
@@ -194,9 +194,9 @@ namespace Chess.Board
         public Vector2 ToCordsFromSquare(Square square)
         {
             (int i, int j) = ConvertSquareToIndexes(square);
-            if(Inverted)
+            if (Inverted)
             {
-                double middle = (s_numberOfSquares-1) / 2.0;
+                double middle = (s_numberOfSquares - 1) / 2.0;
                 j = (int)(middle + (middle - j));
                 i = (int)(middle + (middle - i));
             }
@@ -214,7 +214,7 @@ namespace Chess.Board
                 newPiece.Owner = piece.Owner;
                 AddAPiece(newPiece);               
             }
-            catch(NotImplementedException)
+            catch (NotImplementedException)
             {
                 throw;
             }
