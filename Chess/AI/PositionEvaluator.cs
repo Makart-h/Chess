@@ -4,10 +4,12 @@ using System.Text;
 using System.Linq;
 using Chess.Movement;
 using Chess.Board;
+using Chess.Movement;
 using Chess.Pieces;
 using Chess.Positions;
-using System.Threading;
-using Microsoft.Xna.Framework.Media;
+using System;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace Chess.AI
 {
