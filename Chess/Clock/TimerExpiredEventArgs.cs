@@ -1,5 +1,5 @@
-﻿using System;
-using Chess.AI;
+﻿using Chess.AI;
+using System;
 
 namespace Chess.Clock
 {
