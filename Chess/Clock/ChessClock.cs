@@ -1,10 +1,10 @@
-﻿using System;
+﻿using Chess.AI;
+using Chess.Movement;
+using Chess.Pieces;
+using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
-using Chess.AI;
-using Chess.Movement;
-using Chess.Pieces;
 
 namespace Chess.Clock
 {
