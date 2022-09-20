@@ -37,8 +37,8 @@ namespace Chess.Data
         }
         private static (Piece[] white, Piece[] black) ParsePieces(string fenGroup)
         {
-            List<Piece> white = new List<Piece>();
-            List<Piece> black = new List<Piece>();
+            List<Piece> white = new();
+            List<Piece> black = new();
             int x = 8;
             int y = 'A';
             foreach (char c in fenGroup)
@@ -155,7 +155,7 @@ namespace Chess.Data
         }
         private static string PiecesToString(Dictionary<Square, Piece> pieces)
         {
-            StringBuilder sb = new StringBuilder();
+            StringBuilder sb = new();
             int blanks = 0;
             for (int number = 8; number >= 1; --number)
             {
