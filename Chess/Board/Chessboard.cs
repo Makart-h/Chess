@@ -108,9 +108,9 @@ namespace Chess.Board
         }
         public void RemoveAPiece(Square square)
         {
-            if(_pieces[square] != null)
+            if (TryGetPiece(square, out Piece piece))
             {         
-                OnPieceRemovedFromTheBoard(new PieceEventArgs(_pieces[square]));
+                OnPieceRemovedFromTheBoard(new PieceEventArgs(piece));
                 _pieces[square] = null;
             }
         }
