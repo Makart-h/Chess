@@ -12,7 +12,7 @@ namespace Chess.AI
         protected readonly List<Piece> _pieces;
         protected readonly Team _team;
         public King King { get; private set; }      
-        public Team Team { get => _team; }
+        public Team Team { get; init; }
         public Piece[] Pieces { get { return _pieces.ToArray(); } }
         public static event EventHandler<MoveMadeEventArgs> MoveMade;
 
