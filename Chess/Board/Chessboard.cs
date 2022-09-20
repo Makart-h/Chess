@@ -15,7 +15,14 @@ namespace Chess.Board
 {
     internal sealed class Chessboard : DrawableObject
     {
-        public static Chessboard Instance { get; private set; }
+        private static Chessboard s_instance;
+        public static Chessboard Instance { get 
+            {
+                if (s_instance == null)
+                    throw new InvalidOperationException("Chessboard instance not created!");
+                else
+                    return s_instance;
+            }}
         private readonly Dictionary<Square, Piece> _pieces;
         public Dictionary<Square, Piece> Pieces { get { return _pieces; } }
         private static readonly int s_numberOfSquares = 8;
@@ -27,7 +34,7 @@ namespace Chess.Board
 
         private Chessboard(Texture2D rawTexture, bool inverted = false) : base(null, new Vector2())
         {
-            Instance = this;
+            s_instance = this;
             Model = new Graphics.Model(rawTexture, 0, 0, s_numberOfSquares * Square.SquareWidth, s_numberOfSquares * Square.SquareHeight);
             _pieces = new Dictionary<Square, Piece>();
             foreach (var letter in Enumerable.Range('a', NumberOfSquares).Select(n => (char)n))
@@ -42,7 +49,7 @@ namespace Chess.Board
         }
         public static Chessboard Create(Texture2D rawTexture, bool inverted = false)
         {
-            if (Instance != null)
+            if (s_instance != null)
                 throw new InvalidOperationException($"{nameof(Chessboard)} is already created!");
             return new Chessboard(rawTexture, inverted);
         }
