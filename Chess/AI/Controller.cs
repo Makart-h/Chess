@@ -61,7 +61,7 @@ namespace Chess.AI
         protected void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e) => _pieces.Remove(e.Piece);
         protected void OnPieceAddedToTheBoard(object sender, PieceEventArgs e)
         {
-            if(e.Piece.Team == _team)
+            if (e.Piece.Team == Team)
                 _pieces.Add(e.Piece);
         }
         public bool GetPiece(Square square, out Piece piece) => Chessboard.Instance.GetAPiece(square, out piece);
