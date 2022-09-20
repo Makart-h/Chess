@@ -181,7 +181,7 @@ namespace Chess.Data
                     sb.Append(blanks);
                     blanks = 0;
                 }
-                if(number != 1)
+                if (number != 1)
                     sb.Append('/');
             }
             return sb.ToString();
@@ -206,9 +206,9 @@ namespace Chess.Data
         }
         private static string EnPassantToString(Dictionary<Square, Piece> pieces)
         {
-            foreach(Piece piece in pieces.Values)
+            foreach (Piece piece in pieces.Values)
             {
-                if(piece is Pawn p && p.EnPassant == true)
+                if (piece is Pawn p && p.EnPassant == true)
                 {
                     int direction = p.Team == Team.White ? 1 : -1;
                     int digit = p.Square.Digit - (1 * direction);
