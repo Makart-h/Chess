@@ -114,14 +114,8 @@ namespace Chess.Board
                 _pieces[square] = null;
             }
         }
-        public bool GetAPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece);
-        public Team IsSquareOccupied(Square square)
-        {
-            (int y, int x) = ConvertSquareToIndexes(square);
-            if (x < 0 || y < 0 || x >= s_numberOfSquares || y >= s_numberOfSquares)
-                return Team.Void;
-            return _pieces[square] == null ? Team.Empty : _pieces[square].Team;
-        }
+        public bool TryGetPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece) && piece != null;
+        public Team GetTeamOnSquare(Square square) => _pieces[square] == null ? Team.Empty : _pieces[square].Team;
         public static (int, int) ConvertSquareToIndexes(Square square)
         {
             int x = square.Letter - 'A';
