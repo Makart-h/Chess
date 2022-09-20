@@ -27,7 +27,7 @@ namespace Chess.Movement
             Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
             if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
             {            
-                args.Piece.MoveObject(newPosition-args.Piece.Position);
+                args.Piece.MoveObject(newPosition - args.Piece.Position);
                 _rapidMovement = true;
             }
             else
@@ -37,7 +37,7 @@ namespace Chess.Movement
         }
         private static void OnDestinationReached(object sender, EventArgs args)
         {
-            if(sender is Initiator i)
+            if (sender is Initiator i)
             {
                 i.Dispose();
                 _toRemove.Push(i);
@@ -46,11 +46,11 @@ namespace Chess.Movement
         public static void Update(GameTime gameTime)
         {
             bool initiatorRemovedOnThisUpdate = false;
-            foreach(Initiator initiator in _initiators)
+            foreach (Initiator initiator in _initiators)
             {
                 initiator.Update(gameTime);
             }
-            while(_toRemove.TryPop(out Initiator i))
+            while (_toRemove.TryPop(out Initiator i))
             {
                 _initiators.Remove(i);
                 initiatorRemovedOnThisUpdate = true;
@@ -63,8 +63,8 @@ namespace Chess.Movement
         }
         public static Vector2 RecalculateVector(Vector2 vector)
         {
-            float width = Square.SquareWidth * (Chessboard.NumberOfSquares-1);
-            float height = Square.SquareHeight * (Chessboard.NumberOfSquares-1);
+            float width = Square.SquareWidth * (Chessboard.NumberOfSquares - 1);
+            float height = Square.SquareHeight * (Chessboard.NumberOfSquares - 1);
             return new Vector2(width - vector.X, height - vector.Y);
         }
         private static void OnMovementConcluded(EventArgs e) => MovementConcluded?.Invoke(null, e);
