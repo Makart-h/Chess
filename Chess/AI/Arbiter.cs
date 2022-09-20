@@ -1,14 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
 using Chess.Board;
 using Chess.Data;
 using Chess.Pieces;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using Chess.Data;
-using Chess.Clock;
 
 namespace Chess.AI
 {
