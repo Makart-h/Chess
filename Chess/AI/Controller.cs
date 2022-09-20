@@ -18,8 +18,14 @@ namespace Chess.AI
 
         public Controller(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant)
         {
-            _team = team;
-            _pieces = new List<Piece>();
+            Team = team;
+            _pieces = new();
+            AddPieces(pieces, castlingRights, enPassant);
+            _pieces.Sort();
+            SubscribeToEvents();
+        }
+        private void AddPieces(Piece[] pieces, CastlingRights castlingRights, Square? enPassant)
+        {
             foreach (Piece piece in pieces)
             {
                 piece.Owner = this;
@@ -28,12 +34,16 @@ namespace Chess.AI
                     k.CastlingRights = castlingRights;
                     King = k;
                 }
-                if (enPassant.HasValue)
-                    if (piece is Pawn p && p.Square == enPassant.Value)
+                else if (piece is Pawn p)
+                {
+                    if (enPassant.HasValue && p.Square == enPassant.Value)
                         p.EnPassant = true;
+                }
                 _pieces.Add(piece);
             }
-            _pieces.Sort();
+        }
+        private void SubscribeToEvents()
+        {
             Chessboard.PieceRemovedFromTheBoard += OnPieceRemovedFromTheBoard;
             Chessboard.PieceAddedToTheBoard += OnPieceAddedToTheBoard;
         }
