@@ -223,15 +223,15 @@ namespace Chess.Board
         {
             return PieceType.Queen;
         }
-        public void OnPieceRemovedFromTheBoard(PieceEventArgs args)
+        private void OnPieceRemovedFromTheBoard(PieceEventArgs args)
         {
             PieceRemovedFromTheBoard?.Invoke(this, args);
         }
-        public void OnPieceAddedToTheBoard(PieceEventArgs args)
+        private void OnPieceAddedToTheBoard(PieceEventArgs args)
         {
             PieceAddedToTheBoard?.Invoke(this, args);
         }
-        public void OnBoardInverted(EventArgs args)
+        private void OnBoardInverted(EventArgs args)
         {
             foreach (Piece piece in _pieces.Values)
                 piece?.RecalculatePosition();
