@@ -105,14 +105,15 @@ namespace Chess.Data
         {
             try
             {
-                if (fenGroup.Length != 2)
-                    throw new ArgumentException($"{fenGroup.Length} is not a valid number of characters to describe a square!");
-
+                Square square = new(fenGroup);
                 int direction = toMove == Team.White ? -1 : 1;
-                square = new Square(fenGroup[0], fenGroup[1] - '0' + direction);
+                square.Transform((0, direction));
+                return square;
             }
-
-            return square;
+            catch (ArgumentOutOfRangeException)
+            {
+                return null;
+            }
         }
         private static int ParseIntValue(string fenGroup)
         {
