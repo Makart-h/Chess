@@ -1,9 +1,9 @@
-﻿using System;
+﻿using Chess.Board;
+using Chess.Pieces;
+using System;
 using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
-using Chess.Pieces;
-using Chess.Board;
 
 namespace Chess.Data
 {
