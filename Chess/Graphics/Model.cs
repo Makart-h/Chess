@@ -7,7 +7,8 @@ namespace Chess.Graphics
     {
         public Texture2D RawTexture { get; private set; }
         public Rectangle TextureRect { get; private set; }
-        private readonly int width, height;
+        private readonly int width;
+        private readonly int height;
 
         public Model(Texture2D rawTexture, int posX, int posY, int width, int height)
         {
