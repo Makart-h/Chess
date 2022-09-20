@@ -17,7 +17,7 @@ namespace Chess.Data
         }
         public static FENObject Parse(string FEN)
         {
-            Match validatedString = ValidateString(FEN);
+            Match validatedString = ValidateString(FEN.Trim());
 
             if (!validatedString.Success)
                 throw new ArgumentException("FEN string not in correct format!");
