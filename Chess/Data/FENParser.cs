@@ -74,7 +74,7 @@ namespace Chess.Data
             }
             return (white.ToArray(), black.ToArray());
         }
-        private static Team ParseMoveOrder(string fenGroup) => fenGroup.Contains("w") ? Team.White : Team.Black;
+        private static Team ParseMoveOrder(string fenGroup) => fenGroup.Contains('w') ? Team.White : Team.Black;
         private static (CastlingRights white, CastlingRights black) ParseCastlingRights(string fenGroup)
         {
             CastlingRights white = CastlingRights.None;
