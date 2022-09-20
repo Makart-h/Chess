@@ -130,48 +130,46 @@ namespace Chess.Board
         }
         public bool ArePiecesFacingEachOther(Piece first, Piece second)
         {
-            if (first.Square.Letter == second.Square.Letter)
-            {
-                int direction = first.Square.Digit > second.Square.Digit ? -1 : 1;
-                for (int i = first.Square.Digit + direction; ; i += direction)
-                {
-                    if (!GetAPiece(new Square(first.Square.Letter, i), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
+            (int, int)? iterator = GetIterator(startingPosition: first.Square, destination: second.Square);
 
+            if (iterator.HasValue)
+            {
+                Square square = first.Square;
+                do
+                {
+                    square.Transform(iterator.Value);
+                    if (TryGetPiece(square, out Piece pieceOnTheWay))
                     return pieceOnTheWay == second;
                 }
+                while (Square.Validate(square));
             }
-            else if (first.Square.Digit == second.Square.Digit)
-            {
-                int direction = first.Square.Letter > second.Square.Letter ? -1 : 1;
-                for (int i = first.Square.Letter + direction; ; i += direction)
-                {
-                    if (!GetAPiece(new Square((char)i, first.Square.Digit), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
 
-                    return pieceOnTheWay == second;
-                }
-            }
-            else if (Math.Abs(first.Square.Digit - second.Square.Digit) == Math.Abs(first.Square.Letter - second.Square.Letter))
-            {
-                int directionLetter = first.Square.Letter > second.Square.Letter ? -1 : 1;
-                int directionDigit = first.Square.Digit > second.Square.Digit ? -1 : 1;
-                for (int i = first.Square.Letter + directionLetter, j = first.Square.Digit + directionDigit; ; i += directionLetter, j += directionDigit)
-                {
-
-                    if (!GetAPiece(new Square((char)i, j), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
-
-                    return pieceOnTheWay == second;
-                }
-            }
             return false;
+        }
+        private static (int letter, int digit)? GetIterator(Square startingPosition, Square destination)
+            {
+            (int letter, int digit)? iterator;
+            // Squares are on the same horizontal line.
+            if (startingPosition.Letter == destination.Letter)
+                {
+                iterator = (0, startingPosition.Digit > destination.Digit ? -1 : 1);
+                }
+            // Squares are on the same vertical line.
+            else if (startingPosition.Digit == destination.Digit)
+            {
+                iterator = (startingPosition.Letter > destination.Letter ? -1 : 1, 0);
+            }
+            // Squares are on the same diagonal.
+            else if (Math.Abs(startingPosition.Digit - destination.Digit) == Math.Abs(startingPosition.Letter - destination.Letter))
+                {
+                int directionLetter = startingPosition.Letter > destination.Letter ? -1 : 1;
+                int directionDigit = startingPosition.Digit > destination.Digit ? -1 : 1;
+                iterator = (directionLetter, directionDigit);
+            }
+            else
+                iterator = null;
+
+            return iterator;
         }
         public Square FromVector(Vector2 vector) => FromCords((int)vector.X, (int)vector.Y);
         public Square FromCords(int x, int y)
