@@ -1,7 +1,7 @@
-﻿using Microsoft.Xna.Framework;
-using System;
-using Chess.Board;
+﻿using Chess.Board;
 using Chess.Graphics;
+using Microsoft.Xna.Framework;
+using System;
 
 namespace Chess.Movement
 {
