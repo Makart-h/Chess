@@ -1,9 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using Microsoft.Xna.Framework;
 using Chess.AI;
 using Chess.Board;
 using Chess.Pieces;
+using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
 
 namespace Chess.Movement
 {
