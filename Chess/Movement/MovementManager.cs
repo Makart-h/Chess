@@ -16,8 +16,8 @@ namespace Chess.Movement
         public static float MovementVelocity { get; private set; }
         static MovementManager()
         {
-            _initiators = new List<Initiator>();
-            _toRemove = new Stack<Initiator>();
+            _initiators = new();
+            _toRemove = new();
             MovementVelocity = 0.4f;
             Piece.PieceMoved += OnPieceMoved;
             _rapidMovement = false;
