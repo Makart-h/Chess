@@ -2,7 +2,10 @@
 using System.Collections.Generic;
 using System.Text;
 using Chess.Board;
+using Chess.Data;
 using Chess.Pieces;
+using System;
+using System.Collections.Generic;
 using System.Linq;
 using Chess.Data;
 using Chess.Clock;
@@ -51,21 +54,24 @@ namespace Chess.AI
         private static GameResult AnalyzeBoard(Dictionary<Square, Piece> piecesOnTheBoard, Team toMove, int halfMoves, ref Dictionary<string, int> occuredPositions)
         {
             var notNullPieces = (from piece in piecesOnTheBoard.Values
-                                 where piece != null select piece).ToArray();
+                                 where piece != null
+                                 select piece).ToArray();
 
             var whitePieces = (from piece in notNullPieces
                               where piece.Team == Team.White
                               select piece).ToArray();
-            var whiteKing = (from piece in whitePieces where piece is King
+            var whiteKing = (from piece in whitePieces
+                             where piece is King
                             select piece as King).Single();
 
             var blackPieces = (from piece in notNullPieces
                               where piece.Team == Team.Black
                               select piece).ToArray();
-            var blackKing = (from piece in blackPieces where piece is King
+            var blackKing = (from piece in blackPieces
+                             where piece is King
                             select piece as King).Single();
 
-            if(toMove == Team.White)
+            if (toMove == Team.White)
             {
                 if (whiteKing.Owner is Controller c)
                     c.Update();
@@ -84,7 +90,7 @@ namespace Chess.AI
             if (result != GameResult.InProgress)
                 return result;
 
-            if(halfMoves == _maxHalfMoves)
+            if (halfMoves == _maxHalfMoves)
                 return GameResult.HalfMoves;
 
             result = CheckMaterial(whitePieces, blackPieces);
@@ -142,14 +148,14 @@ namespace Chess.AI
                 if (secondPiece is Knight || secondPiece is Bishop)
                     return GameResult.Draw;
             }
-            else if(blackPieces.Length == 1 && whitePieces.Length == 2)
+            else if (blackPieces.Length == 1 && whitePieces.Length == 2)
             {
                 var secondPiece = whitePieces[^1];
                 // King vs king + bishop/knight is a draw.
                 if (secondPiece is Knight || secondPiece is Bishop)
                     return GameResult.Draw;
             }
-            else if(whitePieces.Length == 2 && blackPieces.Length == 2)
+            else if (whitePieces.Length == 2 && blackPieces.Length == 2)
             {
                 var secondWhitePiece = whitePieces[^1];
                 var secondBlackPiece = blackPieces[^1];
