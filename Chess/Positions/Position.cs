@@ -1,11 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Threading.Tasks;
-using System.Threading;
+using Chess.AI;
 using Chess.Board;
 using Chess.Data;
 using Chess.Movement;
 using Chess.Pieces;
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace Chess.Positions
 {
