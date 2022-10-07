@@ -43,6 +43,15 @@ namespace Chess.Board;
             }
             throw new ArgumentOutOfRangeException(nameof(square), "Not a valid chess square!");
         }
+    public static bool IsLightSquare(Square square)
+    {
+        int letterInt = square.Letter - 'a' + 1;
+        int digit = square.Digit;
+        if (letterInt % 2 == 0)
+            return digit % 2 != 0;
+        else
+            return digit % 2 == 0;
+    }
         public void Transform((int letter, int digit) iterator)
         {
             Letter = (char)(Letter + iterator.letter);
