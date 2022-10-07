@@ -1,11 +1,11 @@
 ﻿namespace Chess.Graphics;
 
-    enum SquareOverlayType
-    {
-        MovedTo,
-        MovedFrom,
-        Selected,
-        CanTake,
-        CanMove,
-        Check    
-    }
+enum SquareOverlayType
+{
+    MovedTo,
+    MovedFrom,
+    Selected,
+    CanTake,
+    CanMove,
+    Check
+}

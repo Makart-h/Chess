@@ -1,20 +1,29 @@
 ﻿using Chess.Movement;
 using Microsoft.Xna.Framework;
 
-namespace Chess.Graphics
+namespace Chess.Graphics;
+
+internal class DrawableObject
 {
-    internal class DrawableObject
+    public Model Model { get; protected set; }
+    public Rectangle DestinationRectangle { get; protected set; }
+    public Vector2 Position { get; protected set; }
+    protected Color _color = Color.White;
+    public virtual Color Color { get => _color; }
+    public DrawableObject(Model model, Rectangle destinationRectangle)
     {
-        public virtual Model Model { get; protected set; }
-        public virtual Vector2 Position { get; protected set; }
-        protected Color _color = Color.White;
-        public virtual Color Color { get => _color; }
-        public DrawableObject(Model model, Vector2 position)
-        {
-            Model = model;
-            Position = position;
-        }
-        public void MoveObject(Vector2 vector) => Position += vector;
-        public void RecalculatePosition() => Position = MovementManager.RecalculateVector(Position);
+        Model = model;
+        Position = new Vector2(destinationRectangle.X, destinationRectangle.Y);
+        DestinationRectangle = destinationRectangle;
+    }
+    public void MoveObject(Vector2 vector)
+    { 
+        Position += vector;
+        DestinationRectangle = new Rectangle((int)Position.X, (int)Position.Y, DestinationRectangle.Width, DestinationRectangle.Height);
+    }
+    public void RecalculatePosition() 
+    { 
+        Position = MovementManager.RecalculateVector(Position);
+        DestinationRectangle = new Rectangle((int)Position.X, (int)Position.Y, DestinationRectangle.Width, DestinationRectangle.Height);
     }
 }

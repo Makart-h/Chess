@@ -1,13 +1,16 @@
 ﻿using Chess.Board;
+using Microsoft.Xna.Framework;
 
 namespace Chess.Graphics;
 
-    internal sealed class SquareOverlay : DrawableObject
+internal sealed class SquareOverlay : DrawableObject
+{
+    public SquareOverlayType Type { get; private set; }
+    private static readonly int s_numberOfTypes = 6;
+    public SquareOverlay(SquareOverlayType type, Square square) : base(null, new Rectangle((int)Chessboard.Instance.ToCordsFromSquare(square).X, (int)Chessboard.Instance.ToCordsFromSquare(square).Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength))
     {
-        public SquareOverlayType Type { get; private set; }
-        public SquareOverlay(SquareOverlayType type, Square square) : base(null, Chessboard.Instance.ToCordsFromSquare(square))
-        {
-            Model = new Model(Game1.Instance.Overlays, Square.SquareWidth * (int)type, 0, Square.SquareWidth, Square.SquareHeight);
-            Type = type;
-        }
+        int squareSideLength = OverlayManager.Instance.OverlaysTexture.Width / s_numberOfTypes;
+        Model = new Model(OverlayManager.Instance.OverlaysTexture, squareSideLength * (int)type, 0, squareSideLength, squareSideLength);
+        Type = type;
     }
+}
