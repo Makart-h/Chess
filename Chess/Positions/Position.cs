@@ -3,236 +3,235 @@ using Chess.Board;
 using Chess.Data;
 using Chess.Movement;
 using Chess.Pieces;
+using Chess.Pieces.Info;
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Chess.Positions
+namespace Chess.Positions;
+
+internal sealed class Position : IPieceOwner
 {
-    internal sealed class Position : IPieceOwner
+    public string ShortFEN { get; private set; }
+    public King White { get; private set; }
+    public King Black { get; private set; }
+    public Team ActiveTeam { get; private set; }
+    public int HalfMoves { get; init; }
+    public Square? EnPassant { get; private set; }
+    public bool Check { get; private set; }
+    public Dictionary<Square, Piece> Pieces { get; init; }
+    public Dictionary<string, int> OccuredPositions { get; init; }
+    public List<Move> NextMoves { get; init; }
+    public string MovePlayed { get; init; }
+    public GameResult Result { get; set; } 
+    private static readonly object s_locker = new object();
+    private Position(Dictionary<Square, Piece> pieces, Team activeTeam, Move move, int halfMoves, Dictionary<string, int> occuredPositions)
     {
-        private readonly int _halfMoves;
-        private King _white;
-        private King _black;
-        public string ShortFEN { get; private set; } 
-        public King White { get => _white; }
-        public King Black { get => _black; }
-        public Team ActiveTeam { get; private set; }
-        public int HalfMoves { get => _halfMoves; }
-        public bool Check { get; private set; }
-        public Dictionary<Square, Piece> Pieces { get; private set; }
-        public List<Move> NextMoves{ get; private set; }
-        private Position(Dictionary<Square, Piece> pieces, Team activeTeam, Move move, int halfMoves)
+        Pieces = new Dictionary<Square, Piece>(Chessboard.NumberOfSquares * Chessboard.NumberOfSquares);
+        lock (s_locker)
         {
-            Pieces = new Dictionary<Square, Piece>(Chessboard.NumberOfSquares*Chessboard.NumberOfSquares);
-            NextMoves = new List<Move>();
-            ActiveTeam = activeTeam;
-            this._halfMoves = halfMoves;
-            Check = false;
-            CopyDictionary(pieces);
-            ApplyMove(move);
-            Update();
+            OccuredPositions = new(occuredPositions);
         }
-        private Position(Position other, Move move) : this(other.Pieces, other.ActiveTeam, move, other._halfMoves) { }
-        private Position(Chessboard board, Team activeTeam, Move move, int halfMoves = 0) : this(board.Pieces, activeTeam, move, halfMoves) { }
-        public static Task<Position> CreateAsync(Chessboard board, Team activeTeam, Move move, CancellationToken token, int halfMoves = 0)
+        NextMoves = new();
+        ActiveTeam = activeTeam;
+        HalfMoves = halfMoves;
+        Check = false;
+        MovePlayed = $"{move.Former}{move.Description}{move.Latter}";
+        CopyDictionary(pieces);
+        ApplyMove(move);
+        Update();
+    }
+    private Position(Position other, Move move)
+        : this(other.Pieces, other.ActiveTeam, move, other.HalfMoves, other.OccuredPositions) { }
+    private Position(Chessboard board, Team activeTeam, Move move, Dictionary<string, int> occuredPositions, int halfMoves = 0)
+        : this(board.Pieces, activeTeam, move, halfMoves, occuredPositions) { }
+    public static Task<Position> CreateAsync(Chessboard board, Team activeTeam, Move move, Dictionary<string, int> occuredPostions, CancellationToken token, int halfMoves = 0)
+    {
+        return Task.Run(() =>
         {
-            return Task.Run(() =>
-            {
-                token.ThrowIfCancellationRequested();
-                Position position = new Position(board, activeTeam, move, halfMoves);
-                return position;
-            });
-        }
-        public static Task<Position> CreateAsync(CancellationToken token, Position other, Move move)
+            token.ThrowIfCancellationRequested();
+            Position position = new(board, activeTeam, move, occuredPostions, halfMoves);
+            return position;
+        });
+    }
+    public static Task<Position> CreateAsync(Position other, Move move, CancellationToken token)
+    {
+        return Task.Run(() =>
         {
-            return Task.Run(() =>
-            {
-                token.ThrowIfCancellationRequested();
-                Position position = new Position(other, move);
-                return position;
-            });
-        }
-        private void CopyDictionary(Dictionary<Square, Piece> other)
+            token.ThrowIfCancellationRequested();
+            Position position = new(other, move);
+            return position;
+        });
+    }
+    private void CopyDictionary(Dictionary<Square, Piece> other)
+    {
+        Piece copiedPiece;
+        foreach (var key in other.Keys)
         {
-            Piece copiedPiece;
-            foreach (var key in other.Keys)
+            copiedPiece = other[key];
+            if (copiedPiece != null)
             {
-                copiedPiece = other[key];
-                if (copiedPiece != null)
+                Piece createdPiece = PieceFactory.CopyAPiece(copiedPiece, this, true);
+                Pieces[key] = createdPiece;
+                if (createdPiece is King k)
                 {
-                    Piece createdPiece = PieceFactory.CopyAPiece(copiedPiece, this, true);
-                    Pieces[key] = createdPiece;
-                    if (createdPiece is King k)
-                    {
-                        if (k.Team == Team.White)
-                            _white = k;
-                        else
-                            _black = k;
-                    }
+                    if (k.Team == Team.White)
+                        White = k;
+                    else
+                        Black = k;
                 }
-                else
-                {
-                    Pieces[key] = null;
-                }
-            }
-        }
-        public King GetKing(Team team)
-        {
-            return team switch
-            {
-                Team.White => _white,
-                Team.Black => _black,
-                _ => null
-            };
-        }
-        private void ApplyMove(Move move)
-        {
-            move = Pieces[move.Former]?.GetAMove(move.Latter);
-            if (move != null)
-            {
-                Pieces[move.Latter] = Pieces[move.Former];
-                Pieces[move.Former] = null;
-                if (move.Description == 'p')
-                {
-                    Square enPassant = new Square(move.Latter.Letter, move.Former.Digit);
-                    Pieces[enPassant] = null;
-                }
-                else if (move.Description == 'k' || move.Description == 'q')
-                {
-                    int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
-                    Square originalRookPosition = King.GetCastlingRookSquare(move.Description, Pieces[move.Latter].Team);
-                    Square newRookPosition = new Square((char)(move.Latter.Letter + direction), move.Latter.Digit);
-                    Move rookMove = new Move(Pieces[originalRookPosition].Square, newRookPosition, 'c');
-                    Pieces[originalRookPosition].MovePiece(rookMove);
-                    Pieces[newRookPosition] = Pieces[originalRookPosition];
-                    Pieces[originalRookPosition] = null;
-
-                }
-                Pieces[move.Latter].MovePiece(move);
-            }
-            else
-                throw new InvalidOperationException("No such move on the given piece!");
-        }
-        private void Update()
-        {
-            ActiveTeam = ~ActiveTeam;
-            if (_white.Team == ActiveTeam)
-            {
-                _white.Update();
-                _black.CheckCastlingMoves();
-                if (_white.Moves.Count > 0)
-                {
-                    NextMoves.AddRange(_white.Moves);
-                }
-                if (_white.Threatened)
-                    Check = true;
-            }
-            else if (_black.Team == ActiveTeam)
-            {
-                _black.Update();
-                _white.CheckCastlingMoves();
-                if (_black.Moves.Count > 0)
-                {
-                    NextMoves.AddRange(_black.Moves);
-                }
-                if (_black.Threatened)
-                    Check = true;
-            }
-            foreach (var piece in Pieces.Values)
-            {
-                if (piece is King)
-                    continue;
-                else if(piece != null && piece.Team == ActiveTeam)
-                {
-                    piece.Update();
-                    if(piece.Moves.Count > 0)
-                        NextMoves.AddRange(piece.Moves);
-                }
-            }       
-            ShortFEN = FENParser.ToShortFenString(Pieces, _white.CastlingRights, _black.CastlingRights, ActiveTeam);
-        }
-        public void PrepareForEvaluation()
-        {
-            if(ActiveTeam == Team.White)
-            {
-                _black.FindAllThreats();
             }
             else
             {
-                _white.FindAllThreats();
+                Pieces[key] = null;
             }
         }
-        public bool GetPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece);
-        public Team IsSquareOccupied(Square square)
+    }
+    public King GetKing(Team team)
+    {
+        return team switch
         {
-            (int y, int x) = Chessboard.ConvertSquareToIndexes(square);
-            if (x < 0 || y < 0 || x >= Chessboard.NumberOfSquares || y >= Chessboard.NumberOfSquares)
-                return Team.Void;
-            return Pieces[square] == null ? Team.Empty : Pieces[square].Team;
+            Team.White => White,
+            Team.Black => Black,
+            _ => null
+        };
+    }
+    private void ApplyMove(Move move)
+    {
+        move = Pieces[move.Former]?.GetAMove(move.Latter);
+        if (move != null)
+        {
+            Pieces[move.Latter] = Pieces[move.Former];
+            Pieces[move.Former] = null;
+            if (move.Description == 'p')
+            {
+                Square enPassant = new Square(move.Latter.Letter, move.Former.Digit);
+                Pieces[enPassant] = null;
+            }
+            else if (move.Description == 'k' || move.Description == 'q')
+            {
+                int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
+                Square originalRookPosition = King.GetCastlingRookSquare(move.Description, Pieces[move.Latter].Team);
+                Square newRookPosition = new Square((char)(move.Latter.Letter + direction), move.Latter.Digit);
+                Move rookMove = new Move(Pieces[originalRookPosition].Square, newRookPosition, 'c');
+                Pieces[originalRookPosition].MovePiece(rookMove);
+                Pieces[newRookPosition] = Pieces[originalRookPosition];
+                Pieces[originalRookPosition] = null;
+
+            }
+            Pieces[move.Latter].MovePiece(move);
         }
-        public bool ArePiecesFacingEachOther(Piece first, Piece second)
+        else
+            throw new InvalidOperationException("No such move on the given piece!");
+    }
+    private void Update()
+    {
+        ActiveTeam = ~ActiveTeam;
+        if (White.Team == ActiveTeam)
+            UpdateKings(White, Black);
+        else
+            UpdateKings(Black, White);
+
+        AddNextMoves();
+        PrepareFEN();
+    }
+    private void PrepareFEN()
+    {
+        ShortFEN = FENParser.ToShortFenString(Pieces, White.CastlingRights, Black.CastlingRights, ActiveTeam);
+        string enPassantSquare = ShortFEN[(ShortFEN.LastIndexOf(' ') + 1)..];
+        EnPassant = enPassantSquare == "-" ? null : new Square(enPassantSquare);
+
+        if (OccuredPositions.TryGetValue(ShortFEN, out var occurances))
+            OccuredPositions[ShortFEN] = occurances + 1;
+        else
+            OccuredPositions[ShortFEN] = 1;
+    }
+    private void AddNextMoves()
+    {
+        foreach (var piece in Pieces.Values)
         {
-            if (first.Square.Letter == second.Square.Letter)
+            if (piece is King)
+                continue;
+            else if (piece != null && piece.Team == ActiveTeam)
             {
-                int direction = first.Square.Digit > second.Square.Digit ? -1 : 1;
-                for (int i = first.Square.Digit + direction; ; i += direction)
-                {
-                    if (!GetPiece(new Square(first.Square.Letter, i), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
-
-                    return pieceOnTheWay == second;
-                }
+                piece.Update();
+                if (piece.Moves.Count > 0)
+                    NextMoves.AddRange(piece.Moves);
             }
-            else if (first.Square.Digit == second.Square.Digit)
-            {
-                int direction = first.Square.Letter > second.Square.Letter ? -1 : 1;
-                for (int i = first.Square.Letter + direction; ; i += direction)
-                {
-                    if (!GetPiece(new Square((char)i, first.Square.Digit), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
-
-                    return pieceOnTheWay == second;
-                }
-            }
-            else if (Math.Abs(first.Square.Digit - second.Square.Digit) == Math.Abs(first.Square.Letter - second.Square.Letter))
-            {
-                int directionLetter = first.Square.Letter > second.Square.Letter ? -1 : 1;
-                int directionDigit = first.Square.Digit > second.Square.Digit ? -1 : 1;
-                for (int i = first.Square.Letter + directionLetter, j = first.Square.Digit + directionDigit; ; i += directionLetter, j += directionDigit)
-                {
-
-                    if (!GetPiece(new Square((char)i, j), out Piece pieceOnTheWay))
-                        return false;
-                    if (pieceOnTheWay == null)
-                        continue;
-
-                    return pieceOnTheWay == second;
-                }
-            }
+        }
+    }
+    private void UpdateKings(King activeKing, King standbyKing)
+    {
+        activeKing.Update();
+        standbyKing.CheckCastlingMoves();
+        if (activeKing.Moves.Count > 0)
+        {
+            NextMoves.AddRange(activeKing.Moves);
+        }
+        if (activeKing.Threatened)
+            Check = true;
+    }
+    public void PrepareForEvaluation()
+    {
+        if (ActiveTeam == Team.White)
+            Black.FindAllThreats();
+        else
+            White.FindAllThreats();
+    }
+    public bool TryGetPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece) && piece != null;
+    public Team GetTeamOnSquare(Square square) => Pieces[square] == null ? Team.Empty : Pieces[square].Team;
+    public bool ArePiecesFacingEachOther(Piece first, Piece second)
+    {
+        (int letter, int digit) iterator;
+        if (first.Square.Letter == second.Square.Letter)
+        {
+            iterator = (0, first.Square.Digit > second.Square.Digit ? -1 : 1);
+        }
+        else if (first.Square.Digit == second.Square.Digit)
+        {
+            iterator = (first.Square.Letter > second.Square.Letter ? -1 : 1, 0);
+        }
+        else if (Math.Abs(first.Square.Digit - second.Square.Digit) == Math.Abs(first.Square.Letter - second.Square.Letter))
+        {
+            int directionLetter = first.Square.Letter > second.Square.Letter ? -1 : 1;
+            int directionDigit = first.Square.Digit > second.Square.Digit ? -1 : 1;
+            iterator = (directionLetter, directionDigit);
+        }
+        else
             return false;
-        }
-        public void OnPromotion(Piece piece)
+
+        Square square = first.Square;
+        do
         {
-            PieceType type = PieceType.Queen;
-            Square square = piece.Square;
-            Team team = piece.Team;
-            Pieces[square] = null;
-            try
-            {
-                Piece newPiece = PieceFactory.CreateAPiece(type, square, team);
-                newPiece.Owner = piece.Owner;
-                Pieces[square] = newPiece;
-            }
-            catch (NotImplementedException)
-            {
-                //log the exception and probbably shutdown the game
-            }
+            square.Transform(iterator);
+            if (TryGetPiece(square, out Piece pieceOnTheWay))
+                return pieceOnTheWay == second;
+        }
+        while (Square.Validate(square));
+
+        return false;
+    }
+    public void OnPromotion(Piece piece)
+    {
+        PieceType type = PieceType.Queen;
+        Square square = piece.Square;
+        Team team = piece.Team;
+        Pieces[square] = null;
+        try
+        {
+            Piece newPiece = PieceFactory.CreateAPiece(type, square, team);
+            newPiece.Owner = piece.Owner;
+            Pieces[square] = newPiece;
+        }
+        catch (NotImplementedException e)
+        {
+            using var file = new FileStream("exceptions.txt", FileMode.Append, FileAccess.Write, FileShare.Write);
+            using var writer = new StreamWriter(file);
+            writer.WriteLine($"{DateTime.Now} - {e.Message} {e.StackTrace}");
+            writer.Flush();
+            throw;
         }
     }
 }
