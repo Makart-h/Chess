@@ -15,10 +15,13 @@ namespace Chess.AI
     {
         private readonly List<Move> _movesToConsider;
         private bool _isAlreadyThinking;
+    private readonly List<string> _movesQueue;
         public AIController(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant) : base(team, pieces, castlingRights, enPassant)
         {
             _movesToConsider = new List<Move>();
             _isAlreadyThinking = false;
+        _movesQueue = new();
+        MoveMade += OnOpponentMoveMade;
         }
         public override void Update()
         {
@@ -30,10 +33,13 @@ namespace Chess.AI
         {
             if (!_isAlreadyThinking)
             {
+            if (!TryTakeMoveFromQueue())
+            {
                 _isAlreadyThinking = true;
                 _ = MakeMoveAsync();
             }
         }
+    }
         public async Task MakeMoveAsync()
         {
             CancellationToken token = ChessClock.GetCancelletionToken(this) ?? CancellationToken.None;
@@ -67,6 +73,21 @@ namespace Chess.AI
                 if (evaluations[i] == bestOutcome)
                     bestOptions.Add(movesToConsider[i]);
             }
+        int index = bestOptions[GetIndexOfBestOption(bestOptions.ToArray())];
+        RefreshMovesQueue(evaluations[index]);
+        return movesToConsider[index];
+    }
+    private void RefreshMovesQueue(Evaluation chosenEvaluation)
+    {
+        double desiredValue = Team == Team.White ? 1000 : -1000;
+        if (_movesQueue.Count == 0 && chosenEvaluation.Value == desiredValue)
+        {
+            _movesQueue.AddRange(chosenEvaluation.Path.Split("->"));
+            _movesQueue.RemoveAt(0);
+        }
+    }
+    private static int GetIndexOfBestOption(int[] bestOptions)
+    {
             int moveIndex = 0;
 
             if (bestOptions.Count < 1)
@@ -91,7 +112,24 @@ namespace Chess.AI
             }
             throw new ArgumentOutOfRangeException("AI didn't manage to chose a valid move!");
         }
-        private  Task<(double, int)> GetMoveEvaluationAsync(Move move, CancellationToken token)
+    private bool TryTakeMoveFromQueue()
+    {
+        if(_movesQueue.Count > 0)
+        {
+            string queuedMove = _movesQueue.First();
+            _movesQueue.RemoveAt(0);
+            string formerSquare = queuedMove[..2];
+            Square former = new(formerSquare);
+            char description = queuedMove[2];
+            string latterSquare = queuedMove[3..5];
+            Square latter = new(latterSquare);
+            Move move = new(former, latter, description);
+            ApplyMove(move);
+            return true;
+        }
+        return false;
+    }
+    private Task<Evaluation> GetMoveEvaluationAsync(Move move, CancellationToken token)
         {
             return Task.Run(async () =>
             {
@@ -112,6 +150,16 @@ namespace Chess.AI
             _movesToConsider.Clear();
             _isAlreadyThinking = false;
             base.OnMoveMade(e);
+        }
+    private void OnOpponentMoveMade(object sender, MoveMadeEventArgs e)
+    {
+        if (e.Controller != this && _movesQueue.Count > 0)
+        {
+            string opponentMove = $"{e.Move.Former}{e.Move.Description}{e.Move.Latter}";
+            if (_movesQueue.First().Contains(opponentMove))
+                _movesQueue.RemoveAt(0);
+            else
+                _movesQueue.Clear();
         }
     }
 }
