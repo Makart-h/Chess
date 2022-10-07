@@ -20,7 +20,7 @@ namespace Chess.Board;
     public bool IsValid { get => Validate(this); }
         public Square(char letter, int number)
         {
-            Letter = char.ToUpper(letter);
+        Letter = char.ToLower(letter);
             Digit = number;
         }
         public Square(Square other)
@@ -33,7 +33,7 @@ namespace Chess.Board;
             var match = _regex.Match(square);
             if (match.Success)
             {
-                Letter = char.ToUpper(match.Groups["letter"].Value.First());
+            Letter = char.ToLower(match.Groups["letter"].Value.First());
 
                 if (int.TryParse(match.Groups["number"].Value, out int digit))
                 {
