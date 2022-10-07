@@ -3,8 +3,8 @@ using Chess.Movement;
 using Chess.Pieces;
 using System;
 
-namespace Chess.AI
-{
+namespace Chess.AI;
+
     internal sealed class MoveMadeEventArgs : EventArgs
     {
         public readonly Controller Controller;
@@ -18,4 +18,3 @@ namespace Chess.AI
             Move = move;
         }
     }
-}

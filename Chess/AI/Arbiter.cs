@@ -5,8 +5,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 
-namespace Chess.AI
-{
+namespace Chess.AI;
+
     internal static class Arbiter
     {
         

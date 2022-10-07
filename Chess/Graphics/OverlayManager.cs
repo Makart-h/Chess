@@ -4,7 +4,8 @@ using Chess.Pieces;
 using Chess.Board;
 using Chess.Movement;
 
-namespace Chess.Graphics
+namespace Chess.Graphics;
+
 {
     static class OverlayManager
     {

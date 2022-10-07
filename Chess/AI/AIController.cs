@@ -1,16 +1,18 @@
-﻿using System;
+using Chess.Board;
+using Chess.Clock;
+using Chess.Graphics;
+using Chess.Movement;
+using Chess.Pieces;
+using Chess.Pieces.Info;
+using Chess.Positions;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Chess.Board;
-using Chess.Clock;
-using Chess.Movement;
-using Chess.Pieces;
-using Chess.Positions;
 
-namespace Chess.AI
-{
+namespace Chess.AI;
+
     internal sealed class AIController : Controller
     {
         private readonly List<Move> _movesToConsider;
@@ -52,7 +54,7 @@ namespace Chess.AI
                     return;
                 ApplyMove(move: bestMove);
             }
-            catch(OperationCanceledException)
+        catch (OperationCanceledException)
             {
                 return;
             }
@@ -139,7 +141,7 @@ namespace Chess.AI
                     var node = await PositionNode.CreateAsync(position: position, rank: 2, team: _team, depth: 1, token: token);
                     return await node.FindBestOutcomeAsync(token: token);
                 }
-                catch(OperationCanceledException)
+            catch (OperationCanceledException)
                 {
                     throw;
                 }

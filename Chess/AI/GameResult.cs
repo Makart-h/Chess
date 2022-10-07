@@ -1,5 +1,5 @@
-﻿namespace Chess.AI
-{
+﻿namespace Chess.AI;
+
     public enum GameResult
     {
         White,
@@ -12,4 +12,3 @@
         DrawByAgreement,
         HalfMoves
     }
-}

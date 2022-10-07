@@ -7,8 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
-namespace Chess.Board
-{
+namespace Chess.Board;
+
     internal sealed class Chessboard : DrawableObject
     {
         private static Chessboard s_instance;

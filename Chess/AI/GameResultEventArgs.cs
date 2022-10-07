@@ -1,5 +1,5 @@
-﻿namespace Chess.AI
-{
+﻿namespace Chess.AI;
+
     internal sealed class GameResultEventArgs
     {
         public GameResult GameResult;
@@ -9,4 +9,3 @@
             GameResult = gameResult;
         }
     }
-}

@@ -1,5 +1,5 @@
-﻿namespace Chess.Graphics
-{
+﻿namespace Chess.Graphics;
+
     enum SquareOverlayType
     {
         MovedTo,
@@ -9,4 +9,3 @@
         CanMove,
         Check    
     }
-}

@@ -1,8 +1,8 @@
 ﻿using Chess.AI;
 using System;
 
-namespace Chess.Clock
-{
+namespace Chess.Clock;
+
     internal sealed class TimerExpiredEventArgs : EventArgs
     {
         public readonly Controller VictoriousController;
@@ -12,4 +12,3 @@ namespace Chess.Clock
             VictoriousController = victoriousController;
         }
     }
-}

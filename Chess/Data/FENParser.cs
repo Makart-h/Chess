@@ -5,8 +5,8 @@ using System.Collections.Generic;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace Chess.Data
-{
+namespace Chess.Data;
+
     internal static class FENParser
     {
         private static Match ValidateString(string FEN)
@@ -224,4 +224,3 @@ namespace Chess.Data
             return "-";
         }
     }
-}

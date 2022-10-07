@@ -1,11 +1,11 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
+﻿using Chess.Board;
+using Chess.Graphics;
 using Chess.Pieces;
-using Chess.Board;
-using System.Threading.Tasks;
+using Chess.Pieces.Info;
+using System;
+using System.Collections.Generic;
 
-namespace Chess.AI
+namespace Chess.AI;
 {
     internal abstract class Controller : IPieceOwner
     {

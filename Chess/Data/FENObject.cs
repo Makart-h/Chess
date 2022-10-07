@@ -2,7 +2,7 @@ using Chess.Board;
 using Chess.Pieces;
 using System.Collections.Generic;
 
-namespace Chess.Data
+namespace Chess.Data;
 {
     internal sealed class FENObject
     {

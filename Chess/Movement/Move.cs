@@ -2,8 +2,8 @@
 using Chess.Board;
 using Chess.Pieces;
 
-namespace Chess.Movement
-{
+namespace Chess.Movement;
+
     internal sealed class Move
     {
         public Square Former { get; private set; }

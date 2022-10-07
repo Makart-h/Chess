@@ -2,8 +2,8 @@
 using System.Linq;
 using System.Text.RegularExpressions;
 
-namespace Chess.Board
-{
+namespace Chess.Board;
+
     internal struct Square
     {
         public static readonly int SquareWidth = 72;

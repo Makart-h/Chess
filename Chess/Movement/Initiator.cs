@@ -3,8 +3,8 @@ using Chess.Graphics;
 using Microsoft.Xna.Framework;
 using System;
 
-namespace Chess.Movement
-{
+namespace Chess.Movement;
+
     internal sealed class Initiator : IDisposable
     {
         private Vector2 _originalPosition;

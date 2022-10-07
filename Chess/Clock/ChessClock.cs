@@ -6,8 +6,8 @@ using System.Collections.Generic;
 using System.Threading;
 using System.Timers;
 
-namespace Chess.Clock
-{
+namespace Chess.Clock;
+
     internal static class ChessClock
     {
         private static readonly Dictionary<Team, Controller> _controllers;
@@ -128,4 +128,3 @@ namespace Chess.Clock
                 return null;
         }
     }
-}

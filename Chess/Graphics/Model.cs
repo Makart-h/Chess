@@ -1,8 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
-namespace Chess.Graphics
-{
+namespace Chess.Graphics;
+
     internal sealed class Model
     {
         public Texture2D RawTexture { get; private set; }

@@ -5,7 +5,8 @@ using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 
-namespace Chess.Movement
+namespace Chess.Movement;
+
 {
     internal static class MovementManager
     {

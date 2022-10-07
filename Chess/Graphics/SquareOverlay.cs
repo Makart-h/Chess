@@ -1,7 +1,7 @@
 ﻿using Chess.Board;
 
-namespace Chess.Graphics
-{
+namespace Chess.Graphics;
+
     internal sealed class SquareOverlay : DrawableObject
     {
         public SquareOverlayType Type { get; private set; }
@@ -11,4 +11,3 @@ namespace Chess.Graphics
             Type = type;
         }
     }
-}
