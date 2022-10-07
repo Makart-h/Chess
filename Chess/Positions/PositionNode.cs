@@ -1,73 +1,76 @@
-using Chess.AI;
+﻿using Chess.AI;
 using Chess.Movement;
-using Chess.Pieces;
-using System;
+using Chess.Pieces.Info;
+using Chess.Positions.Evaluators;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Chess.Positions
-{
-    internal sealed class PositionNode
-    {
-        private double _value;
-        private readonly int _depth;
-        private readonly Team _team;
-        private readonly List<PositionNode> _children;
+namespace Chess.Positions;
 
-        private PositionNode(Team team, int depth)
+internal sealed class PositionNode
+{
+    private readonly double _value;
+    private readonly int _depth;
+    private readonly Team _team;
+    private readonly bool _isFertile;
+    private readonly List<PositionNode> _children;
+    private readonly StringBuilder _path;
+    private static readonly int s_minDepth = 2;
+    private static readonly int s_maxDepth = 4;
+
+    private PositionNode(Team team, int depth, string path, Position position, bool isFertile)
+    {
+        _team = team;
+        _depth = depth;
+        _children = new();
+        _path = new(path);      
+        _value = PositionEvaluator.EvaluatePosition(position);
+        _path.Append($"{(_path.Length > 0 ? "->" : "")}{position.MovePlayed}({_value:0.00})");
+        _isFertile = (depth < s_minDepth || isFertile) && depth < s_maxDepth;
+    }
+    public static async Task<PositionNode> CreateAsync(string path, Position position, Team team, int depth, bool isFertile, CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        PositionNode node = new(team, depth, path, position, isFertile);
+        await node.CreateChildrenAsync(position, token);
+        return node;
+    }
+    private async Task CreateChildrenAsync(Position position, CancellationToken token)
+    {
+        if (_isFertile && position.Result == GameResult.InProgress)
         {
-            _team = team;
-            _depth = depth;
-            _children = new List<PositionNode>();
-        }
-        public static async Task<PositionNode> CreateAsync(Position position, int rank, Team team, int depth, CancellationToken token)
-        {
-            token.ThrowIfCancellationRequested();
-            PositionNode node = new PositionNode(team, depth);
-            await node.CreateChildrenAsync(position, rank, token);
-            return node;
-        }
-        private async Task CreateChildrenAsync(Position position, int rank, CancellationToken token)
-        {
-            token.ThrowIfCancellationRequested();
-            if (rank > 0 && position.NextMoves.Count > 0)
+            foreach (Move move in position.NextMoves)
             {
-                foreach (Move move in position.NextMoves)
-                {
-                    token.ThrowIfCancellationRequested();
-                    Position pos = await Position.CreateAsync(token, position, move);
-                    PositionNode node = await CreateAsync(pos, rank - (position.Check ? 0 : 1), ~_team, _depth + 1, token);
-                    _children.Add(node);
-                }
+                token.ThrowIfCancellationRequested();
+                Position pos = await Position.CreateAsync(position, move, token);
+                bool isChildFertile = move.Description == 'x' || move.Description == 'p' || position.Check || pos.Check;
+                PositionNode node = await CreateAsync(_path.ToString(), pos, ~_team, _depth + 1, isChildFertile, token);
+                _children.Add(node);
             }
-            else
-                _value = PositionEvaluator.EvaluatePosition(position);
-        }
-        public async Task<(double, int)> FindBestOutcomeAsync(CancellationToken token)
+        }         
+    }
+    public async Task<Evaluation> FindBestOutcomeAsync(CancellationToken token)
+    {
+        token.ThrowIfCancellationRequested();
+        if (_children.Count > 0)
         {
-            token.ThrowIfCancellationRequested();
-            if (_children?.Count > 0)
+            Evaluation[] evaluations = new Evaluation[_children.Count];
+            for (int i = 0; i < _children.Count; i++)
             {
-                (double eval, int depth)[] evals = new (double, int)[_children.Count];
-                for (int i = 0; i < _children.Count; i++)
-                {
-                    token.ThrowIfCancellationRequested();
-                    int index = i;
-                    evals[index] = await _children[index].FindBestOutcomeAsync(token);
-                }
-                if (_team == Team.Black)
-                {
-                    return evals.Max();
-                }
-                else
-                {
-                    return evals.Min();
-                }
+                evaluations[i] = await _children[i].FindBestOutcomeAsync(token);
             }
+            if (_team == Team.Black)
+                return evaluations.Max();
             else
-                return _team == Team.White ? (_value, -_depth) : (_value, _depth);
+                return evaluations.Min();
+        }
+        else
+        {
+            int sign = _team == Team.White ? -1 : 1;
+            return new Evaluation(_value, sign * _depth, _path.ToString());
         }
     }
 }
