@@ -17,6 +17,7 @@ namespace Chess.Board;
         }
         public char Letter { get; private set; }
         public int Digit { get; private set; }
+    public bool IsValid { get => Validate(this); }
         public Square(char letter, int number)
         {
             Letter = char.ToUpper(letter);
@@ -49,6 +50,7 @@ namespace Chess.Board;
         }
         public static bool operator ==(Square first, Square second) => first.Letter == second.Letter && first.Digit == second.Digit;
         public static bool Validate(Square square) => square.Digit >= 1 && square.Digit <= 8 && square.Letter >= 'A' && square.Letter <= 'H';
+    public static bool Validate(Square square) => square.Digit >= 1 && square.Digit <= 8 && square.Letter >= 'a' && square.Letter <= 'h';
         public static bool operator !=(Square first, Square second) => !(first == second);
         public override bool Equals(object obj) => (obj is Square s) && this == s;
         public override int GetHashCode() => HashCode.Combine(Letter.GetHashCode(), Digit.GetHashCode());
