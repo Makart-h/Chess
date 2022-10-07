@@ -1,74 +1,99 @@
-using Chess.AI;
+﻿using Chess.AI;
 using Chess.Board;
 using Chess.Pieces;
+using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
 
 namespace Chess.Movement;
 
+internal sealed class MovementManager : IDisposable
 {
-    internal static class MovementManager
+    private static MovementManager s_instance;
+    public static MovementManager Instance { get => s_instance ??= new MovementManager(); }
+    private readonly List<Initiator> _initiators;
+    private readonly Stack<Initiator> _toRemove;
+    public static EventHandler MovementConcluded;
+    private bool _rapidMovement;
+    private bool _isDisposed;
+    public float MovementVelocity { get; private set; }
+    private MovementManager()
     {
-        private readonly static List<Initiator> _initiators;
-        private readonly static Stack<Initiator> _toRemove;
-        public static EventHandler MovementConcluded;
-        private static bool _rapidMovement;
-        public static float MovementVelocity { get; private set; }
-        static MovementManager()
+        _initiators = new();
+        _toRemove = new();
+        MovementVelocity = 0.6f;
+        Piece.PieceMoved += OnPieceMoved;
+        _rapidMovement = false;
+    }
+    private void OnPieceMoved(object sender, PieceMovedEventArgs args)
+    {
+        Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
+        if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
         {
-            _initiators = new();
-            _toRemove = new();
-            MovementVelocity = 0.4f;
-            Piece.PieceMoved += OnPieceMoved;
+            args.Piece.MoveObject(newPosition - args.Piece.Position);
+            _rapidMovement = true;
+        }
+        else
+        {
+            _initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
+        }
+    }
+    private void OnDestinationReached(object sender, EventArgs args)
+    {
+        if (sender is Initiator i)
+        {
+            i.Dispose();
+            _toRemove.Push(i);
+        }
+    }
+    public void Update(GameTime gameTime)
+    {    
+        foreach (Initiator initiator in _initiators)
+            initiator.Update(gameTime);
+        bool initiatorRemovedOnThisUpdate = TryRemoveInitiators();
+        TryConcludeMovement(initiatorRemovedOnThisUpdate);
+    }
+    private bool TryRemoveInitiators()
+    {
+        bool initiatorRemovedOnThisUpdate = false;
+        while (_toRemove.TryPop(out Initiator i))
+        {
+            _initiators.Remove(i);
+            initiatorRemovedOnThisUpdate = true;
+        }
+        return initiatorRemovedOnThisUpdate;
+    }
+    private void TryConcludeMovement(bool initiatorRemovedOnThisUpdate)
+    {
+        if (_initiators.Count == 0 && (initiatorRemovedOnThisUpdate || _rapidMovement))
+        {
+            OnMovementConcluded(EventArgs.Empty);
             _rapidMovement = false;
         }
-        private static void OnPieceMoved(object sender, PieceMovedEventArgs args)
+    }
+    public void Dispose()
+    {
+        if (_isDisposed)
+            return;
+
+        Piece.PieceMoved -= OnPieceMoved;
+        foreach (var initiator in _initiators)
         {
-            Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
-            if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
-            {            
-                args.Piece.MoveObject(newPosition - args.Piece.Position);
-                _rapidMovement = true;
-            }
-            else
-            {
-                _initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
-            }
+            initiator.Dispose();
         }
-        private static void OnDestinationReached(object sender, EventArgs args)
-        {
-            if (sender is Initiator i)
-            {
-                i.Dispose();
-                _toRemove.Push(i);
-            }
-        }
-        public static void Update(GameTime gameTime)
-        {
-            bool initiatorRemovedOnThisUpdate = false;
-            foreach (Initiator initiator in _initiators)
-            {
-                initiator.Update(gameTime);
-            }
-            while (_toRemove.TryPop(out Initiator i))
-            {
-                _initiators.Remove(i);
-                initiatorRemovedOnThisUpdate = true;
-            }
-            if (_initiators.Count == 0 && (initiatorRemovedOnThisUpdate || _rapidMovement))
-            {
-                OnMovementConcluded(EventArgs.Empty);
-                _rapidMovement = false;
-            }
-        }
-        public static Vector2 RecalculateVector(Vector2 vector)
-        {
-            float width = Square.SquareWidth * (Chessboard.NumberOfSquares - 1);
-            float height = Square.SquareHeight * (Chessboard.NumberOfSquares - 1);
-            return new Vector2(width - vector.X, height - vector.Y);
-        }
-        private static void OnMovementConcluded(EventArgs e) => MovementConcluded?.Invoke(null, e);
+        _initiators.Clear();
+        _toRemove.Clear();
+        s_instance = null;
+        _isDisposed = true;
+    }
+    public static Vector2 RecalculateVector(Vector2 vector)
+    {
+        float width = Chessboard.Instance.SquareSideLength * (Chessboard.NumberOfSquares - 1);
+        float height = Chessboard.Instance.SquareSideLength * (Chessboard.NumberOfSquares - 1);
+        return new Vector2(width - vector.X, height - vector.Y);
+    }
+    private static void OnMovementConcluded(EventArgs e) => MovementConcluded?.Invoke(null, e);
     public static (MoveSets set, Move[] moves)[] GenerateEveryMove(Square initialSquare, MoveSets set, IPieceOwner pieceOwner, bool friendlyFire = false, Piece pieceToIgnore = null)
     {
         List<(MoveSets, Move[])> movesGroupedByDirection = new();
