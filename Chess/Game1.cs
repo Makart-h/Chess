@@ -1,206 +1,421 @@
-using Chess.AI;
+﻿using Chess.AI;
 using Chess.Board;
 using Chess.Clock;
 using Chess.Data;
 using Chess.Graphics;
 using Chess.Graphics.UI;
+using Chess.Input;
 using Chess.Movement;
 using Chess.Pieces;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using Model = Chess.Graphics.Model;
 
-namespace Chess
+namespace Chess;
+
+internal sealed class Chess : Game
 {
-    internal sealed class Game1 : Game
+    private readonly GraphicsDeviceManager _graphics;
+    private SpriteBatch _spriteBatch;
+    public static Chess Instance;
+    private Chessboard _chessboard;
+    private readonly List<Controller> _controllers;
+    private SpriteFont _clockTimeFont;
+    private SpriteFont _messagesFont;
+    private bool _isRunning;
+    private bool _updateController;
+    private string _endgameMessage;
+    private readonly List<UIModule> _uiModules;  
+    private UIModule _chessboardUIModule;
+    private readonly InputManager _chessboardInputManager;
+    private readonly InputManager _menuInputManager;
+    private BoardSaver _boardSaver;
+    private Texture2D _lightTile;
+    private Texture2D _darkTile;
+    private bool _buttonInputOnly;
+    public static EventHandler TurnEnded;
+    public static EventHandler<PromotionEventArgs> PromotionConcluded;
+    private int _unresolvedUserInputs;
+    private readonly List<Button> _promotionButtons;
+    private ChessGameSettings _chessGameSettings;
+    private UIModule _menuUI;
+    private bool _inMenu;
+    private DrawableObject _piecesExplanation;
+    private DrawableObject _controlsExplanation;
+    private bool _explanationVisible;
+    private bool _controlsVisible;
+
+    public Chess()
     {
-        private readonly GraphicsDeviceManager _graphics;
-        private SpriteBatch _spriteBatch;
-        public static Game1 Instance;
-        private Chessboard _chessboard;
-        public Texture2D Overlays { get; private set; }
-        private readonly List<Controller> _controllers;
-        private FENObject _fenObject;
-        private SpriteFont _clockTimeFont;
-        private bool _isRunning;
-        private bool _updateController;
-        private string _endgameMessage;
-        private bool _tabPressed = false;
+        _graphics = new GraphicsDeviceManager(this);
+        Content.RootDirectory = "Content";
+        IsMouseVisible = true;
+        Instance = this;
+        _controllers = new();
+        _isRunning = true;
+        _updateController = true;
+        _uiModules = new();       
+        _promotionButtons = new();
+        _chessGameSettings = new ChessGameSettings();
+        _chessboardInputManager = new();
+        _menuInputManager = new();
+        _inMenu = true;
+    }
 
-        public Game1()
+    private void SubscribeToEvents()
+    {
+        ChessClock.TimerExpired += OnChessClockExpired;
+        Arbiter.GameConcluded += OnGameConcluded;
+        MovementManager.MovementConcluded += OnMovementConcluded;
+        Pawn.Promotion += OnPromotion;
+        _chessboardInputManager.SubscribeToEvent(Keys.Tab, OnTabPressed);
+        _chessboardInputManager.SubscribeToEvent(Keys.Escape, OnEscapePressed);
+        _chessboardInputManager.SubscribeToEvent(Keys.F11, OnF11Pressed);
+    }
+    private void OnTabPressed() => Chessboard.Instance.ToggleInversion();
+    private void OnEscapePressed() => Exit();
+    private void OnF11Pressed()
+    {
+        _graphics.IsFullScreen = !_graphics.IsFullScreen;
+        _graphics.ApplyChanges();
+    }
+    private void TryEndTurn()
+    {
+        if (_unresolvedUserInputs == 0)
         {
-            _graphics = new GraphicsDeviceManager(this);
-            Content.RootDirectory = "Content";
-            IsMouseVisible = true;
-            Instance = this;
-            _controllers = new List<Controller>();
-            _isRunning = true;
-            _updateController = true;
+            _updateController = true;           
+            TurnEnded?.Invoke(this, EventArgs.Empty);
         }
-
-        private void SubscribeToEvents()
+    }
+    private void OnMovementConcluded(object sender, EventArgs e) => TryEndTurn();
+    private void OnChessClockExpired(object sender, TimerExpiredEventArgs e)
+    {
+        _isRunning = false;
+        _endgameMessage = $"{e.VictoriousController.Team} won on time!";
+        AddEndgameMessage();
+    }
+    private void OnGameConcluded(object sender, GameResultEventArgs e)
+    {
+        _isRunning = false;
+        string gameResultExplanation = Arbiter.ExplainGameResult(e.GameResult);
+        if (e.GameResult != GameResult.White && e.GameResult != GameResult.Black)
+            _endgameMessage = $"Game ended in a draw by \n{gameResultExplanation}.";
+        else
         {
-            ChessClock.TimerExpired += OnChessClockExpired;
-            Arbiter.GameConcluded += OnGameConcluded;
-            Controller.MoveMade += OnMoveChosen;
+            Team victoriousTeam = e.GameResult == GameResult.White ? Team.White : Team.Black;
+            _endgameMessage = $"{victoriousTeam} won by \n{gameResultExplanation}.";
         }
-        private void OnMoveChosen(object sender, MoveMadeEventArgs args) => _updateController = true;
-        private void OnChessClockExpired(object sender, TimerExpiredEventArgs args)
+        AddEndgameMessage();
+    }
+    private void AddEndgameMessage()
+    {
+        float messageWidth = _messagesFont.MeasureString($" {_endgameMessage} ").X;       
+        UIModule controlsUI = _uiModules[^1];
+        float scale = controlsUI.RenderTarget.Width / messageWidth;
+        TextObject text = new(_messagesFont, _endgameMessage, new Vector2(controlsUI.RenderTarget.Width * 0.05f, controlsUI.RenderTarget.Height * 0.05f), Color.Black, scale);
+        controlsUI.SubmitElementToAdd(text);
+    }
+    private void HandlePromotionDecision(Pawn promotedPawn, PieceType type, bool fromUserInput = true)
+    {
+        PromotionConcluded?.Invoke(this, new PromotionEventArgs(promotedPawn, type));
+        if (fromUserInput)
         {
-            _isRunning = false;
-            _endgameMessage = $"{args.VictoriousController.Team} is victorious!";
-        }
-        private void OnGameConcluded(object sender, GameResultEventArgs args)
-        {
-            _isRunning = false;
-            if(args.GameResult != GameResult.White && args.GameResult != GameResult.Black)
-                _endgameMessage = _endgameMessage = "Game ended in a draw!";
-            else
+            _unresolvedUserInputs--;
+            foreach (Button button in _promotionButtons)
             {
-                Team victoriousTeam = args.GameResult == GameResult.White ? Team.White : Team.Black;
-                _endgameMessage = $"{victoriousTeam} is victorious!";
+                _chessboardUIModule.SubmitElementToRemove(button);
             }
+            TryEndTurn();
+            _buttonInputOnly = false;
         }
-        protected override void Initialize()
+    }
+    private void OnPromotion(object sender, EventArgs e)
+    {
+        Pawn pawn = (Pawn)sender;
+        if (pawn.Owner is AIController)
+            HandlePromotionDecision(pawn, PieceType.Queen, false);
+        else
         {
-            // TODO: Add your initialization logic here
-
-            base.Initialize();
-            _graphics.PreferredBackBufferWidth = 576;  // set this value to the desired width of your window
-            _graphics.PreferredBackBufferHeight = 576;   // set this value to the desired height of your window
-            _graphics.ApplyChanges();
-            PieceFactory.Initilize(this.Content.Load<Texture2D>("Tpieces"));
-
-            //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-            //"6k1/6p1/5p1p/1p2p3/p2p2q1/Pr1P2Nn/Q7/6RK b - - 1 38"
-            //"r1bk1q2/pp4pB/4pn2/3p4/3P3Q/2P3P1/PP1N2PP/R5K1 b - - 6 18"
-            //5k2/1q6/8/8/4n3/4K3/8/8 w - - 0 1
-            //2r2k2/8/8/8/Q7/6b1/6PP/7K w - - 0 1  mate in one test
-            //5r2/p2b2k1/4p3/2p1R3/5B1b/2P5/PP1N3P/R5K1 w - - 2 23 real game
-            //6k1/3b3r/1p1p4/p1n2p2/1PPNpP1q/P3Q1p1/1R1RB1P1/5K2 b - - 0 1 mate in 5
-            //4r1k1/3n1ppp/4r3/3n3q/Q2P4/5P2/PP2BP1P/R1B1R1K1 b - - 0 1 mate in 3
-            //rn3rk1/pbppq1pp/1p2pb2/4N2Q/3PN3/3B4/PPP2PPP/R3K2R w KQ - 7 11 mate in 7
-            //3k4/6R1/4K3/8/8/8/8/8 b - - 9 5 mate in 4 king+rook endgame
-            //8/8/4k3/8/3K4/5R2/8/8 w - - 0 1 mate in 12 king+rook endgame
-            //5r1k/5p2/1p4rN/2nQ4/P6R/6P1/5P2/5K2 w - - 0 1
-            //5r1k/5p2/6rN/3Q4/7R/6P1/8/5K2 w - - 0 1
-            //2k2r2/3R4/4Qp2/8/8/6P1/8/5K2 w - - 0 1
-            //1k6/8/8/4bn2/4K3/8/8/8 w - - 0 1 material draw knight/bishop
-            //1k6/8/8/4b3/4K3/8/8/8 w - - 0 1 material draw king vs king
-            //1k6/8/5b2/8/4K3/8/4R3/8 w - - 0 1 3fold, 5fold
-            //1k6/8/5b2/8/4K3/8/5B2/8 w - - 0 1 both bishops same colors
-            //k7/2Q5/8/8/4K3/8/8/8 w - - 0 1 stalemate
-            try
-            {
-                string fen = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
-                _fenObject = FENParser.Parse(fen.Trim());
-                Arbiter.Initilize(fen, _fenObject.HalfMoves);            
-            }
-            catch (ArgumentException)
-            {
-                throw;
-            }
-            //Controller white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
-            Controller white = new AIController(Team.White, _fenObject.WhitePieces, _fenObject.WhiteCastling, _fenObject.EnPassantSquare);
-            Controller black = new AIController(Team.Black, _fenObject.BlackPieces, _fenObject.BlackCastling, _fenObject.EnPassantSquare);
-            //Controller black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
-            _controllers.Add(white);
-            _controllers.Add(black);
-            ChessClock.Initialize(white, black, new TimeSpan(0, 0, 10), new TimeSpan(0,0,0), _fenObject.TeamToMove);
-            _chessboard.InitilizeBoard(_fenObject.AllPieces);
-            ChessClock.ActiveController.Update();
-            SubscribeToEvents();
-            ChessClock.Start();
+            _buttonInputOnly = true;
+            _unresolvedUserInputs++;
+            AddPromotionButtons(pawn);
         }
-
-        protected override void LoadContent()
+    }
+    private void AddPromotionButtons(Pawn pawn)
+    {
+        PieceType[] types = { PieceType.Queen, PieceType.Knight, PieceType.Rook, PieceType.Bishop };
+        int direction = pawn.Team == Team.White ? -1 : 1;
+        for(int i = 0; i < types.Length; ++i)
         {
-            _spriteBatch = new SpriteBatch(GraphicsDevice);
-            _chessboard = new Chessboard(this.Content.Load<Texture2D>("chessboard"));
-            Overlays = this.Content.Load<Texture2D>("Tsquares");
-            _clockTimeFont = this.Content.Load<SpriteFont>("ChessClock");
-
-            // TODO: use this.Content to load your game content here
+            Square square = new Square(pawn.Square.Letter, pawn.Square.Digit + direction * i);
+            var button = CreatePromotionButton(square, pawn, types[i]);
+            _promotionButtons.Add(button);
+            _chessboardUIModule.SubmitElementToAdd(button);
         }
+    }
+    private Button CreatePromotionButton(Square square, Pawn pawn, PieceType type)
+    {
+        Square overlaySquare = Chessboard.Instance.Inverted ? new Square("h1") : new Square("a8");
+        SquareOverlay overlay = new(SquareOverlayType.CanTake, overlaySquare);
+        Vector2 position = Chessboard.Instance.ToCordsFromSquare(square);
+        Rectangle buttonRectangle = new((int)position.X, (int)position.Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength);
+        Rectangle drawableRectangle = pawn.DestinationRectangle with { X = 0, Y = 0 };
+        var appearance = CreatePieceAppearance(type, pawn.Team, drawableRectangle);
+        Texture2D tile = Square.IsLightSquare(square) ? _lightTile : _darkTile;
+        ButtonActionInfo actions = new();
+        actions.OnRelease = () => HandlePromotionDecision(pawn, type);
+        return new Button(GraphicsDevice, tile, new[] { appearance, overlay }, null, buttonRectangle, actions);
+    }
+    private DrawableObject CreatePiecesExplanation()
+    {
+        Texture2D texture = Content.Load<Texture2D>("piecesExplanation");      
+        Model model = new(texture, 0, 0, texture.Width, texture.Height);
+        int width = (int)(_graphics.PreferredBackBufferWidth * 0.25);
+        int height = _graphics.PreferredBackBufferHeight;
+        DrawableObject piecesExplanation = new(model, new Rectangle(0,0, width, height));
+        return piecesExplanation;
+    }
+    private DrawableObject CreateControlsExplanation()
+    {
+        Texture2D texture = Content.Load<Texture2D>("controlsExplanation");
+        Model model = new(texture, 0, 0, texture.Width, texture.Height);
+        int width = (int)(_graphics.PreferredBackBufferWidth * 0.25);
+        int height = _graphics.PreferredBackBufferHeight;
+        DrawableObject controlsExplanation = new(model, new Rectangle(0, 0, width, height));
+        return controlsExplanation;
+    }
+    private Button[] CreateControlsButtons(UIModule controlsUI)
+    {
+        List<Button> buttons = new();
 
-        protected override void Update(GameTime gameTime)
+        Texture2D help = Content.Load<Texture2D>("help");
+        int width = (int)(controlsUI.RenderTarget.Width * 0.25f);
+        int posX = (int)(controlsUI.RenderTarget.Width * 0.1f);
+        int posY = controlsUI.RenderTarget.Height - width;
+        Rectangle dest = new(posX, posY, width, width);
+        ButtonActionInfo actions = new();
+        actions.OnHoverStarted = () => _explanationVisible = true;
+        actions.OnHoverEnded = () => _explanationVisible = false;
+        Button button = new(GraphicsDevice, help, null, null, dest, actions);
+        buttons.Add(button);
+
+        Texture2D controls = Content.Load<Texture2D>("controls");
+        width = (int)(controlsUI.RenderTarget.Width * 0.5f);
+        posX = (int)(controlsUI.RenderTarget.Width * 0.4f);
+        posY = (int)(controlsUI.RenderTarget.Height - width / 2.0f);
+        dest = new Rectangle(posX, posY, width, (int)(width / 2.0f));
+        actions.OnHoverStarted = () => _controlsVisible = true;
+        actions.OnHoverEnded = () => _controlsVisible = false;
+        button = new Button(GraphicsDevice, controls, null, null, dest, actions);
+        buttons.Add(button);
+
+        return buttons.ToArray();
+    }
+    private static DrawableObject CreatePieceAppearance(PieceType type, Team team, Rectangle destinationRectangle)
+    {
+        int texturePosX = PieceFactory.PieceTextureWidth * (int)type + (PieceFactory.PiecesRawTexture.Width / 2 * ((byte)team & 1));
+        Graphics.Model model = new(PieceFactory.PiecesRawTexture, texturePosX, 0, PieceFactory.PieceTextureWidth, PieceFactory.PieceTextureWidth);
+        DrawableObject appearance = new(model, destinationRectangle);
+        return appearance;
+    }
+    private void InitializeGraphics()
+    {
+        /*_graphics.PreferredBackBufferWidth = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Width;
+        _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
+        _graphics.IsFullScreen = true;*/
+        _graphics.PreferredBackBufferWidth = 1280;
+        _graphics.PreferredBackBufferHeight = 720;      
+        _graphics.ApplyChanges();
+    }
+    private FENObject InitializeFENObject()
+    {
+        try
         {
-            if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
-                Exit();
-            if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_tabPressed)
-            {
-                _tabPressed = true;
-                Chessboard.Instance.ToggleInversion();
-            }
-            else if(Keyboard.GetState().IsKeyUp(Keys.Tab))
-            {
-                _tabPressed = false;
-            }
-            MovementManager.Update(gameTime);
+            //string fen = "1Q1b2k1/1pp2pp1/4p3/2q1P2p/4KP1P/6P1/8/8 b - - 0 1";
+            string fen = _chessGameSettings.FEN;
+            return FENParser.Parse(fen);
+        }
+        catch (ArgumentException)
+        {
+            throw;
+        }
+    }
+    private void InitializeControllers(FENObject fenObject)
+    {
+        Controller white, black;
+        if (_chessGameSettings.IsWhiteHuman)
+            white = new HumanController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
+        else
+            white = new AIController(Team.White, fenObject.WhitePieces, fenObject.WhiteCastling, fenObject.EnPassantSquare);
 
-            if (_isRunning && (_updateController || ChessClock.ActiveController is HumanController))
+        if (_chessGameSettings.IsBlackHuman)
+            black = new HumanController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
+        else
+            black = new AIController(Team.Black, fenObject.BlackPieces, fenObject.BlackCastling, fenObject.EnPassantSquare);
+
+        _controllers.Add(white);
+        _controllers.Add(black);
+    }
+    private void InitializeUI(FENObject fenObject)
+    {
+        IDrawableProvider[] drawableProviders = { OverlayManager.Instance, _controllers[0], _controllers[1] };
+        var chessboardUI = new UIModule(GraphicsDevice, _chessboard, new Vector2(0.25f, 0.01f), new Vector2(0.50f, 0.98f), drawableProviders, Array.Empty<ITextProvider>());
+        chessboardUI.Layer = 2;
+        _chessboardUIModule = chessboardUI;
+        _boardSaver = new(GraphicsDevice, _chessboardInputManager);
+
+        Texture2D backgroundTexture = Content.Load<Texture2D>("uiBackground");
+        DrawableObject uiBackground = new DrawableObject(new Model(backgroundTexture, 0, 0, backgroundTexture.Width, backgroundTexture.Height), Rectangle.Empty);
+
+        MoveHistory moveHistory = new MoveHistory(fenObject.MoveNo, _clockTimeFont, 10, _chessboardInputManager);        
+        var moveHistoryUI = new UIModule(GraphicsDevice, uiBackground, (moveHistory.Width, moveHistory.Height), new Vector2(0.75f, 0f), new Vector2(0.25f, 0.75f), Array.Empty<IDrawableProvider>(), new[] { moveHistory });
+
+        float graveyardUIWidthScale = 0.25f;
+        PieceGraveyard pieceGraveyard = new((int)(_graphics.PreferredBackBufferWidth*graveyardUIWidthScale), 6, 6);
+        var graveyardUI = new UIModule(GraphicsDevice, uiBackground, (pieceGraveyard.Width, pieceGraveyard.Height), new Vector2(0f, 0.25f), new Vector2(graveyardUIWidthScale, 0.5f), new[] { pieceGraveyard }, Array.Empty<ITextProvider>());
+        graveyardUI.Layer = 1;
+
+        ClockReader clockReader = new(_clockTimeFont, 1.0f, 0.25f, Color.Black);
+        var clockUI = new UIModule(GraphicsDevice, uiBackground, (clockReader.Width, clockReader.Height), new Vector2(0f, 0f), new Vector2(0.25f, 1f), Array.Empty<IDrawableProvider>(), new[] { clockReader });
+
+        float w = _graphics.PreferredBackBufferWidth * 0.25f;
+        float h = _graphics.PreferredBackBufferHeight * 0.25f;
+        var controlsUI = new UIModule(GraphicsDevice, uiBackground, ((int)w, (int)h), new Vector2(0.75f, 0.75f), new Vector2(0.25f, 0.25f), null, null);
+
+        foreach (Button button in CreateControlsButtons(controlsUI))
+        {
+            controlsUI.SubmitElementToAdd(button);
+        }
+        controlsUI.Layer = int.MaxValue;
+
+        _uiModules.Add(controlsUI);
+        _uiModules.Add(graveyardUI);
+        _uiModules.Add(chessboardUI);
+        _uiModules.Add(moveHistoryUI);
+        _uiModules.Add(clockUI);
+        _uiModules.Sort();
+    }
+    private void InitializeClock(FENObject fenObject)
+    {
+        ChessClock.Initialize(_controllers[0], _controllers[1], (_chessGameSettings.WhiteClockTime, _chessGameSettings.BlackClockTime), (_chessGameSettings.WhiteIncrement, _chessGameSettings.BlackIncrement), fenObject.TeamToMove);
+        ChessClock.ActiveController.Update();       
+    }
+    private void CreateChessGame(ChessGameSettings chessGameSettings)
+    {
+        FENObject fenObject;
+        _chessGameSettings = chessGameSettings;
+        SubscribeToEvents();
+        PieceFactory.Initilize(Content.Load<Texture2D>("pieces"));
+        try
+        {
+            fenObject = InitializeFENObject();
+        }
+        catch (ArgumentException)
+        { throw; }
+        Arbiter.Initilize(fenObject.FEN, fenObject.HalfMoves);
+        _chessboard.InitilizeBoard(fenObject.AllPieces);
+        InitializeControllers(fenObject);
+        OverlayManager.Create(Content.Load<Texture2D>("Tsquares"));
+        InitializeClock(fenObject);
+        InitializeUI(fenObject);
+        _inMenu = false;
+        _piecesExplanation = CreatePiecesExplanation();
+        _controlsExplanation = CreateControlsExplanation();
+        ChessClock.Start();
+    }
+    protected override void Initialize()
+    {
+        base.Initialize();
+        InitializeGraphics();
+        InitializeMenu();
+    }
+    private void InitializeMenu()
+    {
+        MainMenu menu = new(GraphicsDevice, Content, CreateChessGame);
+        Button[] buttons = menu.GetButtons();
+        Model model = new(_lightTile, 0, 0, _lightTile.Width, _lightTile.Height);
+        DrawableObject background = new DrawableObject(model, new Rectangle(0, 0, 0, 0));
+        _menuUI = new UIModule(GraphicsDevice, background, (menu.Width, menu.Height), new Vector2(0,0), new Vector2(1f,1f), new[] {menu}, new[] {menu}, buttons);
+        _menuInputManager.SubscribeToEvent(Keys.Escape, () => Exit());
+        _menuInputManager.SubscribeToEvent(Keys.F11, () => { _graphics.IsFullScreen = !_graphics.IsFullScreen; _graphics.ApplyChanges(); });
+    }
+    protected override void LoadContent()
+    {
+        _spriteBatch = new SpriteBatch(GraphicsDevice);
+        _chessboard = Chessboard.Create(Content.Load<Texture2D>("chessboard"));
+        _clockTimeFont = Content.Load<SpriteFont>("ChessClock");
+        _messagesFont = Content.Load<SpriteFont>("messages");
+        _lightTile = Content.Load<Texture2D>("lightTile");
+        _darkTile = Content.Load<Texture2D>("darkTile");
+    }
+    protected override void Update(GameTime gameTime)
+    {
+        if (!_inMenu)
+        {
+            if (!_buttonInputOnly)
+                _chessboardInputManager.CheckInput(gameTime);
+            MovementManager.Instance.Update(gameTime);
+
+            var mouseState = Mouse.GetState();
+            foreach (UIModule module in _uiModules)
+                module.Interact(mouseState.Position);
+
+            if (_isRunning && (_updateController || ChessClock.ActiveController is HumanController) && !_buttonInputOnly)
             {
                 _updateController = false;
                 ChessClock.ActiveController.MakeMove();
             }
-
-            base.Update(gameTime);
         }
-
-        protected override void Draw(GameTime gameTime)
+        else
         {
-            GraphicsDevice.Clear(Color.CornflowerBlue);
-
-
-            _spriteBatch.Begin();
-            _spriteBatch.Draw(_chessboard.Model.RawTexture, _chessboard.Position, _chessboard.Model.TextureRect, Color.White);
-            List<DrawableObject> overlays = OverlayManager.GetOverlays();
-            foreach (var obj in overlays)
-            {
-                _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);
-            }
-            foreach (var controller in _controllers)
-            {
-                foreach (var obj in controller.Pieces)
-                {
-                    _spriteBatch.Draw(obj.Model.RawTexture, obj.Position, obj.Model.TextureRect, obj.Color);
-                    if (controller is HumanController hc)
-                    {
-                        if (hc.DragedPiece.PieceTexture != null)
-                        {
-                            _spriteBatch.Draw(hc.DragedPiece.PieceTexture.RawTexture, hc.DragedPiece.Position, hc.DragedPiece.PieceTexture.TextureRect, Color.White);
-                        }
-                    }
-                }
-            }
-            (TimeSpan white, TimeSpan black) = ChessClock.GetTimers();
-            Vector2 topClock = new Vector2(15, 216);
-            Vector2 bottomClock = new Vector2(15, 288);
-            Vector2 whiteClock, blackClock;
-            if (Chessboard.Instance.Inverted)
-            {
-                whiteClock = topClock;
-                blackClock = bottomClock;
-            }
-            else
-            {
-                whiteClock = bottomClock;
-                blackClock = topClock;
-            }
-            _spriteBatch.DrawString(_clockTimeFont, $"{black.Minutes:d2}:{black.Seconds:d2}:{black.Milliseconds:d2}", blackClock, Color.Black);
-            _spriteBatch.DrawString(_clockTimeFont, $"{white.Minutes:d2}:{white.Seconds:d2}:{white.Milliseconds:d2}", whiteClock, Color.Black);
-
-            if(!_isRunning)
-            {
-                _spriteBatch.DrawString(_clockTimeFont, $"{_endgameMessage}", new Vector2(100, 400), Color.Red);
-            }
-            _spriteBatch.End();
-
-            base.Draw(gameTime);
+            _menuInputManager.CheckInput(gameTime);
+            _menuUI.Interact(Mouse.GetState().Position);
         }
-    } 
+        base.Update(gameTime);
+    }
+    protected override void Draw(GameTime gameTime)
+    {
+        _spriteBatch.Begin();
+        GraphicsDevice.Clear(Color.CornflowerBlue);
+        if (!_inMenu)
+        {
+            PrepareUIModulesForDrawing();
+            DrawUIModules();
+            if (_explanationVisible)
+                _spriteBatch.Draw(_piecesExplanation.Model.RawTexture, _piecesExplanation.DestinationRectangle, _piecesExplanation.Model.TextureRect, Color.White);
+            if (_controlsVisible)
+                _spriteBatch.Draw(_controlsExplanation.Model.RawTexture, _controlsExplanation.DestinationRectangle, _controlsExplanation.Model.TextureRect, Color.White);
+        }
+        else
+        {           
+            _menuUI.PrepareRenderTarget();
+            _spriteBatch.Draw(_menuUI.RenderTarget, new Rectangle((int)_menuUI.Position.X, (int)_menuUI.Position.Y, _menuUI.Width, _menuUI.Height), Color.White);
+        }
+        _spriteBatch.End();
+        base.Draw(gameTime);
+    }
+    private void PrepareUIModulesForDrawing()
+    {
+        foreach (UIModule module in _uiModules)
+        {
+            module.PrepareRenderTarget();
+            if (module == _chessboardUIModule && _boardSaver.UpdateRequired)
+                _boardSaver.SaveBoardInBothInversions(module);
+        }
+    }
+    private void DrawUIModules()
+    {
+        foreach (UIModule module in _uiModules)
+        {
+            if (module == _chessboardUIModule && _boardSaver.ShouldBeDrawn)
+                _spriteBatch.Draw(_boardSaver.CurrentFrame, new Rectangle((int)module.Position.X, (int)module.Position.Y, module.Width, module.Height), Color.Wheat);
+            else
+                _spriteBatch.Draw(module.RenderTarget, new Rectangle((int)module.Position.X, (int)module.Position.Y, module.Width, module.Height), Color.White);
+        }
+    }    
+    public Point TranslateToBoard(Point point) => _chessboardUIModule.ToLocalCoordinates(point);
 }
