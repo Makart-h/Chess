@@ -1,13 +1,13 @@
 ﻿using Chess.Board;
+using Chess.Pieces.Info;
 
-namespace Chess.Pieces
+namespace Chess.Pieces;
+
+internal interface IPieceOwner
 {
-    internal interface IPieceOwner
-    {
-        public King GetKing(Team team);
-        public bool GetPiece(Square square, out Piece piece);
-        public Team IsSquareOccupied(Square square);
-        public bool ArePiecesFacingEachOther(Piece first, Piece second);
-        public void OnPromotion(Piece piece);
-    }
+    public King GetKing(Team team);
+    public bool TryGetPiece(Square square, out Piece piece);
+    public Team GetTeamOnSquare(Square square);
+    public bool ArePiecesFacingEachOther(Piece first, Piece second);
+    public void OnPromotion(Piece piece);
 }

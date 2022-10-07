@@ -1,122 +1,158 @@
 ﻿using Chess.Board;
+using Chess.Pieces.Info;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Reflection;
 
-namespace Chess.Pieces
+namespace Chess.Pieces;
+
+internal static class PieceFactory
 {
-    internal static class PieceFactory
+    private static bool _isInitilized;
+    private static Texture2D _piecesRawTexture;
+    public static Texture2D PiecesRawTexture
     {
-        private static bool _isInitilized;
-        private static Texture2D _piecesRawTexture;
-
-        public static void Initilize(Texture2D piecesRawTexture)
+        get
         {
-            PieceFactory._piecesRawTexture = piecesRawTexture;
-            _isInitilized = true;
+            CheckInitialization();
+            return _piecesRawTexture;
         }
-        public static Piece CreateAPiece(char type, Square square, bool isRaw = false)
-        {
-            if (!_isInitilized)
-                throw new TypeInitializationException("Factory not initilized!", null);
+    }
+    public static int PieceTextureWidth;
+    // Taking colors of the pieces into consideration.
+    private const int _numberOfDifferentPieces = 12;
 
-            return type switch
-            {
-                'p' => new Pawn(Team.Black, square, _piecesRawTexture, isRaw),
-                'r' => new Rook(Team.Black, square, _piecesRawTexture, isRaw),
-                'n' => new Knight(Team.Black, square, _piecesRawTexture, isRaw),
-                'b' => new Bishop(Team.Black, square, _piecesRawTexture, isRaw),
-                'k' => new King(Team.Black, square, _piecesRawTexture, isRaw),
-                'q' => new Queen(Team.Black, square, _piecesRawTexture, isRaw),
-                'P' => new Pawn(Team.White, square, _piecesRawTexture, isRaw),
-                'R' => new Rook(Team.White, square, _piecesRawTexture, isRaw),
-                'N' => new Knight(Team.White, square, _piecesRawTexture, isRaw),
-                'B' => new Bishop(Team.White, square, _piecesRawTexture, isRaw),
-                'K' => new King(Team.White, square, _piecesRawTexture, isRaw),
-                'Q' => new Queen(Team.White, square, _piecesRawTexture, isRaw),
-                _ => throw new NotImplementedException()
-            };
-        }
-        public static Piece CreateAPiece(PieceType type, Square square, Team team, bool isRaw = false)
-        {
-            if (!_isInitilized)
-                throw new TypeInitializationException("Factory not initilized!", null);
+    public static void Initilize(Texture2D piecesRawTexture)
+    {
+        _piecesRawTexture = piecesRawTexture;
+        PieceTextureWidth = _piecesRawTexture.Width / _numberOfDifferentPieces;
+        _isInitilized = true;
+    }
+    private static void CheckInitialization()
+    {
+        if (!_isInitilized)
+            throw new TypeInitializationException("Factory not initilized!", null);
+    }
+    public static Piece CreateAPiece(char type, Square square, bool isRaw = false)
+    {
+        CheckInitialization();
 
-            return type switch
-            {
-                PieceType.Queen => new Queen(team, square, _piecesRawTexture, isRaw),
-                PieceType.Rook => new Rook(team, square, _piecesRawTexture, isRaw),
-                PieceType.Pawn => new Pawn(team, square, _piecesRawTexture, isRaw),
-                PieceType.Knight => new Knight(team, square, _piecesRawTexture, isRaw),
-                PieceType.Bishop => new Bishop(team, square, _piecesRawTexture, isRaw),
-                PieceType.King => new King(team, square, _piecesRawTexture, isRaw),
-                _ => throw new NotImplementedException()
-            };
-        }
-        public static Piece CopyAPiece(Piece piece, IPieceOwner owner, bool isRaw = false)
+        return type switch
         {
-            if (!_isInitilized)
-                throw new TypeInitializationException("Factory not initilized!", null);
+            'p' => new Pawn(Team.Black, square, isRaw),
+            'r' => new Rook(Team.Black, square, isRaw),
+            'n' => new Knight(Team.Black, square, isRaw),
+            'b' => new Bishop(Team.Black, square, isRaw),
+            'k' => new King(Team.Black, square, isRaw),
+            'q' => new Queen(Team.Black, square, isRaw),
+            'P' => new Pawn(Team.White, square, isRaw),
+            'R' => new Rook(Team.White, square, isRaw),
+            'N' => new Knight(Team.White, square, isRaw),
+            'B' => new Bishop(Team.White, square, isRaw),
+            'K' => new King(Team.White, square, isRaw),
+            'Q' => new Queen(Team.White, square, isRaw),
+            _ => throw new NotImplementedException()
+        };
+    }
+    public static Piece CreateAPiece(PieceType type, Square square, Team team, bool isRaw = false)
+    {
+        CheckInitialization();
 
-            Type type = piece.GetType();
-            ConstructorInfo ci = type.GetConstructor(new[] { type, isRaw.GetType() });
-
-            var copy = ci?.Invoke(new object[] { piece, isRaw });
-            if (copy is Piece p)
-            {
-                p.Owner = owner;
-                return p;
-            }
-            return null;
-        }
-        public static char GetPieceType(Piece piece)
+        return type switch
         {
-            if(piece is King k)
-            {
-                if (k.Team == Team.White)
-                    return 'K';
-                else
-                    return 'k';
-            }
-            else if (piece is Queen q)
-            {
-                if (q.Team == Team.White)
-                    return 'Q';
-                else
-                    return 'q';
-            }
-            else if (piece is Bishop b)
-            {
-                if (b.Team == Team.White)
-                    return 'B';
-                else
-                    return 'b';
-            }
-            else if (piece is Knight n)
-            {
-                if (n.Team == Team.White)
-                    return 'N';
-                else
-                    return 'n';
-            }
-            else if (piece is Rook r)
-            {
-                if (r.Team == Team.White)
-                    return 'R';
-                else
-                    return 'r';
-            }
-            else if (piece is Pawn p)
-            {
-                if (p.Team == Team.White)
-                    return 'P';
-                else
-                    return 'p';
-            }
+            PieceType.Queen => new Queen(team, square, isRaw),
+            PieceType.Rook => new Rook(team, square, isRaw),
+            PieceType.Pawn => new Pawn(team, square, isRaw),
+            PieceType.Knight => new Knight(team, square, isRaw),
+            PieceType.Bishop => new Bishop(team, square, isRaw),
+            PieceType.King => new King(team, square, isRaw),
+            _ => throw new NotImplementedException()
+        };
+    }
+    public static Piece CopyAPiece(Piece piece, IPieceOwner owner, bool isRaw = false)
+    {
+        CheckInitialization();
+
+        Piece copy = piece switch
+        {
+            King k => new King(k, isRaw),
+            Queen q => new Queen(q, isRaw),
+            Bishop b => new Bishop(b, isRaw),
+            Knight n => new Knight(n, isRaw),
+            Rook r => new Rook(r, isRaw),
+            Pawn p => new Pawn(p, isRaw),
+            _ => null
+        };
+        if(copy != null)
+            copy.Owner = owner;
+        return copy;
+    }
+    public static char GetPieceCharacter(Piece piece)
+    {
+        if (piece is King k)
+        {
+            if (k.Team == Team.White)
+                return 'K';
             else
-            {
-                throw new NotImplementedException();
-            }
+                return 'k';
         }
+        else if (piece is Queen q)
+        {
+            if (q.Team == Team.White)
+                return 'Q';
+            else
+                return 'q';
+        }
+        else if (piece is Bishop b)
+        {
+            if (b.Team == Team.White)
+                return 'B';
+            else
+                return 'b';
+        }
+        else if (piece is Knight n)
+        {
+            if (n.Team == Team.White)
+                return 'N';
+            else
+                return 'n';
+        }
+        else if (piece is Rook r)
+        {
+            if (r.Team == Team.White)
+                return 'R';
+            else
+                return 'r';
+        }
+        else if (piece is Pawn p)
+        {
+            if (p.Team == Team.White)
+                return 'P';
+            else
+                return 'p';
+        }
+        else
+        {
+            throw new NotImplementedException();
+        }
+    }
+    public static char GetPieceCharacter(PieceType pieceType, Team team)
+    {
+        return (pieceType, team) switch
+        {
+            (PieceType.Queen, Team.White) => 'Q',
+            (PieceType.Queen, Team.Black) => 'q',
+            (PieceType.King, Team.White) => 'K',
+            (PieceType.King, Team.Black) => 'k',
+            (PieceType.Bishop, Team.White) => 'B',
+            (PieceType.Bishop, Team.Black) => 'b',
+            (PieceType.Knight, Team.White) => 'N',
+            (PieceType.Knight, Team.Black) => 'n',
+            (PieceType.Rook, Team.White) => 'R',
+            (PieceType.Rook, Team.Black) => 'r',
+            (PieceType.Pawn, Team.White) => 'P',
+            (PieceType.Pawn, Team.Black) => 'p',
+            _ => throw new NotImplementedException()
+        };
     }
 }
