@@ -129,49 +129,6 @@ internal sealed class Chessboard : DrawableObject
         int y = square.Digit - 1;
         return (y, x);
     }
-    public bool ArePiecesFacingEachOther(Piece first, Piece second)
-    {
-        (int, int)? iterator = GetIterator(startingPosition: first.Square, destination: second.Square);
-
-        if (iterator.HasValue)
-        {
-            Square square = first.Square;
-            do
-            {
-                square.Transform(iterator.Value);
-                if (TryGetPiece(square, out Piece pieceOnTheWay))
-                    return pieceOnTheWay == second;
-            }
-            while (Square.Validate(square));
-        }
-
-        return false;
-    }
-    private static (int letter, int digit)? GetIterator(Square startingPosition, Square destination)
-    {
-        (int letter, int digit)? iterator;
-        // Squares are on the same horizontal line.
-        if (startingPosition.Letter == destination.Letter)
-        {
-            iterator = (0, startingPosition.Digit > destination.Digit ? -1 : 1);
-        }
-        // Squares are on the same vertical line.
-        else if (startingPosition.Digit == destination.Digit)
-        {
-            iterator = (startingPosition.Letter > destination.Letter ? -1 : 1, 0);
-        }
-        // Squares are on the same diagonal.
-        else if (Math.Abs(startingPosition.Digit - destination.Digit) == Math.Abs(startingPosition.Letter - destination.Letter))
-        {
-            int directionLetter = startingPosition.Letter > destination.Letter ? -1 : 1;
-            int directionDigit = startingPosition.Digit > destination.Digit ? -1 : 1;
-            iterator = (directionLetter, directionDigit);
-        }
-        else
-            iterator = null;
-
-        return iterator;
-    }
     public Square FromVector(Vector2 vector) => FromCords((int)vector.X, (int)vector.Y);
     public Square FromCords(int x, int y)
     {
