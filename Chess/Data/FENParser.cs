@@ -10,6 +10,10 @@ namespace Chess.Data;
 
 internal static class FENParser
 {
+    private static readonly byte _boardWidth = 8;
+    private static readonly byte _digitToIndexOffset = 1;
+    private static readonly char _firstLetter = 'a';
+    private static readonly char _rankSeparator = '/';
     private static Match ValidateString(string FEN)
     {
         RegexOptions regexOptions = RegexOptions.IgnoreCase;
@@ -40,18 +44,18 @@ internal static class FENParser
     {
         List<Piece> white = new();
         List<Piece> black = new();
-        int x = 8;
-        int y = 'A';
+        int x = _boardWidth;
+        int y = _firstLetter;
         foreach (char c in fenGroup)
         {
-            if (c == '/')
+            if (c == _rankSeparator)
             {
                 x--;
-                y = 'A';
+                y = _firstLetter;
             }
             else if (char.IsDigit(c))
             {
-                y += c - '0';
+                y += int.Parse(c.ToString());
             }
             else
             {
@@ -129,17 +133,17 @@ internal static class FENParser
         }
         return value;
     }
-    public static string ToFullFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves, int moves)
+    public static string ToFullFenString(Piece[] pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves, int moves)
     {
         string shortFen = ToShortFenString(pieces, white, black, toMove);
         return shortFen + $" {(halfMoves == 0 ? "-" : halfMoves.ToString())} {(moves == 0 ? "-" : moves.ToString())}";
     }
-    public static string ToLongFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves)
+    public static string ToLongFenString(Piece[] pieces, CastlingRights white, CastlingRights black, Team toMove, int halfMoves)
     {
         string shortFen = ToShortFenString(pieces, white, black, toMove);
         return shortFen + $" {(halfMoves == 0 ? "-" : halfMoves.ToString())}";
     }
-    public static string ToShortFenString(Dictionary<Square, Piece> pieces, CastlingRights white, CastlingRights black, Team toMove)
+    public static string ToShortFenString(Piece[] pieces, CastlingRights white, CastlingRights black, Team toMove)
     {
         StringBuilder sb = new StringBuilder();
 
@@ -153,15 +157,15 @@ internal static class FENParser
 
         return sb.ToString();
     }
-    private static string PiecesToString(Dictionary<Square, Piece> pieces)
+    private static string PiecesToString(Piece[] pieces)
     {
         StringBuilder sb = new();
         int blanks = 0;
-        for (int number = 8; number >= 1; --number)
+        for (int number = _boardWidth; number > 0; --number)
         {
-            for (int letter = 'a'; letter <= 'h'; ++letter)
+            for (int letter = _firstLetter; letter < _firstLetter + _boardWidth; ++letter)
             {
-                Piece p = pieces[new Square((char)letter, number)];
+                Piece p = pieces[((letter - _firstLetter) * _boardWidth) + number - _digitToIndexOffset];
                 if (p != null)
                 {
                     if (blanks > 0)
@@ -190,7 +194,7 @@ internal static class FENParser
                 blanks = 0;
             }
             if (number != 1)
-                sb.Append('/');
+                sb.Append(_rankSeparator);
         }
         return sb.ToString();
     }
@@ -212,20 +216,21 @@ internal static class FENParser
 
         return sb.ToString();
     }
-    private static string EnPassantToString(Dictionary<Square, Piece> pieces)
+    private static string EnPassantToString(Piece[] pieces)
     {
-        foreach (Piece piece in pieces.Values)
+        foreach (Piece piece in pieces)
         {
             if (piece is Pawn {EnPassant: true } p)
             {
                 bool isCapturable = false;
-                Square oneLeft = new Square((char)(p.Square.Letter - 1), p.Square.Digit);
-                Square oneRight = new Square((char)(p.Square.Letter + 1), p.Square.Digit);
+                Square oneLeft = new(p.Square, (-1, 0));
+                Square oneRight = new(p.Square, (1, 0));
                 foreach (Square toCheck in new[] { oneLeft, oneRight })
                 {
-                    if (toCheck.IsValid)
+                    if (Square.Validate(toCheck))
                     {
-                        if (pieces.TryGetValue(toCheck, out Piece other) && other is Pawn)
+                        Piece other = pieces[toCheck.Index];
+                        if (other is Pawn)
                         {
                             isCapturable = true;
                             break;
