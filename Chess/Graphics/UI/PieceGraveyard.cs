@@ -65,12 +65,12 @@ internal class PieceGraveyard : IDrawableProvider
     }
     private void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e)
     {      
-        Model blueprint = e.Piece.Model;
+        Model blueprint = PieceFactory.CreatePieceDrawable(e.Piece).Model;
         DrawableObject deadPiece;
         int posX = (int)_zero.X;
         int posY = (int)_zero.Y;
 
-        if(e.Piece.Team == Team.White)
+        if (e.Piece.Team == Team.White)
         {
             posX += (_whitePieces.Count % _maxPiecesInRow) * _pieceWidth;
             posY += (_whitePieces.Count / _maxPiecesInRow) * _pieceWidth;

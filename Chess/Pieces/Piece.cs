@@ -1,16 +1,12 @@
 ﻿using Chess.Board;
-using Chess.Graphics;
 using Chess.Movement;
 using Chess.Pieces.Info;
-using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
-using Model = Chess.Graphics.Model;
 
 namespace Chess.Pieces;
 
-internal abstract class Piece : DrawableObject, IComparable<Piece>
+internal abstract class Piece : IComparable<Piece>
 {
     protected readonly Team _team;
     protected bool _isSelected;
@@ -19,7 +15,7 @@ internal abstract class Piece : DrawableObject, IComparable<Piece>
     public IPieceOwner Owner { get; set; }
     public static event EventHandler<PieceMovedEventArgs> PieceMoved;
     public static event EventHandler<PieceEventArgs> PieceSelected;
-    public static event EventHandler PieceDeselected;
+    public static event EventHandler<PieceEventArgs> PieceDeselected;
     public int Value { get; protected set; }
     public MoveSets MoveSet { get => _moveSet; }
     public bool IsSelected
@@ -28,39 +24,34 @@ internal abstract class Piece : DrawableObject, IComparable<Piece>
         set
         {
             _isSelected = value;
+            if (!IsRaw)
+            {
             if (_isSelected)
                 OnPieceSelected(new PieceEventArgs(this));
             else
-                OnPieceDeselected(EventArgs.Empty);
-            _color.A = _isSelected ? (byte)10 : (byte)255;
+                    OnPieceDeselected(new PieceEventArgs(this));
         }
+    }
     }
     public bool IsRaw { get; protected set; }
     public Square Square { get; set; }
     protected List<Move> moves;
 
     protected Piece(Team team, Square square, PieceType type, bool isRaw)
-        : base(null, new Rectangle((int)Chessboard.Instance.ToCordsFromSquare(square).X, (int)Chessboard.Instance.ToCordsFromSquare(square).Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength))
     {
         IsRaw = isRaw;
-        if (!IsRaw)
-        {
-            Texture2D rawTexture = PieceFactory.PiecesRawTexture;
-            int texturePosX = PieceFactory.PieceTextureWidth * (int)type + (rawTexture.Width / 2 * ((byte)team & 1));
-            Model = new Model(rawTexture, texturePosX, 0, PieceFactory.PieceTextureWidth, PieceFactory.PieceTextureWidth);
-        }      
         _team = team;
         Square = square;
-        moves = new();
+        Type = type;
+        _moves = new();
     }
-    protected Piece(Piece other, bool isRaw) : base(null, Rectangle.Empty)
+    protected Piece(Piece other, bool isRaw)
     {
         IsRaw = isRaw;
-        Model = IsRaw ? null : new Model(other.Model);
         _team = other._team;
         Square = other.Square;
-        moves = other.CreateCopyOfMoves();
-        _moveSet = other._moveSet;
+        _moves = new();
+        _moveset = other._moveset;
         Value = other.Value;
         Owner = other.Owner;
     }

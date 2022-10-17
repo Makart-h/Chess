@@ -8,13 +8,13 @@ internal class DrawableObject
     public Model Model { get; protected set; }
     public Rectangle DestinationRectangle { get; protected set; }
     public Vector2 Position { get; protected set; }
-    protected Color _color = Color.White;
-    public virtual Color Color { get => _color; }
+    public Color Color { get; set; }
     public DrawableObject(Model model, Rectangle destinationRectangle)
     {
         Model = model;
         Position = new Vector2(destinationRectangle.X, destinationRectangle.Y);
         DestinationRectangle = destinationRectangle;
+        Color = Color.White;
     }
     public void MoveObject(Vector2 vector)
     { 

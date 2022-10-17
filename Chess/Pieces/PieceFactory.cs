@@ -1,8 +1,10 @@
 ﻿using Chess.Board;
+using Chess.Graphics;
 using Chess.Pieces.Info;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
-using System.Reflection;
+using Model = Chess.Graphics.Model;
 
 namespace Chess.Pieces;
 
@@ -32,6 +34,16 @@ internal static class PieceFactory
     {
         if (!_isInitilized)
             throw new TypeInitializationException("Factory not initilized!", null);
+    }
+    public static DrawableObject CreatePieceDrawable(Piece piece)
+    {
+        Chessboard board = Chessboard.Instance;
+        int texturePosX = PieceTextureWidth * (int)piece.Type + (PiecesRawTexture.Width / 2 * ((byte)piece.Team & 1));
+        Model model = new(PiecesRawTexture, texturePosX, 0, PieceTextureWidth, PieceTextureWidth);
+        Vector2 position = board.ToCordsFromSquare(piece.Square);
+        Rectangle destinationRectangle = new((int)position.X, (int)position.Y, board.SquareSideLength, board.SquareSideLength);
+        DrawableObject drawable = new(model, destinationRectangle);
+        return drawable;
     }
     public static Piece CreateAPiece(char type, Square square, bool isRaw = false)
     {
@@ -81,10 +93,9 @@ internal static class PieceFactory
             Knight n => new Knight(n, isRaw),
             Rook r => new Rook(r, isRaw),
             Pawn p => new Pawn(p, isRaw),
-            _ => null
+            _ => throw new NotImplementedException()
         };
-        if(copy != null)
-            copy.Owner = owner;
+        copy.Owner = owner;
         return copy;
     }
     public static char GetPieceCharacter(Piece piece)

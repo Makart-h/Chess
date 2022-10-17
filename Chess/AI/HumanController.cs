@@ -22,7 +22,7 @@ internal sealed class HumanController : Controller
     public override void Update() => base.Update();
     public override DrawableObject[] GetDrawableObjects()
     {
-        List<DrawableObject> drawables = new(_pieces);
+        List<DrawableObject> drawables = new(_drawablePieces.Values);
         if (_dragedPiece != null)
             drawables.Add(_dragedPiece);
         return drawables.ToArray();
@@ -56,8 +56,8 @@ internal sealed class HumanController : Controller
         _targetedPiece = Chessboard.Instance.CheckCollisions(x, y);
         if (_targetedPiece != null && _targetedPiece.Team == Team)
         {
-            _targetedPiece.IsSelected = true;
-            _dragedPiece ??= new DrawableObject(_targetedPiece.Model, new Rectangle(x, y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength));
+            _targetedPiece.IsSelected = true;         
+            _dragedPiece ??= PieceFactory.CreatePieceDrawable(_targetedPiece);
         }
     }
     private void ApplyMove()
