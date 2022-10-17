@@ -43,22 +43,6 @@ internal readonly struct Evaluation : IComparable, IComparable<Evaluation>, IEqu
     {
         return HashCode.Combine(Value, Depth);
     }
-    public static bool operator <(Evaluation left, Evaluation right)
-    {
-        return left.CompareTo(right) < 0;
-    }
-    public static bool operator <=(Evaluation left, Evaluation right)
-    {
-        return left.CompareTo(right) <= 0;
-    }
-    public static bool operator >(Evaluation left, Evaluation right)
-    {
-        return left.CompareTo(right) > 0;
-    }
-    public static bool operator >=(Evaluation left, Evaluation right)
-    {
-        return left.CompareTo(right) >= 0;
-    }
     public static bool operator ==(Evaluation left, Evaluation right)
     {
         return left.Equals(right);
