@@ -69,7 +69,7 @@ internal sealed class AIController : Controller
         if (evaluations.Length != movesToConsider.Length)
             throw new ArgumentOutOfRangeException("The count of evaluations doesn't match the count of moves!");
 
-        Evaluation bestOutcome = Team == Team.White ? evaluations.Max() : evaluations.Min();
+        Evaluation bestOutcome = Evaluation.Max(evaluations, Team == Team.White);
         var bestOptions = new List<int>();
         for (var i = 0; i < evaluations.Length; ++i)
         {
@@ -85,7 +85,7 @@ internal sealed class AIController : Controller
         double desiredValue = Team == Team.White ? 1000 : -1000;
         if (_movesQueue.Count == 0 && chosenEvaluation.Value == desiredValue)
         {
-            _movesQueue.AddRange(chosenEvaluation.Path.Split("->"));
+            _movesQueue.AddRange(chosenEvaluation.Path.Split("|"));
             _movesQueue.RemoveAt(0);
         }
     }
@@ -104,7 +104,8 @@ internal sealed class AIController : Controller
     }
     private void ApplyMove(Move move)
     {
-        if (Chessboard.Instance.TryGetPiece(move.Former, out Piece piece))
+        Piece piece = Chessboard.Instance.GetPiece(move.Former);
+        if (piece != null)
         {
             if (Chessboard.Instance.MovePiece(piece, move.Latter, out Move _))
             {
@@ -131,21 +132,13 @@ internal sealed class AIController : Controller
         }
         return false;
     }
-    private Task<Evaluation> GetMoveEvaluationAsync(Move move, CancellationToken token)
+    private async Task<Evaluation> GetMoveEvaluationAsync(Move move, CancellationToken token)
     {
-        return Task.Run(async () =>
-        {
-            try
-            {
-                var position = await Position.CreateAsync(board: Chessboard.Instance, activeTeam: Team, move: move, token: token, occuredPostions: Arbiter.OccuredPositions);
-                var node = await PositionNode.CreateAsync(path: string.Empty, position: position, team: Team, depth: 1, isFertile: true, token: token);
-                return await node.FindBestOutcomeAsync(token: token);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-        }, token);
+        var position = await Position.CreateAsync(board: Chessboard.Instance, activeTeam: Team, move: move, token: token, occuredPositions: Arbiter.OccuredPositions);
+        token.ThrowIfCancellationRequested();
+        var node = await PositionNode.CreateAsync(path: string.Empty, position: position, team: Team, depth: 1, isFertile: true, token: token);
+        token.ThrowIfCancellationRequested();
+        return await node.FindBestOutcomeAsync(token: token);
     }
     protected override void OnMoveMade(MoveMadeEventArgs e)
     {
