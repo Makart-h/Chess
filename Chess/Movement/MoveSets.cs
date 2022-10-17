@@ -3,7 +3,7 @@
 namespace Chess.Movement;
 
 [Flags]
-enum MoveSets
+enum Movesets
 {
     Pawn = 1,
     Horizontal = 1 << 1,
