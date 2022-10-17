@@ -4,38 +4,52 @@ using System.Text.RegularExpressions;
 
 namespace Chess.Board;
 
-internal struct Square
+internal struct Square : IEquatable<Square>
 {
-    private static readonly Regex _regex;
+    private static readonly Regex s_regex;
+    private static readonly char s_minLetter;
+    private static readonly char s_maxLetter;
+    private static readonly int s_minDigit;
+    private static readonly int s_maxDigit;
     static Square()
     {
         RegexOptions options = RegexOptions.IgnoreCase;
         string regex = @"^(?'letter'[a-h]{1})(?'number'[1-8]{1})$";
-        _regex = new Regex(regex, options);
+        s_regex = new Regex(regex, options);
+        s_minDigit = 1;
+        s_maxDigit = 8;
+        s_minLetter = 'a';
+        s_maxLetter = 'h';
     }
-    public char Letter { get; private set; }
-    public int Digit { get; private set; }
-    public bool IsValid { get => Validate(this); }
-    public Square(char letter, int number)
+    private int _index;
+    private char _letter;
+    private int _digit;
+    public readonly char Letter { get => _letter; }
+    public readonly int Digit { get => _digit; }
+    public readonly int Index { get => _index; }
+    public Square(char letter, int digit)
     {
-        Letter = char.ToLower(letter);
-        Digit = number;
+        _letter = char.ToLower(letter);
+        _digit = digit;
+        _index = ((_letter - s_minLetter) * s_maxDigit) + _digit - 1;
     }
-    public Square(Square other)
+    public Square(Square other, (int x, int y) iterator)
     {
-        Letter = other.Letter;
-        Digit = other.Digit;
+        _letter = (char)(other._letter + iterator.x);
+        _digit = other._digit + iterator.y;
+        _index = other._index + iterator.x * s_maxDigit + iterator.y;
     }
     public Square(string square)
     {
-        var match = _regex.Match(square);
+        var match = s_regex.Match(square);
         if (match.Success)
         {
-            Letter = char.ToLower(match.Groups["letter"].Value.First());
+            _letter = char.ToLower(match.Groups["letter"].Value.First());
 
             if (int.TryParse(match.Groups["number"].Value, out int digit))
             {
-                Digit = digit;
+                _digit = digit;
+                _index = ((_letter - s_minLetter) * s_maxDigit) + _digit - 1;
                 return;
             }
         }
@@ -43,8 +57,8 @@ internal struct Square
     }
     public static bool IsLightSquare(Square square)
     {
-        int letterInt = square.Letter - 'a' + 1;
-        int digit = square.Digit;
+        int letterInt = square._letter - 'a' + 1;
+        int digit = square._digit;
         if (letterInt % 2 == 0)
             return digit % 2 != 0;
         else
@@ -52,19 +66,21 @@ internal struct Square
     }
     public void Transform((int letter, int digit) iterator)
     {
-        Letter = (char)(Letter + iterator.letter);
-        Digit += iterator.digit;
+        _letter = (char)(Letter + iterator.letter);
+        _digit += iterator.digit;
+        _index += iterator.letter * s_maxDigit + iterator.digit;
     }
-    public static bool operator ==(Square first, Square second) => first.Letter == second.Letter && first.Digit == second.Digit;
-    public static (int x, int y) operator -(Square first, Square second) => (first.Letter - second.Letter, first.Digit - second.Digit);
-    public static bool Validate(Square square) => square.Digit >= 1 && square.Digit <= 8 && square.Letter >= 'a' && square.Letter <= 'h';
+    public static bool operator ==(Square first, Square second) => first._index == second._index;
+    public static (int x, int y) operator -(Square first, Square second) => (first._letter - second._letter, first._digit - second._digit);
+    public static bool Validate(Square square) => square._letter >= s_minLetter && square._letter <= s_maxLetter && square._digit >= s_minDigit && square._digit <= s_maxDigit;
     public static bool operator !=(Square first, Square second) => !(first == second);
-    public override bool Equals(object obj) => (obj is Square s) && this == s;
-    public override int GetHashCode() => HashCode.Combine(Letter.GetHashCode(), Digit.GetHashCode());
-    public override string ToString() => $"{Letter}{Digit}";
-    public void Deconstruct(out char letter, out int digit)
+    public override readonly bool Equals(object obj) => (obj is Square s) && this == s;
+    public readonly bool Equals(Square other) => this == other;
+    public override readonly int GetHashCode() => HashCode.Combine(_letter.GetHashCode(), _digit.GetHashCode());
+    public override readonly string ToString() => _letter + _digit.ToString();
+    public readonly void Deconstruct(out char letter, out int digit)
     {
-        letter = Letter;
-        digit = Digit;
-    }
+        letter = _letter;
+        digit = _digit;
+    } 
 }

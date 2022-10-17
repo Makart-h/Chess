@@ -21,7 +21,7 @@ internal sealed class Position : IPieceOwner
     public int HalfMoves { get; init; }
     public Square? EnPassant { get; private set; }
     public bool Check { get; private set; }
-    public Dictionary<Square, Piece> Pieces { get; init; }
+    public Piece[] Pieces { get; init; }
     public Dictionary<string, int> OccuredPositions { get; init; }
     public List<Move> NextMoves { get; init; }
     public string MovePlayed { get; init; }
@@ -65,30 +65,27 @@ internal sealed class Position : IPieceOwner
             return position;
         });
     }
-    private void CopyDictionary(Dictionary<Square, Piece> other)
+    private void CopyPieces(Piece[] other)
     {
-        Piece copiedPiece;
-        foreach (var key in other.Keys)
+        Piece pieceToCopy;
+        Piece createdPiece;
+        for(int i = 0; i < other.Length; ++i)
         {
-            copiedPiece = other[key];
-            if (copiedPiece != null)
+            pieceToCopy = other[i];          
+            if (pieceToCopy != null)
             {
-                Piece createdPiece = PieceFactory.CopyAPiece(copiedPiece, this, true);
-                Pieces[key] = createdPiece;
-                if (createdPiece is King k)
+                createdPiece = PieceFactory.CopyAPiece(pieceToCopy, this, true);
+                Pieces[i] = createdPiece;
+                if (createdPiece.Moveset == Movesets.King)
                 {
-                    if (k.Team == Team.White)
-                        White = k;
+                    if (createdPiece.Team == Team.White)
+                        White = (King)createdPiece;
                     else
-                        Black = k;
+                        Black = (King)createdPiece;
                 }
             }
-            else
-            {
-                Pieces[key] = null;
             }
         }
-    }
     public King GetKing(Team team)
     {
         return team switch
@@ -98,33 +95,38 @@ internal sealed class Position : IPieceOwner
             _ => null
         };
     }
-    private void ApplyMove(Move move)
+    private void ApplyMove(in Move move)
     {
-        move = Pieces[move.Former]?.GetAMove(move.Latter);
-        if (move != null)
-        {
-            Pieces[move.Latter] = Pieces[move.Former];
-            Pieces[move.Former] = null;
+        int formerIndex = move.Former.Index;
+        int latterIndex = move.Latter.Index;
+        Pieces[latterIndex] = Pieces[formerIndex];
+        Pieces[formerIndex] = null;
             if (move.Description == 'p')
             {
-                Square enPassant = new Square(move.Latter.Letter, move.Former.Digit);
-                Pieces[enPassant] = null;
+            Square enPassant = new(move.Latter.Letter, move.Former.Digit);
+            Pieces[enPassant.Index] = null;
             }
             else if (move.Description == 'k' || move.Description == 'q')
             {
                 int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
-                Square originalRookPosition = King.GetCastlingRookSquare(move.Description, Pieces[move.Latter].Team);
-                Square newRookPosition = new Square((char)(move.Latter.Letter + direction), move.Latter.Digit);
-                Move rookMove = new Move(Pieces[originalRookPosition].Square, newRookPosition, 'c');
-                Pieces[originalRookPosition].MovePiece(rookMove);
-                Pieces[newRookPosition] = Pieces[originalRookPosition];
-                Pieces[originalRookPosition] = null;
+            Square originalRookPosition = King.GetCastlingRookSquare(move.Description, Pieces[latterIndex].Team);
+            int originalRookPositionIndex = originalRookPosition.Index;
+            Square newRookPosition = new(move.Latter, (direction, 0));
+            Move rookMove = new(Pieces[originalRookPositionIndex].Square, newRookPosition, 'c');
+            Pieces[originalRookPositionIndex].MovePiece(rookMove);
+            Pieces[newRookPosition.Index] = Pieces[originalRookPositionIndex];
+            Pieces[originalRookPositionIndex] = null;
 
             }
-            Pieces[move.Latter].MovePiece(move);
+        Piece piece = Pieces[latterIndex];
+        piece.MovePiece(in move);
+        if (piece is Pawn { EnPassant: true } p)
+        {
+            EnPassant = new Square(piece.Square, (0, -p.Value));
+            enPassantPiece = piece;
         }
         else
-            throw new InvalidOperationException("No such move on the given piece!");
+            EnPassant = new Square('p', 0);
     }
     private void Update()
     {
@@ -218,12 +220,12 @@ internal sealed class Position : IPieceOwner
         PieceType type = PieceType.Queen;
         Square square = piece.Square;
         Team team = piece.Team;
-        Pieces[square] = null;
+        Pieces[square.Index] = null;
         try
         {
             Piece newPiece = PieceFactory.CreateAPiece(type, square, team);
             newPiece.Owner = piece.Owner;
-            Pieces[square] = newPiece;
+            Pieces[square.Index] = newPiece;
         }
         catch (NotImplementedException e)
         {
