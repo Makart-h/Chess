@@ -24,6 +24,14 @@ internal static class ChessClock
             return _controllers[_activeTeam];
         }
     }
+    public static Controller InactiveController
+    {
+        get
+        {
+            CheckInitialization();
+            return _controllers[~_activeTeam];
+        }
+    }
     public static event EventHandler<TimerExpiredEventArgs> TimerExpired;
     static ChessClock()
     {
