@@ -1,8 +1,9 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Chess.Positions;
 
-internal readonly struct Evaluation : IComparable, IComparable<Evaluation>, IEquatable<Evaluation>
+internal readonly struct Evaluation : IEquatable<Evaluation>
 {
     public double Value { get; init; }
     public int Depth { get; init; }
@@ -14,22 +15,27 @@ internal readonly struct Evaluation : IComparable, IComparable<Evaluation>, IEqu
         Depth = depth;
         Path = path;
     }
-    public int CompareTo(object obj)
+    public static Evaluation Max(IEnumerable<Evaluation> enumerable, bool standardComparison)
     {
-        if (obj == null)
-            return 1;
-        else if (obj is Evaluation e)
-            return CompareTo(e);
-        else
-            throw new ArgumentException("Object is not an Evaluation!");
+        Evaluation? maxValue = null;
+        foreach (Evaluation evaluation in enumerable)
+        {
+            if(maxValue == null || evaluation.CompareTo(maxValue.Value, standardComparison) == 1)
+                maxValue = evaluation;
+        }
+        return maxValue.Value;
     }
-    public int CompareTo(Evaluation other)
+    public int CompareTo(Evaluation other, bool standardComparison)
     {
+        int sign = standardComparison ? 1 : -1;
         int valueComparision = Value.CompareTo(other.Value);
         if (valueComparision == 0)
-            return Depth.CompareTo(other.Depth);
+        {
+            sign = Value == 1000 * sign ? -1 : 1;
+            return Depth.CompareTo(other.Depth) * sign;
+        }
         else
-            return valueComparision;
+            return valueComparision * sign;
     }
     public bool Equals(Evaluation other)
     {
