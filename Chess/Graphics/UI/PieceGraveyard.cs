@@ -64,7 +64,7 @@ internal class PieceGraveyard : IDrawableProvider
         _isInverted = !_isInverted;
     }
     private void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e)
-    {      
+    {
         Model blueprint = PieceFactory.CreatePieceDrawable(e.Piece).Model;
         DrawableObject deadPiece;
         int posX = (int)_zero.X;
@@ -76,7 +76,7 @@ internal class PieceGraveyard : IDrawableProvider
             posY += (_whitePieces.Count / _maxPiecesInRow) * _pieceWidth;
             if (_isInverted)
                 posY += Height / 2;
-            deadPiece = new DrawableObject(blueprint, new Rectangle(posX, posY, _pieceWidth, _pieceWidth));           
+            deadPiece = new DrawableObject(blueprint, new Rectangle(posX, posY, _pieceWidth, _pieceWidth));
         }
         else
         {
