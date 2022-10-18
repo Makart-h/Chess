@@ -218,8 +218,8 @@ internal class BoardControlEvaluator
     }
     private bool TryPerformExchange(List<ExchangeParticipant> activePieces, List<ExchangeParticipant> passivePieces, ref int passiveValueLost)
     {
-        var activeFirst = activePieces.First();
-        var passiveFirst = passivePieces.First();
+        var activeFirst = activePieces[0];
+        var passiveFirst = passivePieces[0];
         // If the attacking piece is more valuable than the defended piece and would be recaptured, capture is illogical.
         if (passivePieces.Count != 1 && Math.Abs(activeFirst.Piece.Value) > Math.Abs(passiveFirst.Piece.Value))
             return false;
@@ -232,16 +232,23 @@ internal class BoardControlEvaluator
         // Check if active piece uncovered a new piece to join the exchange (for either team).
         Movesets approximateMoveSet = GetMoveSetFromDirection(activeFirst.Direction);
         // If the capturing piece was a knight there is no need to check if something was uncovered since there won't be a straight line between the sqaure and the uncovered piece.
-        if (approximateMoveSet != MoveSets.Knight && _boardControl.TryGetValue(activeFirst.Piece.Square, out SquareControl control))
+        if (approximateMoveSet != Movesets.Knight)
         {
-            if (control.TryGetInvolvedSquare(activeFirst.Direction, out Square involvedSquare))
+            SquareControl control = _boardControl[activeFirst.Piece.Square.Index];
+            if (control != null)
             {
-                if (_pieces.TryGetValue(involvedSquare, out Piece potentialInvoledPiece) && potentialInvoledPiece != null && (potentialInvoledPiece.MoveSet & approximateMoveSet) != 0)
+                Square? involvedSquare = control.GetInvolvedSquare(activeFirst.Direction);
+                if (involvedSquare.HasValue)
+                {
+                    Piece potentialInvoledPiece = _pieces[involvedSquare.Value.Index];
+                    if (potentialInvoledPiece != null && (potentialInvoledPiece.Moveset & approximateMoveSet) != 0)
                 {
                     if (potentialInvoledPiece.Team == activeFirst.Piece.Team)
                     {
+                            activePieces.Remove(activeFirst);
                         activePieces.Add(new(activeFirst.Direction, potentialInvoledPiece));
                         SortParticipatingPieces(activePieces);
+                            activePieces.Insert(0, activeFirst);
                     }
                     else
                     {
@@ -250,6 +257,7 @@ internal class BoardControlEvaluator
                     }
                 }
             }
+        }
         }
         return true;
     }
