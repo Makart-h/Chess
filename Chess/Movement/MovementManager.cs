@@ -1,5 +1,6 @@
 ﻿using Chess.AI;
 using Chess.Board;
+using Chess.Graphics;
 using Chess.Pieces;
 using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
@@ -37,13 +38,13 @@ internal sealed class MovementManager : IDisposable
                 if (controller is HumanController && e.Move.Description != 'c')
                 {
                     drawablePiece.MoveObject(newPosition - drawablePiece.Position);
-            _rapidMovement = true;
-        }
-        else
-        {
+                    _rapidMovement = true;
+                }
+                else
+                {
                     _initiators.Add(new Initiator(newPosition, drawablePiece, OnDestinationReached));
-        }
-    }
+                }
+            }
         }
     }
     private void OnDestinationReached(object sender, EventArgs args)
@@ -101,80 +102,94 @@ internal sealed class MovementManager : IDisposable
         return new Vector2(width - vector.X, height - vector.Y);
     }
     private static void OnMovementConcluded(EventArgs e) => MovementConcluded?.Invoke(null, e);
-    public static (MoveSets set, Move[] moves)[] GenerateEveryMove(Square initialSquare, MoveSets set, IPieceOwner pieceOwner, bool friendlyFire = false, Piece pieceToIgnore = null)
+    public static List<Move> GenerateEveryMove(Square initialSquare, Movesets set, IPieceOwner pieceOwner, bool friendlyFire = false)
     {
-        List<(MoveSets, Move[])> movesGroupedByDirection = new();
-
-        if ((set & MoveSets.Diagonal) != 0)
-        {
-            movesGroupedByDirection.Add((MoveSets.Diagonal, GenerateMovesInADirection(initialSquare, (1, 1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Diagonal, GenerateMovesInADirection(initialSquare, (1, -1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Diagonal, GenerateMovesInADirection(initialSquare, (-1, 1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Diagonal, GenerateMovesInADirection(initialSquare, (-1, -1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-        }
-        if (set == MoveSets.Rook || set == MoveSets.Queen)
-        {
-            movesGroupedByDirection.Add((MoveSets.Vertical, GenerateMovesInADirection(initialSquare, (0, 1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Vertical, GenerateMovesInADirection(initialSquare, (0, -1), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Horizontal, GenerateMovesInADirection(initialSquare, (1, 0), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Horizontal, GenerateMovesInADirection(initialSquare, (-1, 0), pieceOwner, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-        }
+        List<Move> moves;
         // For a piece with a moveset of a pawn only the moves that lead to captures are considered.
-        else if ((set & MoveSets.Pawn) != 0)
+        if (set == Movesets.Pawn)
         {
-            int direction = (pieceToIgnore != null ? pieceToIgnore.Team : pieceOwner.GetTeamOnSquare(initialSquare)) == Team.White ? 1 : -1;
-            movesGroupedByDirection.Add((MoveSets.Pawn, GenerateMovesInADirection(initialSquare, (1, 1 * direction), pieceOwner, infiniteRange: false, "moves", friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Pawn, GenerateMovesInADirection(initialSquare, (-1, 1 * direction), pieceOwner, infiniteRange: false, "moves", friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
+            moves = new(2);
+            int direction = pieceOwner.GetTeamOnSquare(initialSquare) == Team.White ? 1 : -1;
+            GenerateMovesInDirection(moves, initialSquare, (1, 1 * direction), pieceOwner, infiniteRange: false, movesIncluded: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 1 * direction), pieceOwner, infiniteRange: false, movesIncluded: false, friendlyFire: friendlyFire);
         }
-        else if ((set & MoveSets.Knight) != 0)
+        else if (set == Movesets.Knight)
         {
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (2, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (2, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (-1, -2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (1, -2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (-2, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (-2, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (1, 2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.Knight, GenerateMovesInADirection(initialSquare, (-1, 2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-        }
-        else if ((set & MoveSets.King) != 0)
+            moves = new(4);
+            GenerateMovesInDirection(moves, initialSquare, (2, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (2, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, -2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, -2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-2, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-2, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, 2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 2), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+        }  
+        else if (set == Movesets.Bishop)
         {
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (0, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (0, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (1, 0), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (-1, 0), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (1, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (1, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (-1, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
-            movesGroupedByDirection.Add((MoveSets.King, GenerateMovesInADirection(initialSquare, (-1, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire, pieceToIgnore: pieceToIgnore)));
+            moves = new(7);
+            GenerateMovesInDirection(moves, initialSquare, (1, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, -1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, -1), pieceOwner, friendlyFire: friendlyFire);
         }
-        return movesGroupedByDirection.ToArray();
+        else if (set == Movesets.Rook)
+        {
+            moves = new(7);
+            GenerateMovesInDirection(moves, initialSquare, (0, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (0, -1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, 0), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 0), pieceOwner, friendlyFire: friendlyFire);
+        }
+        else if (set == Movesets.King)
+        {
+            moves = new(4);
+            GenerateMovesInDirection(moves, initialSquare, (0, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (0, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, 0), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 0), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, -1), pieceOwner, infiniteRange: false, friendlyFire: friendlyFire);
+        }
+        else
+        {
+            moves = new(14);
+            GenerateMovesInDirection(moves, initialSquare, (1, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, -1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, -1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (0, 1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (0, -1), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (1, 0), pieceOwner, friendlyFire: friendlyFire);
+            GenerateMovesInDirection(moves, initialSquare, (-1, 0), pieceOwner, friendlyFire: friendlyFire);
+        }
+        return moves;
     }
-    public static Move[] GenerateMovesInADirection(Square initialSquare, (int letter, int digit) cordsIterator, IPieceOwner pieceOwner, bool infiniteRange = true, string excludeMove = "none", bool friendlyFire = false, Piece pieceToIgnore = null)
+    public static void GenerateMovesInDirection(List<Move> moves, Square initialSquare, (int letter, int digit) cordsIterator, IPieceOwner pieceOwner, bool infiniteRange = true, bool movesIncluded = true, bool friendlyFire = false)
     {
-        List<Move> moves = new();
         Square current = initialSquare;
-        Team team = pieceToIgnore != null ? pieceToIgnore.Team : pieceOwner.GetTeamOnSquare(initialSquare);
+        Piece pieceOnTheWay;
         do
         {
-            if (cordsIterator == (0, 0))
-                break;
-
             current.Transform(cordsIterator);
-            if (!current.IsValid)
+            if (!Square.Validate(current))
                 break;
 
-            if (pieceOwner.TryGetPiece(current, out Piece pieceOnTheWay) && pieceOnTheWay != pieceToIgnore)
+            pieceOnTheWay = pieceOwner.GetPiece(current);
+            if (pieceOnTheWay != null)
             {
-                if (excludeMove != "takes" && (pieceOnTheWay.Team != team || friendlyFire))
+                if (pieceOnTheWay.Team != pieceOwner.GetTeamOnSquare(initialSquare))
                     moves.Add(new Move(initialSquare, current, 'x'));
+                else if (friendlyFire)
+                    moves.Add(new Move(initialSquare, current, 'd'));
                 break;
             }
-            else if (excludeMove != "moves")
+            else if (movesIncluded)
             {
                 moves.Add(new Move(initialSquare, current, 'm'));
             }
         } while (infiniteRange);
-        return moves.ToArray();
     }
 }
