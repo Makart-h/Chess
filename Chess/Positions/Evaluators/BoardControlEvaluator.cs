@@ -89,16 +89,16 @@ internal class BoardControlEvaluator
         }
         return evaluation;
     }
-    private static int GetMovesPotential(MoveSets moveSet)
+    private static int GetMovesPotential(Movesets moveSet)
     {
         return moveSet switch
         {
-            MoveSets.Queen => 27,
-            MoveSets.Rook => 14,
-            MoveSets.Bishop => 13,
-            MoveSets.Knight => 8,
-            MoveSets.King => 8,
-            MoveSets.Pawn => 4,
+            Movesets.Queen => 27,
+            Movesets.Rook => 14,
+            Movesets.Bishop => 13,
+            Movesets.Knight => 8,
+            Movesets.King => 8,
+            Movesets.Pawn => 4,
             _ => 0
         };
     }
@@ -229,7 +229,7 @@ internal class BoardControlEvaluator
         passiveValueLost += passiveFirst.Piece.Value;
         passivePieces.RemoveAt(0);
         // Check if active piece uncovered a new piece to join the exchange (for either team).
-        MoveSets approximateMoveSet = GetMoveSetFromDirection(activeFirst.Direction);
+        Movesets approximateMoveSet = GetMoveSetFromDirection(activeFirst.Direction);
         // If the capturing piece was a knight there is no need to check if something was uncovered since there won't be a straight line between the sqaure and the uncovered piece.
         if (approximateMoveSet != MoveSets.Knight && _boardControl.TryGetValue(activeFirst.Piece.Square, out SquareControl control))
         {
@@ -263,15 +263,15 @@ internal class BoardControlEvaluator
             participatingPieces.Add(first);
         }
     }
-    private static MoveSets GetMoveSetFromDirection((int x, int y) direction)
+    private static Movesets GetMoveSetFromDirection((int x, int y) direction)
     {
         if (direction.x == 0)
-            return MoveSets.Vertical;
+            return Movesets.Vertical;
         else if (direction.y == 0)
-            return MoveSets.Horizontal;
+            return Movesets.Horizontal;
         else if (Math.Abs(direction.x) == Math.Abs(direction.y))
-            return MoveSets.Diagonal;
+            return Movesets.Diagonal;
         else
-            return MoveSets.Knight;
+            return Movesets.Knight;
     }
 }
