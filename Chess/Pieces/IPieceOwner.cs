@@ -6,7 +6,7 @@ namespace Chess.Pieces;
 internal interface IPieceOwner
 {
     public King GetKing(Team team);
-    public bool TryGetPiece(Square square, out Piece piece);
+    public Piece GetPiece(Square square);
     public Team GetTeamOnSquare(Square square);
     public void OnPromotion(Piece piece);
 }
