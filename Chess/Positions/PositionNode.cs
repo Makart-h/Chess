@@ -55,22 +55,21 @@ internal sealed class PositionNode
     public async Task<Evaluation> FindBestOutcomeAsync(CancellationToken token)
     {
         token.ThrowIfCancellationRequested();
-        if (_children.Count > 0)
+        bool standardComparison = _team == Team.Black;
+        if (_children?.Count > 0)
         {
-            Evaluation[] evaluations = new Evaluation[_children.Count];
-            for (int i = 0; i < _children.Count; i++)
+            Evaluation best = await _children[0].FindBestOutcomeAsync(token);
+            for (int i = 1; i < _children.Count; ++i)
             {
-                evaluations[i] = await _children[i].FindBestOutcomeAsync(token);
+                Evaluation pretender = await _children[i].FindBestOutcomeAsync(token);
+                if (pretender.CompareTo(best, standardComparison) == 1)
+                    best = pretender;
             }
-            if (_team == Team.Black)
-                return evaluations.Max();
-            else
-                return evaluations.Min();
+            return best;
         }
         else
         {
-            int sign = _team == Team.White ? -1 : 1;
-            return new Evaluation(_value, sign * _depth, _path.ToString());
+            return new Evaluation(_value, _depth, _path);
         }
     }
 }
