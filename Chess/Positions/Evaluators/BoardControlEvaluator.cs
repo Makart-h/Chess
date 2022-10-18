@@ -4,20 +4,20 @@ using Chess.Pieces;
 using Chess.Pieces.Info;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Chess.Positions.Evaluators;
 
 internal class BoardControlEvaluator
 {
-    private readonly Dictionary<Square, SquareControl> _boardControl;
-    private readonly Dictionary<Square, Piece> _pieces;
+    private readonly SquareControl[] _boardControl;
+    private readonly Piece[] _pieces;
     private readonly Square? _enPassantSquare;
     private readonly Team _activeTeam;
+    private static readonly byte s_maxSquares = 64;
     private BoardControlInfo _boardControlInfo;
-    public BoardControlEvaluator(Dictionary<Square, Piece> pieces, Square? enPassantSquare, Team activeTeam)
+    public BoardControlEvaluator(Piece[] pieces, Square? enPassantSquare, Team activeTeam)
     {
-        _boardControl = new();
+        _boardControl = new SquareControl[s_maxSquares];
         _pieces = pieces;
         _enPassantSquare = enPassantSquare;
         _activeTeam = activeTeam;
@@ -25,18 +25,19 @@ internal class BoardControlEvaluator
     }
     public void AddSquares(Square origin, Square destination)
     {
-        if (_boardControl.ContainsKey(destination))
+        if (_boardControl[destination.Index] != null)
         {
-            _boardControl[destination].AddSquare(origin, _pieces[origin].Team);
+            _boardControl[destination.Index].AddSquare(origin, _pieces[origin.Index].Team);
         }
         else
         {
             SquareControl squareControl = new(destination);
-            squareControl.AddSquare(origin, _pieces[origin].Team);
-            _boardControl[destination] = squareControl;
+            squareControl.AddSquare(origin, _pieces[origin.Index].Team);
+            _boardControl[destination.Index] = squareControl;
         }
     }
-    public SquareControl GetSquareControl(Square square)
+    public SquareControl GetSquareControl(Square square) => _boardControl[square.Index];
+    public double EvaluatePieceMoves(Piece piece, King enemyKing)
     {
         if (_boardControl.ContainsKey(square))
             return _boardControl[square];
@@ -107,12 +108,12 @@ internal class BoardControlEvaluator
         if (square == _enPassantSquare)
         {
             int enPassantPawnDigitDistanceFromEnPassantSquare = _activeTeam == Team.White ? -1 : 1;
-            Square enPassantPawnSquare = new(square.Letter, square.Digit + enPassantPawnDigitDistanceFromEnPassantSquare);
-            piece = _pieces[enPassantPawnSquare];
+            Square enPassantPawnSquare = new(square, (0, enPassantPawnDigitDistanceFromEnPassantSquare));
+            piece = _pieces[enPassantPawnSquare.Index];
         }
         else
         {
-            piece = _pieces[square];
+            piece = _pieces[square.Index];
         }
         return piece;
     }
