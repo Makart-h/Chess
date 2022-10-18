@@ -3,7 +3,6 @@ using Chess.Movement;
 using Chess.Pieces.Info;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 
 namespace Chess.Pieces;
 
@@ -15,7 +14,7 @@ internal sealed class King : Piece
     private readonly static Dictionary<Team, Square[]> s_queensideCastlingSquares;
     private readonly List<Square[]> _threats;
     public static event EventHandler Check;
-    public bool Threatened { get => _threats.Count > 0; }
+    public bool Threatened { get; private set; }
     static King()
     {
         s_castlingRookSquares = new()
@@ -38,8 +37,8 @@ internal sealed class King : Piece
     }
     public King(Team team, Square square, bool isRaw = false) : base(team, square, PieceType.King, isRaw)
     {
-        _threats = new List<Square[]>();
-        _moveSet = MoveSets.King;
+        _threats = new List<List<Square>>();
+        _moveset = Movesets.King;
         CastlingRights = CastlingRights.None;
         Value = 0;
     }
