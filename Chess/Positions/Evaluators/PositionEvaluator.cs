@@ -9,15 +9,15 @@ namespace Chess.Positions.Evaluators;
 
 internal static class PositionEvaluator
 {
-    private static Dictionary<string, double> _cache = new();
-    private static int _eventCounter = 0;
+    private static Dictionary<int, double> _cache = new();
     private readonly static object _locker = new();
     private static readonly int _endgameMaterialBoundry;
+    private static int s_eventCounter;
     public static void OnMoveMade(object sender, MoveMadeEventArgs e)
     {
-        _eventCounter++;
-        if (_eventCounter % 2 == 0)
-            _cache = new Dictionary<string, double>();
+        s_eventCounter++;
+        if(s_eventCounter % 2 == 0)
+            _cache = new Dictionary<int, double>();     
     }
     static PositionEvaluator()
     {
@@ -26,8 +26,7 @@ internal static class PositionEvaluator
     }
     public static double EvaluatePosition(Position position)
     {
-        position.PrepareForEvaluation();
-        GameResult result = Arbiter.AnalyzeBoard(position.Pieces, position.ActiveTeam, position.HalfMoves, position.OccuredPositions);
+        GameResult result = Arbiter.AnalyzeBoard(position.Pieces, position.ActiveTeam, position.HalfMoves, position.OccuredPositions, hash: position.Hash);
         position.Result = result;
         switch (result)
         {
@@ -44,13 +43,15 @@ internal static class PositionEvaluator
         }
         lock (_locker)
         {
-            if (_cache.TryGetValue(position.ShortFEN, out double cachedEval))
+            if (_cache.TryGetValue(position.Hash, out double cachedEval))
                 return cachedEval;
         }
+
         double eval = IteratePieces(position);
+
         lock (_locker)
         {
-            _cache[position.ShortFEN] = eval;
+            _cache[position.Hash] = eval;
         }
         return eval;
     }
@@ -61,27 +62,33 @@ internal static class PositionEvaluator
         double evaluation = 0;
         BoardControlEvaluator boardControlEvaluator = new(position.Pieces, position.EnPassant, position.ActiveTeam);
         PawnStructuresEvaluator pawnStructuresEvaluator = new();
-        foreach (var piece in position.Pieces.Values)
+        foreach (var piece in position.Pieces)
         {
             if (piece == null)
                 continue;
 
-            evaluation += boardControlEvaluator.EvaluatePieceMoves(piece);
+            Team team = piece.Team;
+            if(team == Team.White)
+                evaluation += boardControlEvaluator.EvaluatePieceMoves(piece, position.Black);
+            else
+                evaluation += boardControlEvaluator.EvaluatePieceMoves(piece, position.White);
+
             int pieceValue = piece.Value;
             evaluation += pieceValue;
             if (piece is not King && piece is not Pawn)
             {
-                if (piece.Team == Team.White)
+                if (team == Team.White)
                     whiteMaterial += pieceValue;
                 else
-                    blackMaterial += Math.Abs(pieceValue);
+                    blackMaterial += pieceValue;
             }
             else if (piece is Pawn p)
             {
                 pawnStructuresEvaluator.AddPawn(p);
+                boardControlEvaluator.GetPawnMoves(p);
             }
         }
-        bool inEndgame = blackMaterial <= _endgameMaterialBoundry && whiteMaterial <= _endgameMaterialBoundry;
+        bool inEndgame = blackMaterial <= -_endgameMaterialBoundry && whiteMaterial <= _endgameMaterialBoundry;
         evaluation += boardControlEvaluator.EvaluateBoardControl(inEndgame);
         evaluation += EvaluateKingPosition(position.White, boardControlEvaluator, inEndgame);
         evaluation += EvaluateKingPosition(position.Black, boardControlEvaluator, inEndgame);
@@ -94,12 +101,12 @@ internal static class PositionEvaluator
         const double distanceFromTheCenterPerSquareValue = 0.1;
         const double middleIndex = 4.5;
         double evaluation = 0;
-        Square[] squares = king.GetSquaresAroundTheKing();
+        Square[] squares = king.AdjacentSquares;
         int dangerousSquares = 0;
         int sign = king.Team == Team.White ? 1 : -1;
         foreach (var square in squares)
         {
-            if (!square.IsValid)
+            if (!Square.Validate(square))
                 continue;
 
             Team team = king.Owner.GetTeamOnSquare(square);

@@ -3,7 +3,6 @@ using Chess.Movement;
 using Chess.Pieces.Info;
 using Chess.Positions.Evaluators;
 using System.Collections.Generic;
-using System.Linq;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -42,15 +41,48 @@ internal sealed class PositionNode
     {
         if (_isFertile && position.Result == GameResult.InProgress)
         {
+            _children = new(position.NextMoves.Count);
             foreach (Move move in position.NextMoves)
             {
                 token.ThrowIfCancellationRequested();
                 Position pos = await Position.CreateAsync(position, move, token);
                 bool isChildFertile = move.Description == 'x' || move.Description == 'p' || position.Check || pos.Check;
-                PositionNode node = await CreateAsync(_path.ToString(), pos, ~_team, _depth + 1, isChildFertile, token);
+                PositionNode node = await CreateAsync(_path, pos, ~_team, _depth + 1, isChildFertile, token);
                 _children.Add(node);
             }
         }         
+    }
+    private async Task CreateChildrenAsync2(Position position, CancellationToken token)
+    {
+        if (_isFertile && position.Result == GameResult.InProgress)
+        {
+            _children = new(position.NextMoves.Count);
+            int sign = _team == Team.White ? -1 : 1;
+            PositionNode bestNode = null;
+            Position bestPosition = null;
+            foreach (Move move in position.NextMoves)
+            {
+                token.ThrowIfCancellationRequested();
+                Position pos = await Position.CreateAsync(position, move, token);
+                bool isChildFertile = move.Description == 'x' || move.Description == 'p' || position.Check || pos.Check;
+                PositionNode node = new(~_team, _depth + 1, _path, pos, isChildFertile);
+                if (bestNode == null || node._value.CompareTo(bestNode._value) * sign == 1)
+                {
+                    bestNode = node;
+                    bestPosition = pos;
+                }
+                if (node._value.CompareTo(_value) * sign != -1)
+                {
+                    await node.CreateChildrenAsync2(pos, token);
+                    _children.Add(node);
+                }
+            }
+            if (_children.Count == 0 && bestNode != null)
+            {
+                await bestNode.CreateChildrenAsync2(bestPosition, token);
+                _children.Add(bestNode);
+            }
+        }
     }
     public async Task<Evaluation> FindBestOutcomeAsync(CancellationToken token)
     {
@@ -68,7 +100,7 @@ internal sealed class PositionNode
             return best;
         }
         else
-        {
+        {         
             return new Evaluation(_value, _depth, _path);
         }
     }

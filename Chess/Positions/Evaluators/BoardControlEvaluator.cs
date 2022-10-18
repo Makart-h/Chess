@@ -49,27 +49,27 @@ internal class BoardControlEvaluator
 
         foreach (var move in piece.Moves)
         {
-                    AddSquares(move.Former, move.Latter);
-                    if (shouldCheckDevelopment)
-                    {
+            AddSquares(move.Former, move.Latter);
+            if (shouldCheckDevelopment)
+            {
                 if (enemyKing.IsAdjacentSquare(move.Latter.Letter, move.Latter.Digit) || move.Description == 'x' || move.Description == 'p')
-                                isActive = true;
+                    isActive = true;
 
                 if(move.Description != 'd')
-                                legalMoves++;
-                            }
-                        }
+                    legalMoves++;
+            }
+        }
        
         if (shouldCheckDevelopment)
-                        {
+        {
             int pieceSign = piece.Team == Team.White ? 1 : -1;
             double factor = legalMoves / (double)GetMovesPotential(piece.Moveset);
             evaluation += developmentValue * pieceSign * factor * (isActive ? 1 : 0.5);
-            }
-        return evaluation;
         }
+        return evaluation;
+    }
     public void GetPawnMoves(Pawn pawn)
-        {
+    {
         List<Move> takes = new(2);
         Square takesLeft = new(pawn.Square, (-1, pawn.Value));
         Square takesRight = new(takesLeft, (2, 0));
@@ -242,22 +242,22 @@ internal class BoardControlEvaluator
                 {
                     Piece potentialInvoledPiece = _pieces[involvedSquare.Value.Index];
                     if (potentialInvoledPiece != null && (potentialInvoledPiece.Moveset & approximateMoveSet) != 0)
-                {
-                    if (potentialInvoledPiece.Team == activeFirst.Piece.Team)
                     {
+                        if (potentialInvoledPiece.Team == activeFirst.Piece.Team)
+                        {
                             activePieces.Remove(activeFirst);
-                        activePieces.Add(new(activeFirst.Direction, potentialInvoledPiece));
-                        SortParticipatingPieces(activePieces);
+                            activePieces.Add(new(activeFirst.Direction, potentialInvoledPiece));
+                            SortParticipatingPieces(activePieces);
                             activePieces.Insert(0, activeFirst);
-                    }
-                    else
-                    {
-                        passivePieces.Add(new(activeFirst.Direction, potentialInvoledPiece));
-                        SortParticipatingPieces(passivePieces);
+                        }
+                        else
+                        {
+                            passivePieces.Add(new(activeFirst.Direction, potentialInvoledPiece));
+                            SortParticipatingPieces(passivePieces);
+                        }
                     }
                 }
             }
-        }
         }
         return true;
     }
