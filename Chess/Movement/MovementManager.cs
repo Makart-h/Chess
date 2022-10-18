@@ -26,17 +26,24 @@ internal sealed class MovementManager : IDisposable
         Piece.PieceMoved += OnPieceMoved;
         _rapidMovement = false;
     }
-    private void OnPieceMoved(object sender, PieceMovedEventArgs args)
+    private void OnPieceMoved(object sender, PieceMovedEventArgs e)
     {
-        Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(args.Move.Latter);
-        if (args.Piece.Owner is HumanController && args.Move.Description != 'c')
+        if (e.Piece.Owner is Controller controller)
         {
-            args.Piece.MoveObject(newPosition - args.Piece.Position);
+            DrawableObject drawablePiece = controller.GetDrawablePiece(e.Piece);
+            if (drawablePiece != null)
+            {
+                Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(e.Move.Latter);
+                if (controller is HumanController && e.Move.Description != 'c')
+                {
+                    drawablePiece.MoveObject(newPosition - drawablePiece.Position);
             _rapidMovement = true;
         }
         else
         {
-            _initiators.Add(new Initiator(newPosition, args.Piece, OnDestinationReached));
+                    _initiators.Add(new Initiator(newPosition, drawablePiece, OnDestinationReached));
+        }
+    }
         }
     }
     private void OnDestinationReached(object sender, EventArgs args)
