@@ -141,9 +141,10 @@ internal sealed class Position : IPieceOwner
     }
     private void PrepareFEN()
     {
-        ShortFEN = FENParser.ToShortFenString(Pieces, White.CastlingRights, Black.CastlingRights, ActiveTeam);
-        string enPassantSquare = ShortFEN[(ShortFEN.LastIndexOf(' ') + 1)..];
-        EnPassant = enPassantSquare == "-" ? null : new Square(enPassantSquare);
+        Hash = unchecked(Hash * 7 + (int)White.CastlingRights);
+        Hash = unchecked(Hash * 7 + (int)Black.CastlingRights);
+        Hash = unchecked(Hash * 7 + (int)ActiveTeam);
+        Hash = unchecked(Hash * 7 + EnPassant.Value.GetHashCode());
 
         if (OccuredPositions.TryGetValue(ShortFEN, out var occurances))
             OccuredPositions[ShortFEN] = occurances + 1;
@@ -152,25 +153,45 @@ internal sealed class Position : IPieceOwner
     }
     private void AddNextMoves()
     {
-        foreach (var piece in Pieces.Values)
+        Hash = 5;
+        int sign;
+        int whiteKingIndex = White.Square.Index;
+        int blackKingIndex = Black.Square.Index;
+        for(int i = 0; i < Pieces.Length; ++i)
         {
-            if (piece is King)
-                continue;
-            else if (piece != null && piece.Team == ActiveTeam)
+            Piece piece = Pieces[i];
+            if (i == whiteKingIndex || i == blackKingIndex)
             {
+                sign = piece.Team == Team.White ? 1 : -1;
+                Hash = unchecked(Hash * 7 + (int)piece.Moveset * sign * (i + 1));
+                continue;
+            }           
+            if (piece != null)
+            {
+                sign = piece.Team == Team.White ? 1 : -1;
+                Hash = unchecked(Hash * 7 + (int)piece.Moveset * sign * (i + 1));
                 piece.Update();
-                if (piece.Moves.Count > 0)
-                    NextMoves.AddRange(piece.Moves);
+                if (piece == enPassantPiece)
+                    ((Pawn)piece).EnPassant = true;
+                if (piece.Team == ActiveTeam)
+                {
+                    foreach (Move move in piece.Moves)
+                    {
+                        if (move.Description != 'd')
+                            NextMoves.Add(move);
+                    }
+                }
             }
         }
     }
     private void UpdateKings(King activeKing, King standbyKing)
     {
         activeKing.Update();
-        standbyKing.CheckCastlingMoves();
-        if (activeKing.Moves.Count > 0)
+        standbyKing.CheckPossibleMoves();
+        foreach(Move move in activeKing.Moves)
         {
-            NextMoves.AddRange(activeKing.Moves);
+            if(move.Description != 'd')
+                NextMoves.Add(move);
         }
         if (activeKing.Threatened)
             Check = true;
