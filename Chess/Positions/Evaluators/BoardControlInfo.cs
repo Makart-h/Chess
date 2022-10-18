@@ -1,33 +1,34 @@
 ﻿using Chess.Board;
-using System.Linq;
 
 namespace Chess.Positions.Evaluators;
 
 internal struct BoardControlInfo
 {
-    private static readonly double s_squareValue = 0.02;
+    private static readonly double s_squareValue = 0.01;
     private static readonly double s_smallCenterValue = 0.1;
-    private static readonly double s_centerValue = 0.2;
-    private static readonly Square[] s_smallCenter;
-    private static readonly Square[] s_center;
+    private static readonly double s_centerValue = 0.3;
+    private static readonly (char min, char max) s_centerLetter;
+    private static readonly (int min, int max) s_centerDigit;
+    private static readonly (char min, char max) s_smallCenterLetter;
+    private static readonly (int min, int max) s_smallCenterDigit;
     private int _centerControl;
     private int _smallCenterControl;
     private int _squaresControl;
     static BoardControlInfo()
     {
-        s_center = new[] { new Square("E4"), new Square("E5"), new Square("D4"), new Square("D5") };
-        s_smallCenter = new[] { new Square("E3"), new Square("E6"), new Square("D3"), new Square("D6"),
-        new Square("C6"), new Square("C5"), new Square("C4"), new Square("C3"),
-        new Square("F6"), new Square("F5"), new Square("F4"), new Square("F3") };
+        s_centerLetter = ('d', 'e');
+        s_centerDigit = (4, 5);
+        s_smallCenterLetter = ('c', 'f');
+        s_smallCenterDigit = (3, 6);
     }
     public double Value { get => CalculateValue(); }
     public void IncreaseControls(int sign, Square square)
     {
         _squaresControl += sign;
 
-        if (s_center.Contains(square))
+        if (IsInCenter(square))
             _centerControl += sign;
-        else if (s_smallCenter.Contains(square))
+        else if (IsInSmallCenter(square))
             _smallCenterControl += sign;
     }
     private double CalculateValue()
@@ -38,4 +39,6 @@ internal struct BoardControlInfo
         value += _smallCenterControl * s_smallCenterValue;
         return value;
     }
+    private static bool IsInCenter(Square square) => square.Letter >= s_centerLetter.min && square.Letter <= s_centerLetter.max && square.Digit >= s_centerDigit.min && square.Digit <= s_centerDigit.max;
+    private static bool IsInSmallCenter(Square square) => square.Letter >= s_smallCenterLetter.min && square.Letter <= s_smallCenterLetter.max && square.Digit >= s_smallCenterDigit.min && square.Digit <= s_smallCenterDigit.max;
 }
