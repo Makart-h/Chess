@@ -10,11 +10,12 @@ internal class SquareControl
     public Square ControlledSquare { get; init; }
     public int ControlValue { get; private set; }
     public Team TeamInControl { get; set; }
-    public Dictionary<(int x, int y), Square> InvolvedSquares { get; init; }
+    public List<((int x, int y) direction, Square square)> InvolvedSquares { get => _involvedSquares; }
+    private readonly List<((int x, int y) direction, Square square)> _involvedSquares;
 
     public SquareControl(Square controlledSquare)
     {
-        InvolvedSquares = new();
+        _involvedSquares = new(4);
         TeamInControl = Team.Empty;
         ControlledSquare = controlledSquare;
     }
@@ -23,20 +24,16 @@ internal class SquareControl
         (int x, int y) direction = ControlledSquare - squareToAdd;
         if (direction.x == 0 || direction.y == 0 || Math.Abs(direction.x) == Math.Abs(direction.y))
             direction = (Math.Sign(direction.x), Math.Sign(direction.y));
-        InvolvedSquares[direction] = squareToAdd;
+        _involvedSquares.Add((direction, squareToAdd));
         ControlValue += teamOnSquare == Team.White ? 1 : -1;
     }
-    public bool TryGetInvolvedSquare((int x, int y) direction, out Square involvedSquare)
+    public Square? GetInvolvedSquare((int x, int y) direction)
     {
-        if (InvolvedSquares.ContainsKey(direction))
+        for(int i = 0; i < _involvedSquares.Count; i++)
         {
-            involvedSquare = InvolvedSquares[direction];
-            return true;
+            if (_involvedSquares[i].direction == direction)
+                return _involvedSquares[i].square;
         }
-        else
-        {
-            involvedSquare = new();
-            return false;
-        }
+        return null;
     }
 }
