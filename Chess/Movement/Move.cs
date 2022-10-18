@@ -1,13 +1,12 @@
 ﻿using Chess.Board;
-using System.Collections.Generic;
 
 namespace Chess.Movement;
 
-internal sealed class Move
+internal readonly struct Move
 {
-    public Square Former { get; private set; }
-    public Square Latter { get; private set; }
-    public char Description { get; private set; }
+    public readonly Square Former { get; }
+    public readonly Square Latter { get; }
+    public readonly char Description { get; }
 
     public Move(Square former, Square latter, char description)
     {
