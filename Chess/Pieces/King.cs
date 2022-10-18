@@ -41,21 +41,37 @@ internal sealed class King : Piece
         _moveset = Movesets.King;
         CastlingRights = CastlingRights.None;
         Value = 0;
+        _adjacentSquares = CreateAdjacentSquares();
     }
     public King(King other, bool isRaw = false) : base(other, isRaw)
     {
-        _threats = other.CreateCopyOfThreats();
+        _threats = new();
         CastlingRights = other.CastlingRights;
+        _adjacentSquares = CreateAdjacentSquares();
+        _hasMoved = other._hasMoved;
     }
-    public override int Update()
+    private Square[] CreateAdjacentSquares()
     {
-        FindAllThreats();
-        return base.Update();
+        return new Square[] {
+            new Square(Square, (1, 1)),
+            new Square(Square, (1, -1)),
+            new Square(Square, (-1, 1)),
+            new Square(Square, (-1, -1)),
+            new Square(Square, (1, 0)),
+            new Square(Square, (-1, 0)),
+            new Square(Square, (0, 1)),
+            new Square(Square, (0, -1)),
+        };
     }
-    private List<Square[]> CreateCopyOfThreats()
+    public bool IsAdjacentSquare(int letter, int digit)
     {
-        List<Square[]> copy = new();
-        foreach (var threat in _threats)
+        int minLetter = Square.Letter - 1;
+        int maxLetter = Square.Letter + 1;
+        int minDigit = Square.Digit - 1;
+        int maxDigit = Square.Digit + 1;
+        return letter >= minLetter && letter <= maxLetter && digit >= minDigit && digit <= maxDigit;
+    }
+    public override void Update()
         {
             copy.Add(threat);
         }
@@ -282,10 +298,19 @@ internal sealed class King : Piece
         }
         return false;
     }
-    public override void MovePiece(Move move)
+    public override void MovePiece(in Move move)
     {
-        base.MovePiece(move);
+        base.MovePiece(in move);
         CastlingRights = CastlingRights.None;
+        MoveAdjacentSquares(move.Latter - move.Former);
+        _hasMoved = true;
+    }
+    private void MoveAdjacentSquares((int,int) vector)
+    {
+        for(int i = 0; i < _adjacentSquares.Length; ++i)
+        {
+            _adjacentSquares[i].Transform(vector);
+        }
     }
     public void OnCheck(EventArgs e)
     {
