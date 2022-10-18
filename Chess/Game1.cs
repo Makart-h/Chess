@@ -13,6 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
+using System.Runtime;
 using Model = Chess.Graphics.Model;
 
 namespace Chess;
@@ -151,7 +152,7 @@ internal sealed class Chess : Game
         int direction = pawn.Team == Team.White ? -1 : 1;
         for(int i = 0; i < types.Length; ++i)
         {
-            Square square = new Square(pawn.Square.Letter, pawn.Square.Digit + direction * i);
+            Square square = new(pawn.Square, (0, direction * i));
             var button = CreatePromotionButton(square, pawn, types[i]);
             _promotionButtons.Add(button);
             _chessboardUIModule.SubmitElementToAdd(button);
@@ -159,16 +160,20 @@ internal sealed class Chess : Game
     }
     private Button CreatePromotionButton(Square square, Pawn pawn, PieceType type)
     {
-        Square overlaySquare = Chessboard.Instance.Inverted ? new Square("h1") : new Square("a8");
-        SquareOverlay overlay = new(SquareOverlayType.CanTake, overlaySquare);
-        Vector2 position = Chessboard.Instance.ToCordsFromSquare(square);
-        Rectangle buttonRectangle = new((int)position.X, (int)position.Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength);
-        Rectangle drawableRectangle = pawn.DestinationRectangle with { X = 0, Y = 0 };
-        var appearance = CreatePieceAppearance(type, pawn.Team, drawableRectangle);
-        Texture2D tile = Square.IsLightSquare(square) ? _lightTile : _darkTile;
-        ButtonActionInfo actions = new();
-        actions.OnRelease = () => HandlePromotionDecision(pawn, type);
-        return new Button(GraphicsDevice, tile, new[] { appearance, overlay }, null, buttonRectangle, actions);
+        if (pawn.Owner is Controller controller)
+        {
+            Square overlaySquare = Chessboard.Instance.Inverted ? new Square("h1") : new Square("a8");
+            SquareOverlay overlay = new(SquareOverlayType.CanTake, overlaySquare);
+            Vector2 position = Chessboard.Instance.ToCordsFromSquare(square);
+            Rectangle buttonRectangle = new((int)position.X, (int)position.Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength);
+            Rectangle drawableRectangle = controller.GetDrawablePiece(pawn).DestinationRectangle with { X = 0, Y = 0 };
+            var appearance = CreatePieceAppearance(type, pawn.Team, drawableRectangle);
+            Texture2D tile = Square.IsLightSquare(square) ? _lightTile : _darkTile;
+            ButtonActionInfo actions = new();
+            actions.OnRelease = () => HandlePromotionDecision(pawn, type);
+            return new Button(GraphicsDevice, tile, new[] { appearance, overlay }, null, buttonRectangle, actions);
+        }
+        throw new ArgumentNullException();
     }
     private DrawableObject CreatePiecesExplanation()
     {
@@ -228,14 +233,14 @@ internal sealed class Chess : Game
         _graphics.PreferredBackBufferHeight = GraphicsAdapter.DefaultAdapter.CurrentDisplayMode.Height;
         _graphics.IsFullScreen = true;*/
         _graphics.PreferredBackBufferWidth = 1280;
-        _graphics.PreferredBackBufferHeight = 720;      
+        _graphics.PreferredBackBufferHeight = 720;
         _graphics.ApplyChanges();
     }
     private FENObject InitializeFENObject()
     {
         try
         {
-            //string fen = "1Q1b2k1/1pp2pp1/4p3/2q1P2p/4KP1P/6P1/8/8 b - - 0 1";
+            //string fen = "r2qkb1r/1pp2ppp/p1n1pnb1/3p4/3P1BP1/P1N1PN2/1PP2P1P/R2QKB1R w KQkq - 0 1";
             string fen = _chessGameSettings.FEN;
             return FENParser.Parse(fen);
         }
@@ -316,7 +321,7 @@ internal sealed class Chess : Game
         }
         catch (ArgumentException)
         { throw; }
-        Arbiter.Initilize(fenObject.FEN, fenObject.HalfMoves);
+        Arbiter.Initilize(fenObject);
         _chessboard.InitilizeBoard(fenObject.AllPieces);
         InitializeControllers(fenObject);
         OverlayManager.Create(Content.Load<Texture2D>("Tsquares"));
