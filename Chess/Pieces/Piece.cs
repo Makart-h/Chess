@@ -118,5 +118,13 @@ internal abstract class Piece : IComparable<Piece>
 
         PieceDeselected?.Invoke(this, e);
     }
-    public int CompareTo(Piece other) => Math.Abs(Value).CompareTo(Math.Abs(other.Value));
+    public int CompareTo(Piece other)
+    {
+        if (Value == 0)
+            return 1;
+        else if (other.Value == 0)
+            return -1;
+        else
+            return Math.Abs(Value).CompareTo(Math.Abs(other.Value));
+    }
 }
