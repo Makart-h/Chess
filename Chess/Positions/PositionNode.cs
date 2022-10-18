@@ -16,19 +16,19 @@ internal sealed class PositionNode
     private readonly int _depth;
     private readonly Team _team;
     private readonly bool _isFertile;
-    private readonly List<PositionNode> _children;
-    private readonly StringBuilder _path;
-    private static readonly int s_minDepth = 2;
-    private static readonly int s_maxDepth = 4;
+    private List<PositionNode> _children;
+    private readonly string _path;
+    private static readonly int s_minDepth = 3;
+    private static readonly int s_maxDepth = 5;
 
     private PositionNode(Team team, int depth, string path, Position position, bool isFertile)
     {
         _team = team;
         _depth = depth;
-        _children = new();
-        _path = new(path);      
         _value = PositionEvaluator.EvaluatePosition(position);
-        _path.Append($"{(_path.Length > 0 ? "->" : "")}{position.MovePlayed}({_value:0.00})");
+        if (path != string.Empty)
+            path += "|";
+        _path = path + position.MovePlayed;
         _isFertile = (depth < s_minDepth || isFertile) && depth < s_maxDepth;
     }
     public static async Task<PositionNode> CreateAsync(string path, Position position, Team team, int depth, bool isFertile, CancellationToken token)
