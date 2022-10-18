@@ -12,12 +12,4 @@ internal sealed class Knight : Piece
         Value = team == Team.White ? 3 : -3;
     }
     public Knight(Knight other, bool isRaw = false) : base(other, isRaw) { }
-    public override void CheckPossibleMoves()
-    {
-        base.CheckPossibleMoves();
-    }
-    public override void MovePiece(Move move)
-    {
-        base.MovePiece(move);
-    }
 }

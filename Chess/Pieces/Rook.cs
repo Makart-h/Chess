@@ -16,13 +16,9 @@ internal sealed class Rook : Piece
     {
         HasMoved = other.HasMoved;
     }
-    public override void CheckPossibleMoves()
+    public override void MovePiece(in Move move)
     {
-        base.CheckPossibleMoves();
-    }
-    public override void MovePiece(Move move)
-    {
-        base.MovePiece(move);
+        base.MovePiece(in move);
         HasMoved = true;
     }
 }
