@@ -39,55 +39,50 @@ internal class BoardControlEvaluator
     public SquareControl GetSquareControl(Square square) => _boardControl[square.Index];
     public double EvaluatePieceMoves(Piece piece, King enemyKing)
     {
-        if (_boardControl.ContainsKey(square))
-            return _boardControl[square];
-        else
-            return null;
-    }
-    public double EvaluatePieceMoves(Piece piece)
-    {
+        if (piece is Pawn)
+            return 0;
         const double developmentValue = 0.3;
-        int pieceSign = piece.Team == Team.White ? 1 : -1;
-        Square[] squaresAroundEnemyKing = piece.Owner.GetKing(~piece.Team).GetSquaresAroundTheKing();
         bool isActive = false;
-        bool shouldCheckDevelopment = piece is not King and not Pawn;
+        bool shouldCheckDevelopment = piece is not King and not Queen;
         double evaluation = 0;
         int legalMoves = 0;
 
-        foreach (var (_, moves) in MovementManager.GenerateEveryMove(piece.Square, piece.MoveSet, piece.Owner, friendlyFire: true))
+        foreach (var move in piece.Moves)
         {
-            foreach (var move in moves)
-            {
-                if (piece.Owner.GetKing(piece.Team).CheckMoveAgainstThreats(piece, move))
-                {
-                    if (squaresAroundEnemyKing.Contains(move.Latter))
-                        isActive = true;
-
                     AddSquares(move.Former, move.Latter);
                     if (shouldCheckDevelopment)
                     {
-                        if (move.Description == 'x' || move.Description == 'p')
-                        {
-                            if (_pieces[move.Latter].Team != piece.Team)
-                            {
+                if (enemyKing.IsAdjacentSquare(move.Latter.Letter, move.Latter.Digit) || move.Description == 'x' || move.Description == 'p')
                                 isActive = true;
+
+                if(move.Description != 'd')
                                 legalMoves++;
                             }
                         }
-                        else
-                        {
-                            legalMoves++;
-                        }
-                    }
-                }
-            }
-        }
+       
         if (shouldCheckDevelopment)
-        {
-            double factor = legalMoves / (double)GetMovesPotential(piece.MoveSet);
-            evaluation += developmentValue * pieceSign * factor * (isActive ? 1 : 0.75);
-        }
+                        {
+            int pieceSign = piece.Team == Team.White ? 1 : -1;
+            double factor = legalMoves / (double)GetMovesPotential(piece.Moveset);
+            evaluation += developmentValue * pieceSign * factor * (isActive ? 1 : 0.5);
+            }
         return evaluation;
+        }
+    public void GetPawnMoves(Pawn pawn)
+        {
+        List<Move> takes = new(2);
+        Square takesLeft = new(pawn.Square, (-1, pawn.Value));
+        Square takesRight = new(takesLeft, (2, 0));
+        if (Square.Validate(takesLeft))
+            takes.Add(new Move(pawn.Square, takesLeft, 'x'));
+        if (Square.Validate(takesRight))
+            takes.Add(new Move(pawn.Square, takesRight, 'x'));
+
+        takes = pawn.Owner.GetKing(pawn.Team).FilterMovesThroughThreats(takes);
+        foreach (Move move in takes)
+        {
+            AddSquares(pawn.Square, move.Latter);
+        }
     }
     private static int GetMovesPotential(Movesets moveSet)
     {
@@ -129,14 +124,17 @@ internal class BoardControlEvaluator
     public double EvaluateBoardControl(bool inEndgame)
     {
         double evaluation = 0;
-        foreach (Square square in _boardControl.Keys)
+        foreach (SquareControl squareControl in _boardControl)
         {
-            int sign = Math.Sign(_boardControl[square].ControlValue);
-            Piece piece = GetPiece(square);
+            if (squareControl == null)
+                continue;
+
+            int sign = Math.Sign(squareControl.ControlValue);
+            Piece piece = GetPiece(squareControl.ControlledSquare);
 
             if (piece != null)
             {
-                double exchangeOutcome = CalculateExchange(piece, _boardControl[square].InvolvedSquares);
+                double exchangeOutcome = CalculateExchange(piece, squareControl);
                 int defendersSign = piece.Team == Team.White ? 1 : -1;
                 // It means the exchange went in favour of attackers.
                 if (exchangeOutcome > 0)
@@ -158,22 +156,25 @@ internal class BoardControlEvaluator
             else if (sign == 0)
                 continue;
 
-            _boardControlInfo.IncreaseControls(sign, square);
-            _boardControl[square].TeamInControl = GetTeamFromSign(sign);
+            _boardControlInfo.IncreaseControls(sign, squareControl.ControlledSquare);
+            squareControl.TeamInControl = GetTeamFromSign(sign);
         }
         if (!inEndgame)
             evaluation += _boardControlInfo.Value;
         return evaluation;
     }
-    private double CalculateExchange(Piece defendedPiece, Dictionary<(int, int), Square> involvedSquares)
+    private double CalculateExchange(Piece defendedPiece, SquareControl control)
     {
         Team defendingTeam = defendedPiece.Team;
-        List<ExchangeParticipant> defenders = new();
-        List<ExchangeParticipant> attackers = new();
+        List<ExchangeParticipant> defenders = new(2);
+        List<ExchangeParticipant> attackers = new(2);
         int defendersValueLost = 0, attackersValueLost = 0;
-        foreach ((int, int) direction in involvedSquares.Keys)
+        var involvedSquares = control.InvolvedSquares;
+        for(int i = 0; i < involvedSquares.Count; i++)
         {
-            if (_pieces.TryGetValue(involvedSquares[direction], out Piece piece))
+            var direction = involvedSquares[i].direction;
+            Piece piece = _pieces[involvedSquares[i].square.Index];
+            if (piece != null)
             {
                 if (piece.Team == defendingTeam)
                     defenders.Add(new(direction, piece));
@@ -255,13 +256,6 @@ internal class BoardControlEvaluator
     private static void SortParticipatingPieces(List<ExchangeParticipant> participatingPieces)
     {
         participatingPieces.Sort();
-        // If either side has a king involved in the exchange we must move it to the end, since you can't caputre with the king on a threatened square.
-        var first = participatingPieces.FirstOrDefault();
-        if (first.Piece is King)
-        {
-            participatingPieces.Remove(first);
-            participatingPieces.Add(first);
-        }
     }
     private static Movesets GetMoveSetFromDirection((int x, int y) direction)
     {
