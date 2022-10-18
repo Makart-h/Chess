@@ -8,7 +8,7 @@ internal sealed class Queen : Piece
 {
     public Queen(Team team, Square square, bool isRaw = false) : base(team, square, PieceType.Queen, isRaw)
     {
-        _moveSet = MoveSets.Queen;
+        _moveset = Movesets.Queen;
         Value = team == Team.White ? 9 : -9;
     }
     public Queen(Queen other, bool isRaw = false) : base(other, isRaw) { }

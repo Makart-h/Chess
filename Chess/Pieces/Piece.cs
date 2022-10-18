@@ -10,7 +10,7 @@ internal abstract class Piece : IComparable<Piece>
 {
     protected readonly Team _team;
     protected bool _isSelected;
-    protected MoveSets _moveSet;
+    protected Movesets _moveset;
     public Team Team { get => _team; }
     public IPieceOwner Owner { get; set; }
     public static event EventHandler<PieceMovedEventArgs> PieceMoved;

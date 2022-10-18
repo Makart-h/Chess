@@ -15,7 +15,7 @@ internal sealed class Pawn : Piece
     public Pawn(Team team, Square square, bool isRaw = false) : base(team, square, PieceType.Pawn, isRaw)
     {
         _enPassant = false;
-        _moveSet = MoveSets.Pawn;
+        _moveset = Movesets.Pawn;
         _promotionSquareNumber = team == Team.White ? 8 : 1;
         Value = team == Team.White ? 1 : -1;
         if (_promotionSquareNumber == 8 && square.Digit != 2 || _promotionSquareNumber == 1 && square.Digit != 7)
