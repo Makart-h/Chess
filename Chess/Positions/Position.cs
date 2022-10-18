@@ -196,46 +196,8 @@ internal sealed class Position : IPieceOwner
         if (activeKing.Threatened)
             Check = true;
     }
-    public void PrepareForEvaluation()
-    {
-        if (ActiveTeam == Team.White)
-            Black.FindAllThreats();
-        else
-            White.FindAllThreats();
-    }
-    public bool TryGetPiece(Square square, out Piece piece) => Pieces.TryGetValue(square, out piece) && piece != null;
-    public Team GetTeamOnSquare(Square square) => Pieces[square] == null ? Team.Empty : Pieces[square].Team;
-    public bool ArePiecesFacingEachOther(Piece first, Piece second)
-    {
-        (int letter, int digit) iterator;
-        if (first.Square.Letter == second.Square.Letter)
-        {
-            iterator = (0, first.Square.Digit > second.Square.Digit ? -1 : 1);
-        }
-        else if (first.Square.Digit == second.Square.Digit)
-        {
-            iterator = (first.Square.Letter > second.Square.Letter ? -1 : 1, 0);
-        }
-        else if (Math.Abs(first.Square.Digit - second.Square.Digit) == Math.Abs(first.Square.Letter - second.Square.Letter))
-        {
-            int directionLetter = first.Square.Letter > second.Square.Letter ? -1 : 1;
-            int directionDigit = first.Square.Digit > second.Square.Digit ? -1 : 1;
-            iterator = (directionLetter, directionDigit);
-        }
-        else
-            return false;
-
-        Square square = first.Square;
-        do
-        {
-            square.Transform(iterator);
-            if (TryGetPiece(square, out Piece pieceOnTheWay))
-                return pieceOnTheWay == second;
-        }
-        while (Square.Validate(square));
-
-        return false;
-    }
+    public Piece GetPiece(Square square) => Pieces[square.Index];
+    public Team GetTeamOnSquare(Square square) => Pieces[square.Index] == null ? Team.Empty : Pieces[square.Index].Team;
     public void OnPromotion(Piece piece)
     {
         PieceType type = PieceType.Queen;
