@@ -28,6 +28,10 @@ internal struct Square : IEquatable<Square>
     public readonly int Digit { get => _digit; }
     public readonly int Index { get => _index; }
     public readonly bool IsValid { get => _letter >= s_minLetter && _letter <= s_maxLetter && _digit >= s_minDigit && _digit <= s_maxDigit; }
+    public static int MinLetter { get => s_minLetter; }
+    public static int MaxLetter { get => s_maxLetter; }
+    public static int MinDigit { get => s_minDigit; }
+    public static int MaxDigit { get => s_maxDigit; }
     public Square(char letter, int digit)
     {
         _letter = char.ToLower(letter);
