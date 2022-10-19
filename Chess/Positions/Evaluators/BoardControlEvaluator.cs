@@ -52,10 +52,10 @@ internal class BoardControlEvaluator
             AddSquares(move.Former, move.Latter);
             if (shouldCheckDevelopment)
             {
-                if (enemyKing.IsAdjacentSquare(move.Latter.Letter, move.Latter.Digit) || move.Description == 'x' || move.Description == 'p')
+                if (enemyKing.IsAdjacentSquare(move.Latter.Letter, move.Latter.Digit) || move.Description == MoveType.Takes || move.Description == MoveType.EnPassant)
                     isActive = true;
 
-                if(move.Description != 'd')
+                if(move.Description != MoveType.Defends)
                     legalMoves++;
             }
         }
@@ -74,9 +74,9 @@ internal class BoardControlEvaluator
         Square takesLeft = new(pawn.Square, (-1, pawn.Value));
         Square takesRight = new(takesLeft, (2, 0));
         if (Square.Validate(takesLeft))
-            takes.Add(new Move(pawn.Square, takesLeft, 'x'));
+            takes.Add(new Move(pawn.Square, takesLeft, MoveType.Takes));
         if (Square.Validate(takesRight))
-            takes.Add(new Move(pawn.Square, takesRight, 'x'));
+            takes.Add(new Move(pawn.Square, takesRight, MoveType.Takes));
 
         takes = pawn.Owner.GetKing(pawn.Team).FilterMovesThroughThreats(takes);
         foreach (Move move in takes)

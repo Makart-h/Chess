@@ -79,26 +79,26 @@ internal sealed class King : Piece
         FindAllThreats();
         base.Update();
     }
-    public static Square GetCastlingRookSquare(char sideOfCastling, Team team)
+    public static Square GetCastlingRookSquare(MoveType sideOfCastling, Team team)
     {
         return (team, sideOfCastling) switch
         {
-            (Team.White, 'k') => s_castlingRookSquares['K'],
-            (Team.White, 'q') => s_castlingRookSquares['Q'],
-            (Team.Black, 'k') => s_castlingRookSquares['k'],
-            (Team.Black, 'q') => s_castlingRookSquares['q'],
+            (Team.White, MoveType.CastlesKingside) => s_castlingRookSquares['K'],
+            (Team.White, MoveType.CastlesQueenside) => s_castlingRookSquares['Q'],
+            (Team.Black, MoveType.CastlesKingside) => s_castlingRookSquares['k'],
+            (Team.Black, MoveType.CastlesQueenside) => s_castlingRookSquares['q'],
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    public static char GetCastlingSideFromRookSquare(Square square, Team team)
+    public static MoveType GetCastlingSideFromRookSquare(Square square, Team team)
     {
         string squareAsString = square.ToString();
         return (team, squareAsString) switch
         {
-            (Team.White, "h1") => 'k',
-            (Team.White, "a1") => 'q',
-            (Team.Black, "h8") => 'k',
-            (Team.Black, "a8") => 'q',
+            (Team.White, "h1") => MoveType.CastlesKingside,
+            (Team.White, "a1") => MoveType.CastlesQueenside,
+            (Team.Black, "h8") => MoveType.CastlesKingside,
+            (Team.Black, "a8") => MoveType.CastlesQueenside,
             _ => throw new ArgumentOutOfRangeException()
         };
     }
@@ -124,11 +124,11 @@ internal sealed class King : Piece
                     continue;
 
                 if(teamOnTheSquare == Team.Empty)
-                    _moves.Add(new Move(Square, square, 'm'));
+                    _moves.Add(new Move(Square, square, MoveType.Moves));
                 else if(teamOnTheSquare == _team)
-                    _moves.Add(new Move(Square, square, 'd'));
+                    _moves.Add(new Move(Square, square, MoveType.Defends));
                 else
-                    _moves.Add(new Move(Square, square, 'x'));
+                    _moves.Add(new Move(Square, square, MoveType.Takes));
             }
             else
             {
@@ -136,9 +136,9 @@ internal sealed class King : Piece
                     continue;
 
                 if (teamOnTheSquare == Team.Empty)
-                    _moves.Add(new Move(Square, square, 'm'));
+                    _moves.Add(new Move(Square, square, MoveType.Moves));
                 else
-                    _moves.Add(new Move(Square, square, 'x'));
+                    _moves.Add(new Move(Square, square, MoveType.Takes));
             }
         }
     }
@@ -336,7 +336,7 @@ internal sealed class King : Piece
         if (_threats.Count == 0)
             return true;
 
-        Square destination = move.Description == 'p' ? new Square(move.Latter.Letter, move.Former.Digit) : move.Latter;
+        Square destination = move.Description == MoveType.EnPassant ? new Square(move.Latter.Letter, move.Former.Digit) : move.Latter;
 
         foreach (var threat in _threats)
         {

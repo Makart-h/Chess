@@ -87,11 +87,11 @@ internal sealed class OverlayManager : IDrawableProvider, IDisposable
             switch (move.Description)
             {
                 default:
-                case 'm':
+                case MoveType.Moves:
                     _selections.Add(new SquareOverlay(SquareOverlayType.CanMove, move.Latter));
                     break;
-                case 'x':
-                case 'p':
+                case MoveType.Takes:
+                case MoveType.EnPassant:
                     _selections.Add(new SquareOverlay(SquareOverlayType.CanTake, move.Latter));
                     break;
             }
@@ -100,7 +100,7 @@ internal sealed class OverlayManager : IDrawableProvider, IDisposable
     private void OnPieceDeselected(object sender, EventArgs e) => _selections.Clear();
     private void OnPieceMoved(object sender, PieceMovedEventArgs e)
     {
-        if (e.Move.Description != 'c')
+        if (e.Move.Description != MoveType.ParticipatesInCastling)
         {
             _showMoves = false;
             Move move = e.Move;

@@ -80,19 +80,19 @@ internal sealed class Chessboard : DrawableObject
         if (moveFromTargetedPiece.HasValue)
         {
             move = moveFromTargetedPiece.Value;
-            if (move.Description == 'x')
+            if (move.Description == MoveType.Takes)
                 RemovePiece(move.Latter);
 
             Pieces[move.Former.Index] = null;
             Pieces[move.Latter.Index] = targetedPiece;
-            if (move.Description == 'p')
+            if (move.Description == MoveType.EnPassant)
                 RemovePiece(new Square(move.Latter.Letter, move.Former.Digit));
-            else if (move.Description == 'k' || move.Description == 'q')
+            else if (move.Description == MoveType.CastlesKingside || move.Description == MoveType.CastlesQueenside)
             {
                 int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
                 Square originalRookPosition = King.GetCastlingRookSquare(move.Description, targetedPiece.Team);
                 Square newRookPosition = new(move.Latter, (direction,0));
-                Move rookMove = new(Pieces[originalRookPosition.Index].Square, newRookPosition, 'c');
+                Move rookMove = new(Pieces[originalRookPosition.Index].Square, newRookPosition, MoveType.ParticipatesInCastling);
                 Pieces[originalRookPosition.Index].MovePiece(rookMove);
                 Pieces[newRookPosition.Index] = Pieces[originalRookPosition.Index];
                 Pieces[originalRookPosition.Index] = null;

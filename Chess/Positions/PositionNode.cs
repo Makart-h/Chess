@@ -46,7 +46,7 @@ internal sealed class PositionNode
             {
                 token.ThrowIfCancellationRequested();
                 Position pos = await Position.CreateAsync(position, move, token);
-                bool isChildFertile = move.Description == 'x' || move.Description == 'p' || position.Check || pos.Check;
+                bool isChildFertile = move.Description == MoveType.Takes || move.Description == MoveType.EnPassant || position.Check || pos.Check;
                 PositionNode node = await CreateAsync(_path, pos, ~_team, _depth + 1, isChildFertile, token);
                 _children.Add(node);
             }
@@ -64,7 +64,7 @@ internal sealed class PositionNode
             {
                 token.ThrowIfCancellationRequested();
                 Position pos = await Position.CreateAsync(position, move, token);
-                bool isChildFertile = move.Description == 'x' || move.Description == 'p' || position.Check || pos.Check;
+                bool isChildFertile = move.Description == MoveType.Takes || move.Description == MoveType.EnPassant || position.Check || pos.Check;
                 PositionNode node = new(~_team, _depth + 1, _path, pos, isChildFertile);
                 if (bestNode == null || node._value.CompareTo(bestNode._value) * sign == 1)
                 {

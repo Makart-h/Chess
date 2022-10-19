@@ -39,7 +39,7 @@ internal sealed class Position : IPieceOwner
         NextMoves = new();
         ActiveTeam = activeTeam;
         HalfMoves = halfMoves;
-        MovePlayed = move.Former.ToString() + move.Description + move.Latter.ToString();
+        MovePlayed = move.Former.ToString() + ((int)move.Description).ToString() + move.Latter.ToString();
         CopyPieces(pieces);
         ApplyMove(in move);
         Update();
@@ -102,18 +102,18 @@ internal sealed class Position : IPieceOwner
         int latterIndex = move.Latter.Index;
         Pieces[latterIndex] = Pieces[formerIndex];
         Pieces[formerIndex] = null;
-        if (move.Description == 'p')
+        if (move.Description == MoveType.EnPassant)
         {
             Square enPassant = new(move.Latter.Letter, move.Former.Digit);
             Pieces[enPassant.Index] = null;
         }
-        else if (move.Description == 'k' || move.Description == 'q')
+        else if (move.Description == MoveType.CastlesKingside || move.Description == MoveType.CastlesQueenside)
         {
             int direction = move.Former.Letter > move.Latter.Letter ? 1 : -1;
             Square originalRookPosition = King.GetCastlingRookSquare(move.Description, Pieces[latterIndex].Team);
             int originalRookPositionIndex = originalRookPosition.Index;
             Square newRookPosition = new(move.Latter, (direction, 0));
-            Move rookMove = new(Pieces[originalRookPositionIndex].Square, newRookPosition, 'c');
+            Move rookMove = new(Pieces[originalRookPositionIndex].Square, newRookPosition, MoveType.ParticipatesInCastling);
             Pieces[originalRookPositionIndex].MovePiece(rookMove);
             Pieces[newRookPosition.Index] = Pieces[originalRookPositionIndex];
             Pieces[originalRookPositionIndex] = null;
@@ -178,7 +178,7 @@ internal sealed class Position : IPieceOwner
                 {
                     foreach (Move move in piece.Moves)
                     {
-                        if (move.Description != 'd')
+                        if (move.Description != MoveType.Defends)
                             NextMoves.Add(move);
                     }
                 }
@@ -191,7 +191,7 @@ internal sealed class Position : IPieceOwner
         standbyKing.CheckPossibleMoves();
         foreach(Move move in activeKing.Moves)
         {
-            if(move.Description != 'd')
+            if(move.Description != MoveType.Defends)
                 NextMoves.Add(move);
         }
         if (activeKing.Threatened)

@@ -1,6 +1,7 @@
 ﻿using Chess.Board;
 using Chess.Clock;
 using Chess.Data;
+using Chess.Movement;
 using Chess.Pieces;
 using Chess.Pieces.Info;
 using System;
@@ -211,7 +212,7 @@ internal static class Arbiter
     private static void OnMoveMade(object sender, MoveMadeEventArgs e)
     {
         // Half move is any move that is not a caputre or a pawn advance.
-        if (e.Piece is Pawn || e.Move.Description == 'x')
+        if (e.Piece is Pawn || e.Move.Description == MoveType.Takes)
             _halfMoves = 0;
         else
             _halfMoves++;

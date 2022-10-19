@@ -194,7 +194,7 @@ internal class MoveHistory : ITextProvider
     private void OnPieceMoved(object sender, PieceMovedEventArgs e)
     {
         // If the moved piece was a rook participating in castling we don't want to add it to move history.
-        if (e.Move.Description == 'c')
+        if (e.Move.Description == MoveType.ParticipatesInCastling)
             return;
 
         string moveDescription = CheckForCastling(e.Move.Description);
@@ -214,12 +214,12 @@ internal class MoveHistory : ITextProvider
         TextObject lastEntry = _history.Last();
         lastEntry.Text += moveDescription;
     }
-    private static string CheckForCastling(char moveDescription)
+    private static string CheckForCastling(MoveType moveDescription)
     {
         return moveDescription switch
         {
-            'k' => "O-O ",
-            'q' => "O-O-O ",
+            MoveType.CastlesKingside => "O-O ",
+            MoveType.CastlesQueenside => "O-O-O ",
             _ => null
         };
     }
@@ -280,7 +280,7 @@ internal class MoveHistory : ITextProvider
         string prefix = GetPrefix(e, pieceType);
         description.Append(prefix);
 
-        if (e.Move.Description == 'x' || e.Move.Description == 'p')
+        if (e.Move.Description == MoveType.Takes || e.Move.Description == MoveType.EnPassant)
         {
             if (prefix == string.Empty && e.Piece is Pawn)
                 description.Append(e.Move.Former.Letter);

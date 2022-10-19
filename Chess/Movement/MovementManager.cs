@@ -35,7 +35,7 @@ internal sealed class MovementManager : IDisposable
             if (drawablePiece != null)
             {
                 Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(e.Move.Latter);
-                if (controller is HumanController && e.Move.Description != 'c')
+                if (controller is HumanController && e.Move.Description != MoveType.ParticipatesInCastling)
                 {
                     drawablePiece.MoveObject(newPosition - drawablePiece.Position);
                     _rapidMovement = true;
@@ -181,14 +181,14 @@ internal sealed class MovementManager : IDisposable
             if (pieceOnTheWay != null)
             {
                 if (pieceOnTheWay.Team != pieceOwner.GetTeamOnSquare(initialSquare))
-                    moves.Add(new Move(initialSquare, current, 'x'));
+                    moves.Add(new Move(initialSquare, current, MoveType.Takes));
                 else if (friendlyFire)
-                    moves.Add(new Move(initialSquare, current, 'd'));
+                    moves.Add(new Move(initialSquare, current, MoveType.Defends));
                 break;
             }
             else if (movesIncluded)
             {
-                moves.Add(new Move(initialSquare, current, 'm'));
+                moves.Add(new Move(initialSquare, current, MoveType.Moves));
             }
         } while (infiniteRange);
     }

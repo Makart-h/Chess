@@ -57,7 +57,7 @@ internal sealed class Pawn : Piece
             // Double move that's available at the start position.
             if (!_hasMoved)
                 CheckDoubleMove();
-            Move moveToAdd = new(Square, _oneUp, 'm');
+            Move moveToAdd = new(Square, _oneUp, MoveType.Moves);
             _moves.Add(moveToAdd);
         }
         // En passant to the right.
@@ -72,7 +72,7 @@ internal sealed class Pawn : Piece
     {
         Team teamOnTheSecondSquare = Owner.GetTeamOnSquare(_doubleMove);
         if (teamOnTheSecondSquare == Team.Empty)
-            _moves.Add(new Move(Square, _doubleMove, 'm'));
+            _moves.Add(new Move(Square, _doubleMove, MoveType.Moves));
     }
     private void CheckEnPassant(Square square)
     {
@@ -83,7 +83,7 @@ internal sealed class Pawn : Piece
             {
                 Piece piece = Owner.GetPiece(square);
                 if (piece is Pawn p && p._enPassant == true)
-                    _moves.Add(new(Square, new Square(square, (0, Value)), 'p'));
+                    _moves.Add(new(Square, new Square(square, (0, Value)), MoveType.EnPassant));
             }
         }
     }

@@ -123,7 +123,7 @@ internal sealed class AIController : Controller
             _movesQueue.RemoveAt(0);
             string formerSquare = queuedMove[..2];
             Square former = new(formerSquare);
-            char description = queuedMove[2];
+            MoveType description = (MoveType)int.Parse(queuedMove[2].ToString());
             string latterSquare = queuedMove[3..5];
             Square latter = new(latterSquare);
             Move move = new(former, latter, description);
