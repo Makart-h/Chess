@@ -120,15 +120,20 @@ internal sealed class King : Piece
 
             if (IsRaw)
             {
-                if (CheckIfSquareIsThreatened(square))
-                    continue;
-
-                if(teamOnTheSquare == Team.Empty)
-                    _moves.Add(new Move(Square, square, MoveType.Moves));
-                else if(teamOnTheSquare == _team)
+                if (teamOnTheSquare == _team)
+                {
                     _moves.Add(new Move(Square, square, MoveType.Defends));
+                }
                 else
-                    _moves.Add(new Move(Square, square, MoveType.Takes));
+                {
+                    if (CheckIfSquareIsThreatened(square))
+                        continue;
+
+                    if (teamOnTheSquare == Team.Empty)
+                        _moves.Add(new Move(Square, square, MoveType.Moves));
+                    else
+                        _moves.Add(new Move(Square, square, MoveType.Takes));
+                }
             }
             else
             {
