@@ -65,7 +65,7 @@ internal sealed class Pawn : Piece
         // En passant to the left.
         CheckEnPassant(_leftEnPassant);
         // Add captures and filter through king.
-        _moves.AddRange(MovementManager.GenerateEveryMove(Square, _moveset, Owner, friendlyFire: IsRaw));
+        _moves.AddRange(MoveGenerator.GenerateEveryMove(Square, _moveset, Owner, friendlyFire: IsRaw));
         _moves = Owner.GetKing(_team).FilterMovesThroughThreats(_moves);
     }
     private void CheckDoubleMove()

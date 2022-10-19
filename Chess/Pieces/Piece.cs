@@ -68,7 +68,7 @@ internal abstract class Piece : IComparable<Piece>
     }
     public virtual void CheckPossibleMoves()
     {
-        _moves = MovementManager.GenerateEveryMove(Square, _moveset, Owner, friendlyFire: IsRaw);
+        _moves = MoveGenerator.GenerateEveryMove(Square, _moveset, Owner, friendlyFire: IsRaw);
         _moves = Owner.GetKing(_team).FilterMovesThroughThreats(_moves);
     }
     public virtual void MovePiece(in Move move)
