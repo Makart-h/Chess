@@ -62,12 +62,13 @@ internal struct Square : IEquatable<Square>
     }
     public static bool IsLightSquare(Square square)
     {
-        int letterInt = square._letter - 'a' + 1;
-        int digit = square._digit;
+        if (!square.IsValid)
+            throw new ArgumentException(message: "Not a valid chessboard square!", paramName: nameof(square));
+        int letterInt = square._letter - s_minLetter + 1;
         if (letterInt % 2 == 0)
-            return digit % 2 != 0;
+            return square._digit % 2 != 0;
         else
-            return digit % 2 == 0;
+            return square._digit % 2 == 0;
     }
     public void Transform((int letter, int digit) iterator)
     {
