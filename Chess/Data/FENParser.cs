@@ -112,7 +112,7 @@ internal static class FENParser
         {
             Square square = new(fenGroup);
             int direction = toMove == Team.White ? -1 : 1;
-            square.Transform((0, direction));
+            square = square.Transform((0, direction));
             return square;
         }
         catch (ArgumentOutOfRangeException)

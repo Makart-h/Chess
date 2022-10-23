@@ -65,7 +65,7 @@ public class SquareTests
     {
         Square firstSquare = new("a4");
         Square secondSquare = firstSquare;
-        firstSquare.Transform((0, 0));
+        firstSquare = firstSquare.Transform((0, 0));
         Assert.Equal(firstSquare, secondSquare);
     }
     [Theory]
@@ -77,7 +77,7 @@ public class SquareTests
     {
         Square initial = new(initialSquare);
         Square expected = new(expectedSquare);
-        initial.Transform((xIt, yIt));
+        initial = initial.Transform((xIt, yIt));
         Assert.Equal(expected, initial);
     }
     [Theory]

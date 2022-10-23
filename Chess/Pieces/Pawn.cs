@@ -109,8 +109,8 @@ internal sealed class Pawn : Piece
     private void UpdateSquares(Square oldSquare, Square newSquare)
     {
         var vector = newSquare - oldSquare;
-        _oneUp.Transform(vector);
-        _leftEnPassant.Transform(vector);
-        _rightEnPassant.Transform(vector);
+        _oneUp = _oneUp.Transform(vector);
+        _leftEnPassant = _leftEnPassant.Transform(vector);
+        _rightEnPassant = _rightEnPassant.Transform(vector);
     }
 }

@@ -279,7 +279,7 @@ internal sealed class King : Piece
             Square currentSquare = firstPieceSquare;
             do
             {
-                currentSquare.Transform(iterator.Value);
+                currentSquare = currentSquare.Transform(iterator.Value);
                 if (!Square.Validate(currentSquare))
                     break;
                 if (Owner.GetPiece(currentSquare) != null)
@@ -527,7 +527,7 @@ internal sealed class King : Piece
     {
         for(int i = 0; i < _adjacentSquares.Length; ++i)
         {
-            _adjacentSquares[i].Transform(vector);
+            _adjacentSquares[i] = _adjacentSquares[i].Transform(vector);
         }
     }
     public void OnCheck(EventArgs e)

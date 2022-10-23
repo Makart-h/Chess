@@ -4,7 +4,7 @@ using System.Text.RegularExpressions;
 
 namespace Chess.Board;
 
-internal struct Square : IEquatable<Square>
+internal readonly struct Square : IEquatable<Square>
 {
     private static readonly Regex s_regex;
     private static readonly char s_minLetter;
@@ -21,9 +21,9 @@ internal struct Square : IEquatable<Square>
         s_minLetter = 'a';
         s_maxLetter = 'h';
     }
-    private int _index;
-    private char _letter;
-    private int _digit;
+    private readonly int _index;  
+    private readonly int _digit;
+    private readonly char _letter;
     public readonly char Letter { get => _letter; }
     public readonly int Digit { get => _digit; }
     public readonly int Index { get => _index; }
@@ -70,12 +70,7 @@ internal struct Square : IEquatable<Square>
         else
             return square._digit % 2 == 0;
     }
-    public void Transform((int letter, int digit) iterator)
-    {
-        _letter = (char)(Letter + iterator.letter);
-        _digit += iterator.digit;
-        _index += iterator.letter * s_maxDigit + iterator.digit;
-    }
+    public Square Transform((int letter, int digit) iterator) => new(this, iterator);
     public static bool operator ==(Square first, Square second) => first._index == second._index;
     public static (int x, int y) operator -(Square first, Square second) => (first._letter - second._letter, first._digit - second._digit);
     public static bool Validate(Square square) => square._letter >= s_minLetter && square._letter <= s_maxLetter && square._digit >= s_minDigit && square._digit <= s_maxDigit;

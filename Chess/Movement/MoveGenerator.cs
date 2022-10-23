@@ -82,7 +82,7 @@ internal class MoveGenerator
             Square current = initialSquare;
             for (int i = 0; i < numberOfIterations; ++i)
             {
-                current.Transform(squareIterator);
+                current = current.Transform(squareIterator);
                 if (GenerateMoveAndStop(moves, initialSquare, current, pieceOwner, options))
                     break;
             }
