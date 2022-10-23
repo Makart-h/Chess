@@ -23,20 +23,20 @@ internal class BoardControlEvaluator
         _activeTeam = activeTeam;
         _boardControlInfo = new BoardControlInfo();
     }
-    public void AddSquares(Square origin, Square destination)
+    public void AddSquares(in Square origin, in Square destination)
     {
         if (_boardControl[destination.Index] != null)
         {
-            _boardControl[destination.Index].AddSquare(origin, _pieces[origin.Index].Team);
+            _boardControl[destination.Index].AddSquare(in origin, _pieces[origin.Index].Team);
         }
         else
         {
-            SquareControl squareControl = new(destination);
-            squareControl.AddSquare(origin, _pieces[origin.Index].Team);
+            SquareControl squareControl = new(in destination);
+            squareControl.AddSquare(in origin, _pieces[origin.Index].Team);
             _boardControl[destination.Index] = squareControl;
         }
     }
-    public SquareControl GetSquareControl(Square square) => _boardControl[square.Index];
+    public SquareControl GetSquareControl(in Square square) => _boardControl[square.Index];
     public double EvaluatePieceMoves(Piece piece, King enemyKing)
     {
         if (piece is Pawn)
@@ -71,17 +71,18 @@ internal class BoardControlEvaluator
     public void GetPawnMoves(Pawn pawn)
     {
         List<Move> takes = new(2);
-        Square takesLeft = new(pawn.Square, (-1, pawn.Value));
-        Square takesRight = new(takesLeft, (2, 0));
-        if (Square.Validate(takesLeft))
-            takes.Add(new Move(pawn.Square, takesLeft, MoveType.Takes));
-        if (Square.Validate(takesRight))
-            takes.Add(new Move(pawn.Square, takesRight, MoveType.Takes));
+        Square pawnSquare = pawn.Square;
+        Square takesLeft = new(in pawnSquare, (-1, pawn.Value));
+        Square takesRight = new(in takesLeft, (2, 0));
+        if (Square.Validate(in takesLeft))
+            takes.Add(new Move(in pawnSquare, in takesLeft, MoveType.Takes));
+        if (Square.Validate(in takesRight))
+            takes.Add(new Move(in pawnSquare, in takesRight, MoveType.Takes));
 
         takes = pawn.Owner.GetKing(pawn.Team).FilterMovesThroughThreats(takes);
         foreach (Move move in takes)
         {
-            AddSquares(pawn.Square, move.Latter);
+            AddSquares(in pawnSquare, move.Latter);
         }
     }
     private static int GetMovesPotential(Movesets moveSet)
@@ -97,13 +98,13 @@ internal class BoardControlEvaluator
             _ => 0
         };
     }
-    private Piece GetPiece(Square square)
+    private Piece GetPiece(in Square square)
     {
         Piece piece;
         if (square == _enPassantSquare)
         {
             int enPassantPawnDigitDistanceFromEnPassantSquare = _activeTeam == Team.White ? -1 : 1;
-            Square enPassantPawnSquare = new(square, (0, enPassantPawnDigitDistanceFromEnPassantSquare));
+            Square enPassantPawnSquare = new(in square, (0, enPassantPawnDigitDistanceFromEnPassantSquare));
             piece = _pieces[enPassantPawnSquare.Index];
         }
         else

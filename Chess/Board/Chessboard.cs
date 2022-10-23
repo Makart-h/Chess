@@ -76,7 +76,7 @@ internal sealed class Chessboard : DrawableObject
     }
     public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)
     {
-        Move? moveFromTargetedPiece = targetedPiece.GetAMove(newSquare);
+        Move? moveFromTargetedPiece = targetedPiece.GetAMove(in newSquare);
         if (moveFromTargetedPiece.HasValue)
         {
             move = moveFromTargetedPiece.Value;
@@ -112,8 +112,8 @@ internal sealed class Chessboard : DrawableObject
             Pieces[square.Index] = null;
         }
     }
-    public Piece GetPiece(Square square) => Pieces[square.Index];
-    public Team GetTeamOnSquare(Square square) => Pieces[square.Index] == null ? Team.Empty : Pieces[square.Index].Team;
+    public Piece GetPiece(in Square square) => Pieces[square.Index];
+    public Team GetTeamOnSquare(in Square square) => Pieces[square.Index] == null ? Team.Empty : Pieces[square.Index].Team;
     public static (int, int) ConvertSquareToIndexes(Square square)
     {
         int x = square.Letter - 'a';

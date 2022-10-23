@@ -38,7 +38,7 @@ internal readonly struct Square : IEquatable<Square>
         _digit = digit;
         _index = ((_letter - s_minLetter) * s_maxDigit) + _digit - 1;
     }
-    public Square(Square other, (int x, int y) iterator)
+    public Square(in Square other, (int x, int y) iterator)
     {
         _letter = (char)(other._letter + iterator.x);
         _digit = other._digit + iterator.y;
@@ -60,7 +60,7 @@ internal readonly struct Square : IEquatable<Square>
         }
         throw new ArgumentOutOfRangeException(nameof(square), "Not a valid chess square!");
     }
-    public static bool IsLightSquare(Square square)
+    public static bool IsLightSquare(in Square square)
     {
         if (!square.IsValid)
             throw new ArgumentException(message: "Not a valid chessboard square!", paramName: nameof(square));
@@ -70,11 +70,11 @@ internal readonly struct Square : IEquatable<Square>
         else
             return square._digit % 2 == 0;
     }
-    public Square Transform((int letter, int digit) iterator) => new(this, iterator);
-    public static bool operator ==(Square first, Square second) => first._index == second._index;
-    public static (int x, int y) operator -(Square first, Square second) => (first._letter - second._letter, first._digit - second._digit);
-    public static bool Validate(Square square) => square._letter >= s_minLetter && square._letter <= s_maxLetter && square._digit >= s_minDigit && square._digit <= s_maxDigit;
-    public static bool operator !=(Square first, Square second) => !(first == second);
+    public Square Transform((int letter, int digit) iterator) => new(in this, iterator);
+    public static bool operator ==(in Square first, in Square second) => first._index == second._index;
+    public static (int x, int y) operator -(in Square first, in Square second) => (first._letter - second._letter, first._digit - second._digit);
+    public static bool Validate(in Square square) => square._letter >= s_minLetter && square._letter <= s_maxLetter && square._digit >= s_minDigit && square._digit <= s_maxDigit;
+    public static bool operator !=(in Square first, in Square second) => !(first == second);
     public override readonly bool Equals(object obj) => (obj is Square s) && this == s;
     public readonly bool Equals(Square other) => this == other;
     public override readonly int GetHashCode() => HashCode.Combine(_letter.GetHashCode(), _digit.GetHashCode());

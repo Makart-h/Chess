@@ -57,7 +57,7 @@ internal abstract class Piece : IComparable<Piece>
         Owner = other.Owner;
     }
     public List<Move> Moves { get => _moves; set => _moves = value; }
-    public Move? GetAMove(Square destination)
+    public Move? GetAMove(in Square destination)
     {
         foreach (Move move in _moves)
         {

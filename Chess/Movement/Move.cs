@@ -8,7 +8,7 @@ internal readonly struct Move
     public readonly Square Latter { get; }
     public readonly MoveType Description { get; }
 
-    public Move(Square former, Square latter, MoveType description)
+    public Move(in Square former, in Square latter, MoveType description)
     {
         Former = former;
         Latter = latter;

@@ -197,8 +197,8 @@ internal sealed class Position : IPieceOwner
         if (activeKing.Threatened)
             Check = true;
     }
-    public Piece GetPiece(Square square) => Pieces[square.Index];
-    public Team GetTeamOnSquare(Square square) => Pieces[square.Index] == null ? Team.Empty : Pieces[square.Index].Team;
+    public Piece GetPiece(in Square square) => Pieces[square.Index];
+    public Team GetTeamOnSquare(in Square square) => Pieces[square.Index] == null ? Team.Empty : Pieces[square.Index].Team;
     public void OnPromotion(Piece piece)
     {
         PieceType type = PieceType.Queen;

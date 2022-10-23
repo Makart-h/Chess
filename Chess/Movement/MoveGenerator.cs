@@ -21,7 +21,7 @@ internal class MoveGenerator
         _everyDirectionIterators = new[] { (0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (1, -1), (-1, 1), (-1, -1) };
         _defaultOptions = MoveGeneratorOptions.TakesIncluded | MoveGeneratorOptions.MovesIncluded;
     }
-    public static List<Move> GenerateEveryMove(Square initialSquare, Movesets set, IPieceOwner pieceOwner, bool friendlyFire = false)
+    public static List<Move> GenerateEveryMove(in Square initialSquare, Movesets set, IPieceOwner pieceOwner, bool friendlyFire = false)
     {
         List<Move> moves;
         MoveGeneratorOptions options = _defaultOptions;
@@ -31,81 +31,81 @@ internal class MoveGenerator
         if (set == Movesets.Pawn)
         {
             moves = new(2);
-            int direction = pieceOwner.GetTeamOnSquare(initialSquare) == Team.White ? 1 : -1;
+            int direction = pieceOwner.GetTeamOnSquare(in initialSquare) == Team.White ? 1 : -1;
             (int, int)[] iterators = { (1, 1 * direction), (-1, 1 * direction) };
             foreach (var iterator in iterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options ^ MoveGeneratorOptions.MovesIncluded);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options ^ MoveGeneratorOptions.MovesIncluded);
         }
         else if (set == Movesets.Knight)
         {
             moves = new(4);
             foreach (var iterator in _knightIterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options);
         }
         else if (set == Movesets.Bishop)
         {
             moves = new(7);
             foreach (var iterator in _bishopIterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }
         else if (set == Movesets.Rook)
         {
             moves = new(7);
             foreach (var iterator in _rookIterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }
         else if (set == Movesets.King)
         {
             moves = new(4);
             foreach (var iterator in _everyDirectionIterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options);
         }
         else
         {
             moves = new(14);
             foreach (var iterator in _everyDirectionIterators)
-                GenerateMovesInDirection(moves, initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
+                GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }
         return moves;
     }
-    public static void GenerateMovesInDirection(List<Move> moves, Square initialSquare, (int letter, int digit) squareIterator, IPieceOwner pieceOwner, MoveGeneratorOptions options)
+    public static void GenerateMovesInDirection(List<Move> moves, in Square initialSquare, (int letter, int digit) squareIterator, IPieceOwner pieceOwner, MoveGeneratorOptions options)
     {
         if ((options & MoveGeneratorOptions.InfiniteRange) == 0)
         {
-            Square nextSquare = new(initialSquare, squareIterator);
+            Square nextSquare = new(in initialSquare, squareIterator);
             if (nextSquare.IsValid)
-                GenerateMoveAndStop(moves, initialSquare, nextSquare, pieceOwner, options);
+                GenerateMoveAndStop(moves, in initialSquare, in nextSquare, pieceOwner, options);
         }
         else
         {
-            int numberOfIterations = GetNumberOfPossibleValidSquareIterations(initialSquare, squareIterator);
+            int numberOfIterations = GetNumberOfPossibleValidSquareIterations(in initialSquare, squareIterator);
             Square current = initialSquare;
             for (int i = 0; i < numberOfIterations; ++i)
             {
                 current = current.Transform(squareIterator);
-                if (GenerateMoveAndStop(moves, initialSquare, current, pieceOwner, options))
+                if (GenerateMoveAndStop(moves, in initialSquare, in current, pieceOwner, options))
                     break;
             }
         }
     }
-    public static bool GenerateMoveAndStop(List<Move> moves, Square initialSquare, Square current, IPieceOwner pieceOwner, MoveGeneratorOptions options)
+    public static bool GenerateMoveAndStop(List<Move> moves, in Square initialSquare, in Square current, IPieceOwner pieceOwner, MoveGeneratorOptions options)
     {
-        Piece pieceOnTheWay = pieceOwner.GetPiece(current);
+        Piece pieceOnTheWay = pieceOwner.GetPiece(in current);
         if (pieceOnTheWay != null)
         {
-            if ((options & MoveGeneratorOptions.TakesIncluded) != 0 && pieceOnTheWay.Team != pieceOwner.GetTeamOnSquare(initialSquare))
-                moves.Add(new Move(initialSquare, current, MoveType.Takes));
+            if ((options & MoveGeneratorOptions.TakesIncluded) != 0 && pieceOnTheWay.Team != pieceOwner.GetTeamOnSquare(in initialSquare))
+                moves.Add(new Move(in initialSquare, in current, MoveType.Takes));
             else if ((options & MoveGeneratorOptions.DefendsIncluded) != 0)
-                moves.Add(new Move(initialSquare, current, MoveType.Defends));
+                moves.Add(new Move(in initialSquare, in current, MoveType.Defends));
             return true;
         }
         else if ((options & MoveGeneratorOptions.MovesIncluded) != 0)
         {
-            moves.Add(new Move(initialSquare, current, MoveType.Moves));
+            moves.Add(new Move(in initialSquare, in current, MoveType.Moves));
         }
         return false;
     }
-    public static int GetNumberOfPossibleValidSquareIterations(Square initialSquare, (int letter, int digit) squareIterator)
+    public static int GetNumberOfPossibleValidSquareIterations(in Square initialSquare, (int letter, int digit) squareIterator)
     {
         int letterValidIterations = int.MaxValue;
         int digitValidIterations = int.MaxValue;

@@ -90,7 +90,7 @@ internal sealed class King : Piece
             _ => throw new ArgumentOutOfRangeException()
         };
     }
-    public static MoveType GetCastlingSideFromRookSquare(Square square, Team team)
+    public static MoveType GetCastlingSideFromRookSquare(in Square square, Team team)
     {
         string squareAsString = square.ToString();
         return (team, squareAsString) switch
@@ -113,37 +113,37 @@ internal sealed class King : Piece
     {
         foreach (var square in _adjacentSquares)
         {
-            if (!Square.Validate(square))
+            if (!Square.Validate(in square))
                 continue;
 
-            Team teamOnTheSquare = Owner.GetTeamOnSquare(square);
+            Team teamOnTheSquare = Owner.GetTeamOnSquare(in square);
 
             if (IsRaw)
             {
                 if (teamOnTheSquare == _team)
                 {
-                    _moves.Add(new Move(Square, square, MoveType.Defends));
+                    _moves.Add(new Move(Square, in square, MoveType.Defends));
                 }
                 else
                 {
-                    if (CheckIfSquareIsThreatened(square))
+                    if (CheckIfSquareIsThreatened(in square))
                         continue;
 
                     if (teamOnTheSquare == Team.Empty)
-                        _moves.Add(new Move(Square, square, MoveType.Moves));
+                        _moves.Add(new Move(Square, in square, MoveType.Moves));
                     else
-                        _moves.Add(new Move(Square, square, MoveType.Takes));
+                        _moves.Add(new Move(Square, in square, MoveType.Takes));
                 }
             }
             else
             {
-                if (teamOnTheSquare == _team || CheckIfSquareIsThreatened(square))
+                if (teamOnTheSquare == _team || CheckIfSquareIsThreatened(in square))
                     continue;
 
                 if (teamOnTheSquare == Team.Empty)
-                    _moves.Add(new Move(Square, square, MoveType.Moves));
+                    _moves.Add(new Move(Square, in square, MoveType.Moves));
                 else
-                    _moves.Add(new Move(Square, square, MoveType.Takes));
+                    _moves.Add(new Move(Square, in square, MoveType.Takes));
             }
         }
     }
@@ -190,12 +190,12 @@ internal sealed class King : Piece
 
         foreach (var square in squaresToCheck)
         {
-            Team teamOnTheSquare = Owner.GetTeamOnSquare(square);
-            if (teamOnTheSquare != Team.Empty || CheckIfSquareIsThreatened(square))
+            Team teamOnTheSquare = Owner.GetTeamOnSquare(in square);
+            if (teamOnTheSquare != Team.Empty || CheckIfSquareIsThreatened(in square))
                 return;
         }
 
-        _moves.Add(new Move(Square, squaresToCheck[1], GetCastlingSideFromRookSquare(r.Square, _team)));
+        _moves.Add(new Move(Square, in squaresToCheck[1], GetCastlingSideFromRookSquare(r.Square, _team)));
     }
     public Square[] GetKingSideCastleSquares() => s_kingsideCastlingSquares[_team];
     public Square[] GetQueenSideCastleSquares() => s_queensideCastlingSquares[_team];
@@ -270,9 +270,9 @@ internal sealed class King : Piece
         }
         return false;
     }
-    public bool ArePiecesFacingEachOther(Square firstPieceSquare, Square secondPieceSquare)
+    public bool ArePiecesFacingEachOther(in Square firstPieceSquare, in Square secondPieceSquare)
     {
-        (int, int)? iterator = GetStraightIterator(startingPosition: firstPieceSquare, destination: secondPieceSquare);
+        (int, int)? iterator = GetStraightIterator(startingPosition: in firstPieceSquare, destination: in secondPieceSquare);
 
         if (iterator.HasValue)
         {
@@ -280,16 +280,16 @@ internal sealed class King : Piece
             do
             {
                 currentSquare = currentSquare.Transform(iterator.Value);
-                if (!Square.Validate(currentSquare))
+                if (!Square.Validate(in currentSquare))
                     break;
-                if (Owner.GetPiece(currentSquare) != null)
+                if (Owner.GetPiece(in currentSquare) != null)
                     return currentSquare == secondPieceSquare;
             }
             while (true);
         }
         return false;
     }
-    private static (int letter, int digit)? GetStraightIterator(Square startingPosition, Square destination)
+    private static (int letter, int digit)? GetStraightIterator(in Square startingPosition, in Square destination)
     {
         char startLetter = startingPosition.Letter;
         char destLetter = destination.Letter;
@@ -407,7 +407,7 @@ internal sealed class King : Piece
 
         return sequences;
     }
-    private List<Square> GenereateSquareSequence(Movesets targetedMoveset, Square initialSquare, (int letterIt, int digitIt) iterator, bool isInfinite = true, bool onlyCaptures = false)
+    private List<Square> GenereateSquareSequence(Movesets targetedMoveset, in Square initialSquare, (int letterIt, int digitIt) iterator, bool isInfinite = true, bool onlyCaptures = false)
     { 
         Square current = new(initialSquare, iterator);
         if (!Square.Validate(current))
@@ -456,62 +456,62 @@ internal sealed class King : Piece
             return null;
         }
     }
-    public bool CheckIfSquareIsThreatened(Square checkedSquare)
+    public bool CheckIfSquareIsThreatened(in Square checkedSquare)
     {
         int direction = Team == Team.White ? 1 : -1;
         List<Square> sequenceToAdd;
 
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, checkedSquare, (1, 1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, 1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, checkedSquare, (1, -1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, -1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, checkedSquare, (-1, 1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, 1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, checkedSquare, (-1, -1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, -1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, checkedSquare, (0, 1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, 1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, checkedSquare, (0, -1));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, -1));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, checkedSquare, (1, 0));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (1, 0));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, checkedSquare, (-1, 0));
+        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (-1, 0));
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, checkedSquare, (1, 1 * direction), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (1, 1 * direction), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, checkedSquare, (-1, 1 * direction), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (-1, 1 * direction), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (2, 1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, 1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (2, -1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, -1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (-1, -2), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, -2), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (1, -2), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, -2), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (-2, -1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, -1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (-2, 1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, 1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (1, 2), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, 2), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, checkedSquare, (-1, 2), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, 2), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (0, 1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, 1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (0, -1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, -1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (1, 0), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 0), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (-1, 0), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 0), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (1, 1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (1, -1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, -1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (-1, 1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 1), isInfinite: false);
         if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, checkedSquare, (-1, -1), isInfinite: false);
+        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, -1), isInfinite: false);
         if (sequenceToAdd != null) return true;
 
         return false;

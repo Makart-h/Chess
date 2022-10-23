@@ -13,13 +13,13 @@ internal class SquareControl
     public List<((int x, int y) direction, Square square)> InvolvedSquares { get => _involvedSquares; }
     private readonly List<((int x, int y) direction, Square square)> _involvedSquares;
 
-    public SquareControl(Square controlledSquare)
+    public SquareControl(in Square controlledSquare)
     {
         _involvedSquares = new(4);
         TeamInControl = Team.Empty;
         ControlledSquare = controlledSquare;
     }
-    public void AddSquare(Square squareToAdd, Team teamOnSquare)
+    public void AddSquare(in Square squareToAdd, Team teamOnSquare)
     {
         (int x, int y) direction = ControlledSquare - squareToAdd;
         if (direction.x == 0 || direction.y == 0 || Math.Abs(direction.x) == Math.Abs(direction.y))

@@ -110,7 +110,7 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
             drawablePiece.RecalculatePosition();
         }
     }
-    public Piece GetPiece(Square square) => Chessboard.Instance.GetPiece(square);
-    public Team GetTeamOnSquare(Square square) => Chessboard.Instance.GetTeamOnSquare(square);
+    public Piece GetPiece(in Square square) => Chessboard.Instance.GetPiece(in square);
+    public Team GetTeamOnSquare(in Square square) => Chessboard.Instance.GetTeamOnSquare(in square);
     public void OnPromotion(Piece piece) { }
 }
