@@ -13,7 +13,6 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using System.Runtime;
 using Model = Chess.Graphics.Model;
 
 namespace Chess;
@@ -50,7 +49,7 @@ internal sealed class Chess : Game
     private bool _explanationVisible;
     private bool _controlsVisible;
 
-    public Chess()
+    public Chess() : base()
     {
         _graphics = new GraphicsDeviceManager(this);
         Content.RootDirectory = "Content";
