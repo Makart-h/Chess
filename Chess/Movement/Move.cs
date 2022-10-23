@@ -14,10 +14,4 @@ internal readonly struct Move
         Latter = latter;
         Description = description;
     }
-    public Move(Move other)
-    {
-        Former = other.Former;
-        Latter = other.Latter;
-        Description = other.Description;
-    }
 }
