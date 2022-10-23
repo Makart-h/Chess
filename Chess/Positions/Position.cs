@@ -28,7 +28,7 @@ internal sealed class Position : IPieceOwner
     public GameResult Result { get; set; } 
     public int Hash { get; private set; }
     private static readonly object s_locker = new();
-    private Piece enPassantPiece;
+    private Pawn _enPassantPawn;
     private Position(Piece[] pieces, Team activeTeam, in Move move, int halfMoves, Dictionary<int, int> occuredPositions)
     {
         Pieces = new Piece[pieces.Length];
@@ -105,7 +105,7 @@ internal sealed class Position : IPieceOwner
         if (move.Description == MoveType.EnPassant)
         {
             Square enPassant = new(move.Latter.Letter, move.Former.Digit);
-            Pieces[enPassant.Index] = null;
+            Pieces[enPassant.Index] = null;           
         }
         else if (move.Description == MoveType.CastlesKingside || move.Description == MoveType.CastlesQueenside)
         {
@@ -124,7 +124,7 @@ internal sealed class Position : IPieceOwner
         if (piece is Pawn { EnPassant: true } p)
         {
             EnPassant = new Square(piece.Square, (0, -p.Value));
-            enPassantPiece = piece;
+            _enPassantPawn = p;
         }
         else
             EnPassant = new Square('p', 0);
@@ -172,8 +172,8 @@ internal sealed class Position : IPieceOwner
                 sign = piece.Team == Team.White ? 1 : -1;
                 Hash = unchecked(Hash * 7 + (int)piece.Moveset * sign * (i + 1));
                 piece.Update();
-                if (piece == enPassantPiece)
-                    ((Pawn)piece).EnPassant = true;
+                if (piece == _enPassantPawn)
+                    _enPassantPawn.EnPassant = true;
                 if (piece.Team == ActiveTeam)
                 {
                     foreach (Move move in piece.Moves)
