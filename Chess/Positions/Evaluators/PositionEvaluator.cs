@@ -82,10 +82,9 @@ internal static class PositionEvaluator
                 else
                     blackMaterial += pieceValue;
             }
-            else if (piece is Pawn p)
+            else if (piece is Pawn pawn)
             {
-                pawnStructuresEvaluator.AddPawn(p);
-                boardControlEvaluator.GetPawnMoves(p);
+                pawnStructuresEvaluator.AddPawn(pawn);
             }
         }
         bool inEndgame = blackMaterial <= -_endgameMaterialBoundry && whiteMaterial <= _endgameMaterialBoundry;
