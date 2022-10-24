@@ -37,7 +37,7 @@ internal class BoardControlEvaluator
         }
     }
     public SquareControl GetSquareControl(in Square square) => _boardControl[square.Index];
-    public double EvaluatePieceMoves(Piece piece, King enemyKing)
+    public double EvaluatePiece(Piece piece, King enemyKing)
     {
         if (piece is Pawn)
             return 0;

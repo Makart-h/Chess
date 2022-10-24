@@ -69,9 +69,9 @@ internal static class PositionEvaluator
 
             Team team = piece.Team;
             if(team == Team.White)
-                evaluation += boardControlEvaluator.EvaluatePieceMoves(piece, position.Black);
+                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.Black);
             else
-                evaluation += boardControlEvaluator.EvaluatePieceMoves(piece, position.White);
+                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.White);
 
             int pieceValue = piece.Value;
             evaluation += pieceValue;
