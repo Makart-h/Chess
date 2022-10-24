@@ -32,6 +32,7 @@ internal sealed class PawnStructuresEvaluator
     {
         _whitePawns = new Dictionary<char, List<int>>();
         _blackPawns = new Dictionary<char, List<int>>();
+        _pawnCounter = 0;
     }
     public void AddPawn(Pawn pawn)
     {
@@ -43,93 +44,90 @@ internal sealed class PawnStructuresEvaluator
             value.Add(digit);
         else
             reference[letter] = new List<int>() { digit };
+
+        _pawnCounter++;
     }
     public double EvaluatePawnStructures(bool inEndgame)
     {
         double evaluation = 0;
-        const double pawnCountAdvantageValue = 0.1;
-        evaluation += EvaluatePawns(_whitePawns, _blackPawns, headsTowardsHigherRanks: true);
+        if (_pawnCounter == 0)
+            return evaluation;
+        evaluation += EvaluatePawns(_whitePawns, _blackPawns, PawnDetails.HeadsTowardsHigherRanks);
         evaluation -= EvaluatePawns(_blackPawns, _whitePawns);
-        evaluation += Math.Sign(_kingsideCount) * pawnCountAdvantageValue;
-        evaluation += Math.Sign(_queensideCount) * pawnCountAdvantageValue;
+        evaluation += Math.Sign(_kingsideCount) * s_pawnCountAdvantageValue;
+        evaluation += Math.Sign(_queensideCount) * s_pawnCountAdvantageValue;
         if (inEndgame)
-            evaluation *= 2;
+            evaluation *= s_endgameFactor;
         return evaluation;
     }
-    private double EvaluatePawns(Dictionary<char, List<int>> teamToEvaluate, Dictionary<char, List<int>> otherTeam, bool headsTowardsHigherRanks = false)
+    private double EvaluatePawns(Dictionary<char, List<int>> teamToEvaluate, Dictionary<char, List<int>> otherTeam, PawnDetails assumptions = PawnDetails.None)
     {
-        const double doubledPawnValue = -0.1;
         double evaluation = 0;
         int doubledPawnsCount = 0;
-        foreach (char key in teamToEvaluate.Keys)
+        for (char key = s_lowestPossibleKey; key < s_highestPossibleKey + 1; key++)
         {
-            GetCounts(teamToEvaluate[key].Count, key, ref doubledPawnsCount, headsTowardsHigherRanks);
+            if (!teamToEvaluate.ContainsKey(key))
+                continue;
+            GetCounts(teamToEvaluate[key].Count, key, ref doubledPawnsCount, assumptions);
             foreach (int pawnRank in teamToEvaluate[key])
             {
-                bool connected = false, passed = false, backward = false, isolated = false;
+                PawnDetails pawnDetails = assumptions;
 
                 bool leftRankExists = teamToEvaluate.ContainsKey((char)(key - 1));
                 bool rightRankExists = teamToEvaluate.ContainsKey((char)(key + 1));
 
                 if (!leftRankExists && !rightRankExists)
-                    isolated = true;
+                    pawnDetails |= PawnDetails.Isolated;
                 else if (leftRankExists && rightRankExists)
                 {
-                    connected = true;
-                    backward = CheckIfBackward(pawnRank, key, teamToEvaluate, headsTowardsHigherRanks);
+                    pawnDetails |= PawnDetails.Connected;
+                    if (CheckIfBackward(pawnRank, key, teamToEvaluate, pawnDetails))
+                        pawnDetails |= PawnDetails.Backward;
                 }
                 else
-                    connected = true;
-                passed = CheckIfPassed(pawnRank, key, otherTeam, headsTowardsHigherRanks);
-                evaluation += EvaluatePawn(pawnRank, connected, passed, backward, isolated, headsTowardsHigherRanks);
+                    pawnDetails |= PawnDetails.Connected;
+
+                if (CheckIfPassed(pawnRank, key, otherTeam, pawnDetails))
+                    pawnDetails |= PawnDetails.Passed;
+
+                evaluation += EvaluatePawn(pawnRank, pawnDetails);
             }
         }
-        evaluation += doubledPawnsCount * doubledPawnValue;
+        evaluation += doubledPawnsCount * s_doubledValue;
         return evaluation;
     }
-    private static double EvaluatePawn(int pawnRank, bool connected, bool passed, bool backward, bool isolated, bool headsTowardsHigherRanks)
+    private static double EvaluatePawn(int pawnRank, PawnDetails pawnDetails)
     {
         double evaluation = 0;
-        const double isolatedValue = -0.1;
-        const double passedValue = 0.1;
-        const double connectedValue = 0.1;
-        const double connectedPassedValue = 0.1;
-        const double backwardValue = -0.1;
-        const double nearPromotionValue = 3.0;
-        const double rankValue = 0.05;
-        int nearPromotionRank = headsTowardsHigherRanks ? 7 : 2;
+        bool headsTowardsHigherRanks = (pawnDetails & PawnDetails.HeadsTowardsHigherRanks) != 0;
+        int nearPromotionRank = headsTowardsHigherRanks ? s_whiteNearPromotionRank : s_blackNearPromotionRank;
 
         if (pawnRank == nearPromotionRank)
-            evaluation += nearPromotionValue;
+            evaluation += s_nearPromotionValue;
         else
         {
-            int rank = headsTowardsHigherRanks ? pawnRank - 2 : 7 - pawnRank;
-            evaluation += rankValue * rank;
+            int rank = headsTowardsHigherRanks ? pawnRank - s_blackNearPromotionRank : s_whiteNearPromotionRank - pawnRank;
+            evaluation += s_rankValue * rank;
         }
-        if (passed)
-            evaluation += passedValue;
-        if (isolated)
-            evaluation += isolatedValue;
-        else
-        {
-            if (backward)
-                evaluation += backwardValue;
-            if (connected)
-                evaluation += connectedValue;
-            if (connected && passed)
-                evaluation += connectedPassedValue;
-        }
+        double passed = (double)(pawnDetails & PawnDetails.Passed) / (double)PawnDetails.Passed;
+        evaluation += s_passedValue * passed;
+        evaluation += s_isolatedValue * (double)(pawnDetails & PawnDetails.Isolated) / (double)PawnDetails.Isolated;
+        evaluation += s_backwardValue * (double)(pawnDetails & PawnDetails.Backward) / (double)PawnDetails.Backward;
+        double connected = (double)(pawnDetails & PawnDetails.Connected) / (double)PawnDetails.Connected;
+        evaluation += s_connectedValue * connected;
+        evaluation += s_connectedPassedValue * connected * passed;
         return evaluation;
     }
-    private static bool CheckIfPassed(int pawnRank, char pawnKey, Dictionary<char, List<int>> otherTeam, bool headsTowardsHigherRanks)
+    private static bool CheckIfPassed(int pawnRank, char pawnKey, Dictionary<char, List<int>> otherTeam, PawnDetails pawnDetails)
     {
         char[] keys = { pawnKey, (char)(pawnKey - 1), (char)(pawnKey + 1) };
+        bool headsTowardsHigherRanks = (pawnDetails & PawnDetails.HeadsTowardsHigherRanks) != 0;
         foreach (char key in keys)
         {
             if (otherTeam.TryGetValue(key, out var pawnRanks))
             {
                 foreach (int enemy in pawnRanks)
-                {
+                {                
                     if (headsTowardsHigherRanks && enemy > pawnRank || !headsTowardsHigherRanks && enemy < pawnRank)
                         return false;
                 }
@@ -137,9 +135,10 @@ internal sealed class PawnStructuresEvaluator
         }
         return true;
     }
-    private static bool CheckIfBackward(int pawnRank, char key, Dictionary<char, List<int>> teamToEvaluate, bool headsTowardsHigherRanks)
+    private static bool CheckIfBackward(int pawnRank, char key, Dictionary<char, List<int>> teamToEvaluate, PawnDetails pawnDetails)
     {
         bool backward = true;
+        bool headsTowardsHigherRanks = (pawnDetails & PawnDetails.HeadsTowardsHigherRanks) != 0;
         foreach (int otherPawn in teamToEvaluate[(char)(key - 1)])
         {
             if (headsTowardsHigherRanks && pawnRank >= otherPawn || !headsTowardsHigherRanks && pawnRank <= otherPawn)
@@ -161,11 +160,12 @@ internal sealed class PawnStructuresEvaluator
         }
         return backward;
     }
-    private void GetCounts(int count, char key, ref int doubledPawnsCount, bool headsTowardsHigherRanks)
+    private void GetCounts(int count, char key, ref int doubledPawnsCount, PawnDetails pawnDetails)
     {
+        bool headsTowardsHigherRanks = (pawnDetails & PawnDetails.HeadsTowardsHigherRanks) != 0;
         if (count > 1)
             doubledPawnsCount += count - 1;
-        if (key >= 'a' && key <= 'd')
+        if (key >= s_queensideLetters.first && key <= s_queensideLetters.last)
             _queensideCount += headsTowardsHigherRanks ? count : -count;
         else
             _kingsideCount += headsTowardsHigherRanks ? count : -count;
