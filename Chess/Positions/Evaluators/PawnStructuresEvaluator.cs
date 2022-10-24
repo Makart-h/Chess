@@ -11,6 +11,22 @@ internal sealed class PawnStructuresEvaluator
     private readonly Dictionary<char, List<int>> _blackPawns;
     private int _kingsideCount;
     private int _queensideCount;
+    private int _pawnCounter;
+    private static readonly int s_whiteNearPromotionRank = 7;
+    private static readonly int s_blackNearPromotionRank = 2;
+    private static readonly (char first, char last) s_queensideLetters = ('a', 'd');
+    private static readonly char s_lowestPossibleKey = 'a';
+    private static readonly char s_highestPossibleKey = 'h';
+    private static readonly double s_endgameFactor = 2;
+    private static readonly double s_pawnCountAdvantageValue = 0.1;
+    private static readonly double s_doubledValue = -0.1;
+    private static readonly double s_isolatedValue = -0.1;
+    private static readonly double s_passedValue = 0.1;
+    private static readonly double s_connectedValue = 0.1;
+    private static readonly double s_connectedPassedValue = 0.1;
+    private static readonly double s_backwardValue = -0.1;
+    private static readonly double s_nearPromotionValue = 3.0;
+    private static readonly double s_rankValue = 0.05;
 
     public PawnStructuresEvaluator()
     {
