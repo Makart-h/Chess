@@ -22,7 +22,7 @@ internal static class PositionEvaluator
     static PositionEvaluator()
     {
         Controller.MoveMade += OnMoveMade;
-        _endgameMaterialBoundry = 10;
+        _endgameMaterialBoundry = 13;
     }
     public static double EvaluatePosition(Position position)
     {
@@ -67,25 +67,21 @@ internal static class PositionEvaluator
             if (piece == null)
                 continue;
 
-            Team team = piece.Team;
-            if(team == Team.White)
-                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.Black);
-            else
-                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.White);
-
             int pieceValue = piece.Value;
             evaluation += pieceValue;
-            if (piece is not King && piece is not Pawn)
+            if (piece.Team == Team.White)
             {
-                if (team == Team.White)
-                    whiteMaterial += pieceValue;
-                else
-                    blackMaterial += pieceValue;
+                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.Black);
+                whiteMaterial += pieceValue;
             }
-            else if (piece is Pawn pawn)
+            else
             {
+                evaluation += boardControlEvaluator.EvaluatePiece(piece, position.White);
+                blackMaterial += pieceValue;
+            }
+
+            if (piece is Pawn pawn)
                 pawnStructuresEvaluator.AddPawn(pawn);
-            }
         }
         bool inEndgame = blackMaterial <= -_endgameMaterialBoundry && whiteMaterial <= _endgameMaterialBoundry;
         evaluation += boardControlEvaluator.EvaluateBoardControl(inEndgame);
