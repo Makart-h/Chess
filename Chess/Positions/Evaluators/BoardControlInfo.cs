@@ -22,13 +22,13 @@ internal struct BoardControlInfo
         s_smallCenterDigit = (3, 6);
     }
     public double Value { get => CalculateValue(); }
-    public void IncreaseControls(int sign, Square square)
+    public void IncreaseControls(int sign, in Square square)
     {
         _squaresControl += sign;
 
-        if (IsInCenter(square))
+        if (IsInCenter(in square))
             _centerControl += sign;
-        else if (IsInSmallCenter(square))
+        else if (IsInSmallCenter(in square))
             _smallCenterControl += sign;
     }
     private double CalculateValue()
@@ -39,6 +39,6 @@ internal struct BoardControlInfo
         value += _smallCenterControl * s_smallCenterValue;
         return value;
     }
-    private static bool IsInCenter(Square square) => square.Letter >= s_centerLetter.min && square.Letter <= s_centerLetter.max && square.Digit >= s_centerDigit.min && square.Digit <= s_centerDigit.max;
-    private static bool IsInSmallCenter(Square square) => square.Letter >= s_smallCenterLetter.min && square.Letter <= s_smallCenterLetter.max && square.Digit >= s_smallCenterDigit.min && square.Digit <= s_smallCenterDigit.max;
+    private static bool IsInCenter(in Square square) => square.Letter >= s_centerLetter.min && square.Letter <= s_centerLetter.max && square.Digit >= s_centerDigit.min && square.Digit <= s_centerDigit.max;
+    private static bool IsInSmallCenter(in Square square) => square.Letter >= s_smallCenterLetter.min && square.Letter <= s_smallCenterLetter.max && square.Digit >= s_smallCenterDigit.min && square.Digit <= s_smallCenterDigit.max;
 }
