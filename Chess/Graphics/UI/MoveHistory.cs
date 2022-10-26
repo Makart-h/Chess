@@ -327,10 +327,12 @@ internal class MoveHistory : ITextProvider
         if (listOffset > 0 || _isInOffsetedState)
         {
             UpdateEntriesPosition(listOffset);
-            return _history.ToArray()[listOffset..];
+            return _history.Skip(listOffset);
         }
         else
-            return _history.ToArray();
+        {
+            return _history;
+        }
     }
     private void UpdateEntriesPosition(int offset)
     {
