@@ -168,24 +168,15 @@ internal class MoveHistory : ITextProvider
             _checkmateOnBoard = true;
     }
     private void OnCheck(object sender, EventArgs e) => _shouldInsertCheckInfo = true;
-    private void InsertCheckInfo()
+    private static void InsertAdditionalInfo(TextObject entry, string info)
     {
-        TextObject lastEntry = _history.Last();
-        StringBuilder sb = new(lastEntry.Text);
-        int index = lastEntry.Text.IndexOf(' ', lastEntry.Text.Length - s_maxHalfmoveEntryLength);
-        sb.Replace(' ', '+', index, 1);
-        lastEntry.Text = sb.ToString();
-    }
-    private void InsertPromotionInfo()
+        StringBuilder sb = new(entry.Text);
+        int index = entry.Text.IndexOf(' ', entry.Text.Length - s_maxHalfmoveEntryLength);
+        for (int j = 0, i = index; j < info.Length; ++i, ++j)
     {
-        TextObject lastEntry = _history.Last();
-        StringBuilder sb = new(lastEntry.Text);
-        int index = lastEntry.Text.IndexOf(' ', lastEntry.Text.Length - s_maxHalfmoveEntryLength);
-        for (int j = 0, i = index; j < _promotionInfo.Length; ++i, ++j)
-        {
-            sb[i] = _promotionInfo[j];
+            sb[i] = info[j];
         }
-        lastEntry.Text = sb.ToString();
+        entry.Text = sb.ToString();
     }
     private void OnPromotionConcluded(object sender, PromotionEventArgs e)
     {
@@ -242,12 +233,12 @@ internal class MoveHistory : ITextProvider
 
         if (_promotionInfo != string.Empty)
         {
-            InsertPromotionInfo();
+            InsertAdditionalInfo(_history.Last(), _promotionInfo);
             _promotionInfo = string.Empty;
         }
         if (_shouldInsertCheckInfo)
         {
-            InsertCheckInfo();
+            InsertAdditionalInfo(_history.Last(), "+");
             _shouldInsertCheckInfo = false;
         }
         if(_checkmateOnBoard)
