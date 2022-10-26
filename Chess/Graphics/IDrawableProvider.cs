@@ -1,6 +1,8 @@
-﻿namespace Chess.Graphics;
+﻿using System.Collections.Generic;
+
+namespace Chess.Graphics;
 
 internal interface IDrawableProvider
 {
-    public DrawableObject[] GetDrawableObjects();
+    public IEnumerable<DrawableObject> GetDrawableObjects();
 }

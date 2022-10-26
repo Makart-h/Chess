@@ -1,6 +1,8 @@
-﻿namespace Chess.Graphics;
+﻿using System.Collections.Generic;
+
+namespace Chess.Graphics;
 
 internal interface ITextProvider
 {
-    public TextObject[] GetTextObjects();
+    public IEnumerable<TextObject> GetTextObjects();
 }

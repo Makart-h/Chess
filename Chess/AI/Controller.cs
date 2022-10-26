@@ -61,7 +61,7 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
         else
             return null;
     }
-    public abstract DrawableObject[] GetDrawableObjects();
+    public abstract IEnumerable<DrawableObject> GetDrawableObjects();
     public virtual void Update()
     {
         for (int i = _pieces.Count - 1; i >= 0; --i)

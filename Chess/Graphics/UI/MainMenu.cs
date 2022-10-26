@@ -141,8 +141,8 @@ internal sealed class MainMenu : IDrawableProvider, ITextProvider
         TextObject textObject = new TextObject(_font, text, Vector2.Zero, Color.White, 1f);
         return new Button(_graphicsDevice, lightTile, null, new[] { textObject }, destinationRectangle, actions);
     }
-    public DrawableObject[] GetDrawableObjects() => _drawables.ToArray();
-    public TextObject[] GetTextObjects()
+    public IEnumerable<DrawableObject> GetDrawableObjects() => _drawables.ToArray();
+    public IEnumerable<TextObject> GetTextObjects()
     {
         AssignTextValues();
         for(int i = 0; i < _textValues.Length; ++i)

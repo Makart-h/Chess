@@ -331,7 +331,7 @@ internal class MoveHistory : ITextProvider
         }
         return conflictInfo;
     }
-    public TextObject[] GetTextObjects()
+    public IEnumerable<TextObject> GetTextObjects()
     {
         int listOffset = _isInOffsetedState ? _watchingOffset : _history.Count - _maxItemsOnScreen;
         if (listOffset > 0 || _isInOffsetedState)

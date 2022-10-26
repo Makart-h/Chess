@@ -57,7 +57,7 @@ internal sealed class OverlayManager : IDrawableProvider, IDisposable
 
         s_instance = new OverlayManager(overlaysTexture);
     }
-    public DrawableObject[] GetDrawableObjects()
+    public IEnumerable<DrawableObject> GetDrawableObjects()
     {
         if(_isDisposed)
             return null;

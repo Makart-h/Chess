@@ -3,6 +3,8 @@ using Chess.Clock;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
+using System.Collections;
+using System.Collections.Generic;
 
 namespace Chess.Graphics.UI;
 
@@ -47,7 +49,7 @@ internal class ClockReader : ITextProvider
     {
         (_bottoomClockPosition, _topClockPosition) = (_topClockPosition, _bottoomClockPosition);
     }
-    public TextObject[] GetTextObjects()
+    public IEnumerable<TextObject> GetTextObjects()
     {
         GetClocks();
         return new[] { _whiteClock, _blackClock};

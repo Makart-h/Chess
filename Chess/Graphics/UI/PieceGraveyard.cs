@@ -104,7 +104,7 @@ internal class PieceGraveyard : IDrawableProvider
                 _blackPieces.Add(piece.drawable);
         }
     }
-    public DrawableObject[] GetDrawableObjects()
+    public IEnumerable<DrawableObject> GetDrawableObjects()
     {
         List<DrawableObject> drawables = new(_whitePieces);
         drawables.AddRange(_blackPieces);
