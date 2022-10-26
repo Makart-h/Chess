@@ -204,9 +204,8 @@ internal class MoveHistory : ITextProvider
     private void OnTurnEnded(object sender, EventArgs e) => AddMoveToHistory(_moveToAdd.team, _moveToAdd.description);
     private void AddEntry(string moveDescription)
     {;
-        float positionX = Width * _propotionalDistanceFromEdges;
-        float positionY = Height * _propotionalDistanceFromEdges + ((_currentNumber - _firstNumber) * _fontHeight);
-        TextObject newEntry = new TextObject(_font, $"{_currentNumber, s_maxNumberOfDigits}.{moveDescription}", new Vector2(positionX, positionY), Color.Black, 1.0f);
+        Vector2 position = CalculateEntryPosition(_currentNumber - _firstNumber);
+        TextObject newEntry = new TextObject(_font, $"{_currentNumber, s_maxNumberOfDigits}.{moveDescription}", position, Color.Black, 1.0f);
         _history.Add(newEntry);
     }
     private void UpdateEntry(string moveDescription)
@@ -346,7 +345,13 @@ internal class MoveHistory : ITextProvider
     {
         for(int i = 0; i < _history.Count; ++i)
         {
-            _history[i].Position = new Vector2(_history[i].Position.X, (i - offset) * _fontHeight);
+            _history[i].Position = CalculateEntryPosition(i - offset);
         }
+        }
+    private Vector2 CalculateEntryPosition(int rowNumber)
+    {
+        float positionX = Width * _propotionalDistanceFromEdges;
+        float positionY = Height * _propotionalDistanceFromEdges + rowNumber * _fontHeight;
+        return new Vector2(positionX, positionY);
     }
 }
