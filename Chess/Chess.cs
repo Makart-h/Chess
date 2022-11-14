@@ -13,7 +13,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
 using System.Collections.Generic;
-using Model = Chess.Graphics.Model;
+using IDrawable = Chess.Graphics.IDrawable;
 
 namespace Chess;
 
@@ -162,11 +162,11 @@ internal sealed class Chess : Game
         if (pawn.Owner is Controller controller)
         {
             Square overlaySquare = Chessboard.Instance.Inverted ? new Square("h1") : new Square("a8");
-            SquareOverlay overlay = new(SquareOverlayType.CanTake, overlaySquare);
+            IDrawable overlay = new SquareOverlay(Content.Load<Texture2D>("Tsquares"), SquareOverlayType.CanTake, overlaySquare);
             Vector2 position = Chessboard.Instance.ToCordsFromSquare(square);
             Rectangle buttonRectangle = new((int)position.X, (int)position.Y, Chessboard.Instance.SquareSideLength, Chessboard.Instance.SquareSideLength);
-            Rectangle drawableRectangle = controller.GetDrawablePiece(pawn).DestinationRectangle with { X = 0, Y = 0 };
-            var appearance = CreatePieceAppearance(type, pawn.Team, drawableRectangle);
+            Rectangle drawableRectangle = controller.GetPieceModel(pawn).DestinationRect with { X = 0, Y = 0 };
+            IDrawable appearance = CreatePieceAppearance(type, pawn.Team, drawableRectangle);
             Texture2D tile = Square.IsLightSquare(square) ? _lightTile : _darkTile;
             ButtonActionInfo actions = new();
             actions.OnRelease = () => HandlePromotionDecision(pawn, type);
@@ -177,19 +177,19 @@ internal sealed class Chess : Game
     private DrawableObject CreatePiecesExplanation()
     {
         Texture2D texture = Content.Load<Texture2D>("piecesExplanation");      
-        Model model = new(texture, 0, 0, texture.Width, texture.Height);
+        Rectangle textureRect = new(0, 0, texture.Width, texture.Height);
         int width = (int)(_graphics.PreferredBackBufferWidth * 0.25);
         int height = _graphics.PreferredBackBufferHeight;
-        DrawableObject piecesExplanation = new(model, new Rectangle(0,0, width, height));
+        DrawableObject piecesExplanation = new(texture, textureRect, new Rectangle(0,0, width, height));
         return piecesExplanation;
     }
     private DrawableObject CreateControlsExplanation()
     {
         Texture2D texture = Content.Load<Texture2D>("controlsExplanation");
-        Model model = new(texture, 0, 0, texture.Width, texture.Height);
+        Rectangle textureRect = new(0, 0, texture.Width, texture.Height);
         int width = (int)(_graphics.PreferredBackBufferWidth * 0.25);
         int height = _graphics.PreferredBackBufferHeight;
-        DrawableObject controlsExplanation = new(model, new Rectangle(0, 0, width, height));
+        DrawableObject controlsExplanation = new(texture, textureRect, new Rectangle(0, 0, width, height));
         return controlsExplanation;
     }
     private Button[] CreateControlsButtons(UIModule controlsUI)
@@ -219,11 +219,11 @@ internal sealed class Chess : Game
 
         return buttons.ToArray();
     }
-    private static DrawableObject CreatePieceAppearance(PieceType type, Team team, Rectangle destinationRectangle)
+    private static IDrawable CreatePieceAppearance(PieceType type, Team team, Rectangle destinationRectangle)
     {
         int texturePosX = PieceFactory.PieceTextureWidth * (int)type + (PieceFactory.PiecesRawTexture.Width / 2 * ((byte)team & 1));
-        Graphics.Model model = new(PieceFactory.PiecesRawTexture, texturePosX, 0, PieceFactory.PieceTextureWidth, PieceFactory.PieceTextureWidth);
-        DrawableObject appearance = new(model, destinationRectangle);
+        Rectangle textureRect = new(texturePosX, 0, PieceFactory.PieceTextureWidth, PieceFactory.PieceTextureWidth);
+        DrawableObject appearance = new(PieceFactory.PiecesRawTexture, textureRect, destinationRectangle);
         return appearance;
     }
     private void InitializeGraphics()
@@ -273,7 +273,7 @@ internal sealed class Chess : Game
         _boardSaver = new(GraphicsDevice, _chessboardInputManager);
 
         Texture2D backgroundTexture = Content.Load<Texture2D>("uiBackground");
-        DrawableObject uiBackground = new DrawableObject(new Model(backgroundTexture, 0, 0, backgroundTexture.Width, backgroundTexture.Height), Rectangle.Empty);
+        DrawableObject uiBackground = new DrawableObject(backgroundTexture, new(0, 0, backgroundTexture.Width, backgroundTexture.Height), Rectangle.Empty);
 
         MoveHistory moveHistory = new MoveHistory(fenObject.MoveNo, _clockTimeFont, 10, _chessboardInputManager);        
         var moveHistoryUI = new UIModule(GraphicsDevice, uiBackground, (moveHistory.Width, moveHistory.Height), new Vector2(0.75f, 0f), new Vector2(0.25f, 0.75f), Array.Empty<IDrawableProvider>(), new[] { moveHistory });
@@ -323,7 +323,8 @@ internal sealed class Chess : Game
         Arbiter.Initilize(fenObject);
         _chessboard.InitilizeBoard(fenObject.AllPieces);
         InitializeControllers(fenObject);
-        OverlayManager.Create(Content.Load<Texture2D>("Tsquares"));
+        IOverlayFactory overlayFactory = new SquareOverlayFactory(Content.Load<Texture2D>("Tsquares"));
+        OverlayManager.Create(overlayFactory);
         InitializeClock(fenObject);
         InitializeUI(fenObject);
         _inMenu = false;
@@ -341,8 +342,8 @@ internal sealed class Chess : Game
     {
         MainMenu menu = new(GraphicsDevice, Content, CreateChessGame);
         Button[] buttons = menu.GetButtons();
-        Model model = new(_lightTile, 0, 0, _lightTile.Width, _lightTile.Height);
-        DrawableObject background = new DrawableObject(model, new Rectangle(0, 0, 0, 0));
+        Rectangle textureRect = new(0, 0, _lightTile.Width, _lightTile.Height);
+        DrawableObject background = new DrawableObject(_lightTile, textureRect, new Rectangle(0, 0, 0, 0));
         _menuUI = new UIModule(GraphicsDevice, background, (menu.Width, menu.Height), new Vector2(0,0), new Vector2(1f,1f), new[] {menu}, new[] {menu}, buttons);
         _menuInputManager.SubscribeToEvent(Keys.Escape, () => Exit());
         _menuInputManager.SubscribeToEvent(Keys.F11, () => { _graphics.IsFullScreen = !_graphics.IsFullScreen; _graphics.ApplyChanges(); });
@@ -390,9 +391,9 @@ internal sealed class Chess : Game
             PrepareUIModulesForDrawing();
             DrawUIModules();
             if (_explanationVisible)
-                _spriteBatch.Draw(_piecesExplanation.Model.RawTexture, _piecesExplanation.DestinationRectangle, _piecesExplanation.Model.TextureRect, Color.White);
+                _spriteBatch.Draw(_piecesExplanation.RawTexture, _piecesExplanation.DestinationRect, _piecesExplanation.TextureRect, Color.White);
             if (_controlsVisible)
-                _spriteBatch.Draw(_controlsExplanation.Model.RawTexture, _controlsExplanation.DestinationRectangle, _controlsExplanation.Model.TextureRect, Color.White);
+                _spriteBatch.Draw(_controlsExplanation.RawTexture, _controlsExplanation.DestinationRect, _controlsExplanation.TextureRect, Color.White);
         }
         else
         {           

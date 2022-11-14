@@ -1,16 +1,17 @@
-﻿using Chess.Graphics;
-using Chess.Movement;
+﻿using Chess.Movement;
 using Chess.Pieces;
 using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using System;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
+using IDrawable = Chess.Graphics.IDrawable;
 
 namespace Chess.Board;
 
-internal sealed class Chessboard : DrawableObject
+internal sealed class Chessboard : IDrawable
 {
+    private static readonly int s_numberOfSquares = 8;
     private static Chessboard s_instance;
     public static Chessboard Instance { get 
         {
@@ -19,23 +20,29 @@ internal sealed class Chessboard : DrawableObject
             else
                 return s_instance;
         }}
-    public Piece[] Pieces { get; init; }
-    private static readonly int s_numberOfSquares = 8;
-    public int SquareSideLength { get; init; }
     public static int NumberOfSquares { get => s_numberOfSquares; }
     public static event EventHandler<PieceEventArgs> PieceRemovedFromTheBoard;
     public static event EventHandler<PieceEventArgs> PieceAddedToTheBoard;
     public static event EventHandler BoardInverted;
+    private Rectangle _textureRect;
+    public Piece[] Pieces { get; init; }   
+    public int SquareSideLength { get; init; }
     public bool Inverted { get; private set; }
+    public Texture2D RawTexture { get; set; }
+    public Rectangle TextureRect { get => _textureRect; set { _textureRect = value; } }
+    public Rectangle DestinationRect { get; set; }
+    public Color Color { get; set; }
 
-    private Chessboard(Texture2D rawTexture, bool inverted = false) : base(null, new Rectangle(0, 0, rawTexture.Width / 2, rawTexture.Height))
+    private Chessboard(Texture2D rawTexture, bool inverted = false)
     {
         s_instance = this;
-
-        Model = new Graphics.Model(rawTexture, 0, 0, rawTexture.Width/2, rawTexture.Height);
-        SquareSideLength = Model.TextureRect.Width / s_numberOfSquares;
         Pieces = new Piece[s_numberOfSquares * s_numberOfSquares];
         Inverted = inverted;
+        RawTexture = rawTexture;
+        TextureRect = new Rectangle(0, 0, rawTexture.Width / 2, rawTexture.Height);
+        DestinationRect = new Rectangle(0, 0, rawTexture.Width / 2, rawTexture.Height);
+        SquareSideLength = TextureRect.Width / s_numberOfSquares;
+        Color = Color.White;
         Chess.PromotionConcluded += OnPromotionConcluded;
     }
     public static Chessboard Create(Texture2D rawTexture, bool inverted = false)
@@ -65,13 +72,12 @@ internal sealed class Chessboard : DrawableObject
     }
     public void ToggleInversion()
     {
-        int xOffset = Model.RawTexture.Width / 2;
+        int xOffset = RawTexture.Width / 2;
         if (Inverted)
             xOffset = -xOffset;
 
         Inverted = !Inverted;
-        
-        Model.Offset(xOffset,0);
+        _textureRect.X += xOffset;
         OnBoardInverted(EventArgs.Empty);
     }
     public bool MovePiece(Piece targetedPiece, Square newSquare, out Move move)

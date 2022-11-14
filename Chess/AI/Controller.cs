@@ -1,10 +1,12 @@
 ﻿using Chess.Board;
 using Chess.Graphics;
+using Chess.Movement;
 using Chess.Pieces;
 using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
 using System;
 using System.Collections.Generic;
+using IDrawable = Chess.Graphics.IDrawable;
 
 namespace Chess.AI;
 
@@ -14,14 +16,14 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
     public King King { get; private set; }
     public Team Team { get; init; }
     public Piece[] Pieces { get { return _pieces.ToArray(); } }
-    protected Dictionary<Piece, DrawableObject> _drawablePieces;
+    protected Dictionary<Piece, IMovableDrawable> _piecesModels;
     public static event EventHandler<MoveMadeEventArgs> MoveMade;
 
     public Controller(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant)
     {
         Team = team;
         _pieces = new();
-        _drawablePieces = new();
+        _piecesModels = new();
         AddPieces(pieces, castlingRights, enPassant);
         _pieces.Sort();
         SubscribeToEvents();
@@ -42,7 +44,7 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
                     p.EnPassant = true;
             }
             _pieces.Add(piece);
-            _drawablePieces.Add(piece, PieceFactory.CreatePieceDrawable(piece));
+            _piecesModels.Add(piece, PieceFactory.CreatePieceModel(piece));
         }
     }
     private void SubscribeToEvents()
@@ -54,14 +56,14 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
         Piece.PieceDeselected += OnPieceDeselected;
     }
     public King GetKing(Team team) => King;
-    public DrawableObject GetDrawablePiece(Piece piece)
+    public IMovableDrawable GetPieceModel(Piece piece)
     {
-        if (_drawablePieces.ContainsKey(piece))
-            return _drawablePieces[piece];
+        if (_piecesModels.ContainsKey(piece))
+            return _piecesModels[piece];
         else
             return null;
     }
-    public abstract IEnumerable<DrawableObject> GetDrawableObjects();
+    public abstract IEnumerable<IDrawable> GetDrawableObjects();
     public virtual void Update()
     {
         for (int i = _pieces.Count - 1; i >= 0; --i)
@@ -77,37 +79,37 @@ internal abstract class Controller : IPieceOwner, IDrawableProvider
     protected void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e)
     {
         _pieces.Remove(e.Piece);
-        _drawablePieces.Remove(e.Piece);
+        _piecesModels.Remove(e.Piece);
     }
     protected void OnPieceAddedToTheBoard(object sender, PieceEventArgs e)
     {
         if (e.Piece.Team == Team)
         {
             _pieces.Add(e.Piece);
-            _drawablePieces.Add(e.Piece, PieceFactory.CreatePieceDrawable(e.Piece));
+            _piecesModels.Add(e.Piece, PieceFactory.CreatePieceModel(e.Piece));
         }
     }
     protected void OnPieceSelected(object sender, PieceEventArgs e)
     {
         if (e.Piece.Team == Team)
         {
-            DrawableObject drawable = _drawablePieces[e.Piece];
-            drawable.Color = new Color(drawable.Color, 10);
+            IDrawable pieceModel = _piecesModels[e.Piece];
+            pieceModel.Color = new Color(pieceModel.Color, 10);
         }
     }
     protected void OnPieceDeselected(object sender, PieceEventArgs e)
     {
         if(e.Piece.Team == Team)
         {
-            DrawableObject drawable = _drawablePieces[e.Piece];
-            drawable.Color = new Color(drawable.Color, 255);
+            IDrawable pieceModel = _piecesModels[e.Piece];
+            pieceModel.Color = new Color(pieceModel.Color, 255);
         }
     }
     protected void OnBoardInverted(object sender, EventArgs e)
     {
-        foreach(DrawableObject drawablePiece in _drawablePieces.Values)
+        foreach(IMovable pieceModel in _piecesModels.Values)
         {
-            drawablePiece.RecalculatePosition();
+            pieceModel.Position = MovementManager.RecalculateVector(pieceModel.Position);
         }
     }
     public Piece GetPiece(in Square square) => Chessboard.Instance.GetPiece(in square);

@@ -128,8 +128,8 @@ internal sealed class MainMenu : IDrawableProvider, ITextProvider
     private Button CreateArrowButton(Rectangle destinationRectangle, bool willIncrement, ButtonActionInfo actions)
     {   
         int posX = willIncrement ? 0 : _buttonTexture.Width / 2;
-        Model model = new(_buttonTexture, posX, 0, _buttonTexture.Width / 2, _buttonTexture.Height);
-        DrawableObject arrow = new DrawableObject(model, destinationRectangle with { X = 0, Y = 0});
+        Rectangle textureRect = new(posX, 0, _buttonTexture.Width / 2, _buttonTexture.Height);
+        DrawableObject arrow = new DrawableObject(_buttonTexture, textureRect, destinationRectangle with { X = 0, Y = 0});
         return new Button(_graphicsDevice, _lightTile, new[] { arrow }, null, destinationRectangle, actions);
     }
     private Button CreateStartGameButton(ButtonActionInfo actions)
@@ -141,7 +141,7 @@ internal sealed class MainMenu : IDrawableProvider, ITextProvider
         TextObject textObject = new TextObject(_font, text, Vector2.Zero, Color.White, 1f);
         return new Button(_graphicsDevice, lightTile, null, new[] { textObject }, destinationRectangle, actions);
     }
-    public IEnumerable<DrawableObject> GetDrawableObjects() => _drawables.ToArray();
+    public IEnumerable<IDrawable> GetDrawableObjects() => _drawables;
     public IEnumerable<TextObject> GetTextObjects()
     {
         AssignTextValues();

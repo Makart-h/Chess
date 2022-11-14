@@ -38,31 +38,31 @@ internal class MoveGenerator
         }
         else if (set == Movesets.Knight)
         {
-            moves = new(4);
+            moves = new(8);
             foreach (var iterator in _knightIterators)
                 GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options);
         }
         else if (set == Movesets.Bishop)
         {
-            moves = new(7);
+            moves = new(13);
             foreach (var iterator in _bishopIterators)
                 GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }
         else if (set == Movesets.Rook)
         {
-            moves = new(7);
+            moves = new(14);
             foreach (var iterator in _rookIterators)
                 GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }
         else if (set == Movesets.King)
         {
-            moves = new(4);
+            moves = new(8);
             foreach (var iterator in _everyDirectionIterators)
                 GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options);
         }
         else
         {
-            moves = new(14);
+            moves = new(27);
             foreach (var iterator in _everyDirectionIterators)
                 GenerateMovesInDirection(moves, in initialSquare, iterator, pieceOwner, options | MoveGeneratorOptions.InfiniteRange);
         }

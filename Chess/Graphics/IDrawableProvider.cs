@@ -4,5 +4,5 @@ namespace Chess.Graphics;
 
 internal interface IDrawableProvider
 {
-    public IEnumerable<DrawableObject> GetDrawableObjects();
+    public IEnumerable<IDrawable> GetDrawableObjects();
 }

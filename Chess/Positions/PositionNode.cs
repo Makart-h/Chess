@@ -1,5 +1,6 @@
 ﻿using Chess.AI;
 using Chess.Movement;
+using Chess.Pieces;
 using Chess.Pieces.Info;
 using Chess.Positions.Evaluators;
 using System.Collections.Generic;
@@ -16,11 +17,12 @@ internal sealed class PositionNode
     private readonly Team _team;
     private readonly bool _isFertile;
     private List<PositionNode> _children;
+    private PositionNode _parent;
     private readonly string _path;
-    private static readonly int s_minDepth = 3;
-    private static readonly int s_maxDepth = 5;
+    private static readonly int s_minDepth = 2;
+    private static readonly int s_maxDepth = 10;
 
-    private PositionNode(Team team, int depth, string path, Position position, bool isFertile)
+    private PositionNode(Team team, int depth, string path, Position position, bool isFertile, PositionNode parent)
     {
         _team = team;
         _depth = depth;
@@ -29,12 +31,13 @@ internal sealed class PositionNode
             path += "|";
         _path = path + position.MovePlayed;
         _isFertile = (depth < s_minDepth || isFertile) && depth < s_maxDepth;
+        _parent = parent;
     }
-    public static async Task<PositionNode> CreateAsync(string path, Position position, Team team, int depth, bool isFertile, CancellationToken token)
+    public static async Task<PositionNode> CreateAsync(string path, Position position, Team team, int depth, bool isFertile, CancellationToken token, PositionNode parent = null)
     {
         token.ThrowIfCancellationRequested();
-        PositionNode node = new(team, depth, path, position, isFertile);
-        await node.CreateChildrenAsync(position, token);
+        PositionNode node = new(team, depth, path, position, isFertile, parent);
+        await node.CreateChildrenAsync2(position, token);
         return node;
     }
     private async Task CreateChildrenAsync(Position position, CancellationToken token)
@@ -56,31 +59,45 @@ internal sealed class PositionNode
     {
         if (_isFertile && position.Result == GameResult.InProgress)
         {
-            _children = new(position.NextMoves.Count);
+            _children = new(position.ActivePieces.Count);
             int sign = _team == Team.White ? -1 : 1;
-            PositionNode bestNode = null;
-            Position bestPosition = null;
-            foreach (Move move in position.NextMoves)
+            foreach (Piece piece in position.ActivePieces)
             {
-                token.ThrowIfCancellationRequested();
-                Position pos = await Position.CreateAsync(position, move, token);
-                bool isChildFertile = move.Description == MoveType.Takes || move.Description == MoveType.EnPassant || position.Check || pos.Check;
-                PositionNode node = new(~_team, _depth + 1, _path, pos, isChildFertile);
-                if (bestNode == null || node._value.CompareTo(bestNode._value) * sign == 1)
+                PositionNode bestNode = null;
+                Position bestPosition = null;
+                foreach (Move move in piece.Moves)
                 {
-                    bestNode = node;
-                    bestPosition = pos;
+                    token.ThrowIfCancellationRequested();
+                    if (move.Description == MoveType.Defends)
+                        continue;
+
+                    Position pos = await Position.CreateAsync(position, move, token);
+                    bool isChildFertile = move.Description == MoveType.Takes || move.Description == MoveType.EnPassant || position.Check || pos.Check;
+                    PositionNode node = new(~_team, _depth + 1, _path, pos, isChildFertile, this);
+                    if (bestNode == null || node._value.CompareTo(bestNode._value) * sign == 1)
+                    {
+                        bestNode = node;
+                        bestPosition = pos;
+                    }
+                    if (_parent != null)
+                    {
+                        if (node._value.CompareTo(_parent._value) * sign != -1)
+                        {
+                            await node.CreateChildrenAsync2(pos, token);
+                            _children.Add(node);
+                        }
+                    }
+                    else
+                    {
+                        await node.CreateChildrenAsync2(pos, token);
+                        _children.Add(node);
+                    }
                 }
-                if (node._value.CompareTo(_value) * sign != -1)
+                if (_children.Count == 0 && bestNode != null)
                 {
-                    await node.CreateChildrenAsync2(pos, token);
-                    _children.Add(node);
+                    await bestNode.CreateChildrenAsync2(bestPosition, token);
+                    _children.Add(bestNode);
                 }
-            }
-            if (_children.Count == 0 && bestNode != null)
-            {
-                await bestNode.CreateChildrenAsync2(bestPosition, token);
-                _children.Add(bestNode);
             }
         }
     }

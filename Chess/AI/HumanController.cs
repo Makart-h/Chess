@@ -6,6 +6,7 @@ using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Input;
 using System.Collections.Generic;
+using IDrawable = Chess.Graphics.IDrawable;
 
 namespace Chess.AI;
 
@@ -14,15 +15,15 @@ internal sealed class HumanController : Controller
     private MouseState _previousState;
     private MouseState _currentState;
     private Piece _targetedPiece;
-    private DrawableObject _dragedPiece;
+    private IMovableDrawable _dragedPiece;
     public HumanController(Team team, Piece[] pieces, CastlingRights castlingRights, Square? enPassant) : base(team, pieces, castlingRights, enPassant)
     {
         _dragedPiece = null;
     }
     public override void Update() => base.Update();
-    public override DrawableObject[] GetDrawableObjects()
+    public override IEnumerable<IDrawable> GetDrawableObjects()
     {
-        List<DrawableObject> drawables = new(_drawablePieces.Values);
+        List<IDrawable> drawables = new(_piecesModels.Values);
         if (_dragedPiece != null)
             drawables.Add(_dragedPiece);
         return drawables.ToArray();
@@ -45,9 +46,9 @@ internal sealed class HumanController : Controller
         if (_dragedPiece != null)
         {
             (int x, int y) = Chess.Instance.TranslateToBoard(_currentState.Position);
-            var mouse = new Vector2(x - _dragedPiece.DestinationRectangle.Width / 2, y - _dragedPiece.DestinationRectangle.Height / 2);
+            var mouse = new Vector2(x - _dragedPiece.DestinationRect.Width / 2, y - _dragedPiece.DestinationRect.Height / 2);
             Vector2 offset = mouse - _dragedPiece.Position;
-            _dragedPiece.MoveObject(offset);
+            _dragedPiece.Position += offset;
         }
     }
     private void CheckIfPieceIsTargeted()
@@ -57,7 +58,7 @@ internal sealed class HumanController : Controller
         if (_targetedPiece != null && _targetedPiece.Team == Team)
         {
             _targetedPiece.IsSelected = true;         
-            _dragedPiece ??= PieceFactory.CreatePieceDrawable(_targetedPiece);
+            _dragedPiece ??= PieceFactory.CreatePieceModel(_targetedPiece);
         }
     }
     private void ApplyMove()

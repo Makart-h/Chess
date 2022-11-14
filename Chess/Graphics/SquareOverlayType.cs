@@ -1,6 +1,6 @@
 ﻿namespace Chess.Graphics;
 
-enum SquareOverlayType
+internal enum SquareOverlayType
 {
     MovedTo,
     MovedFrom,

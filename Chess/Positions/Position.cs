@@ -24,6 +24,7 @@ internal sealed class Position : IPieceOwner
     public Piece[] Pieces { get; init; }
     public Dictionary<int, int> OccuredPositions { get; init; }
     public List<Move> NextMoves { get; init; }
+    public List<Piece> ActivePieces { get; init; }
     public string MovePlayed { get; init; }
     public GameResult Result { get; set; } 
     public int Hash { get; private set; }
@@ -36,7 +37,8 @@ internal sealed class Position : IPieceOwner
         {
             OccuredPositions = new(occuredPositions);
         }
-        NextMoves = new();
+        //NextMoves = new(20);
+        ActivePieces = new(16);
         ActiveTeam = activeTeam;
         HalfMoves = halfMoves;
         MovePlayed = move.Former.ToString() + ((int)move.Description).ToString() + move.Latter.ToString();
@@ -176,11 +178,12 @@ internal sealed class Position : IPieceOwner
                     _enPassantPawn.EnPassant = true;
                 if (piece.Team == ActiveTeam)
                 {
-                    foreach (Move move in piece.Moves)
+                    ActivePieces.Add(piece);
+                    /*foreach (Move move in piece.Moves)
                     {
                         if (move.Description != MoveType.Defends)
                             NextMoves.Add(move);
-                    }
+                    }*/
                 }
             }
         }
@@ -189,11 +192,12 @@ internal sealed class Position : IPieceOwner
     {
         activeKing.Update();
         standbyKing.CheckPossibleMoves();
-        foreach(Move move in activeKing.Moves)
+        ActivePieces.Add(activeKing);
+        /*foreach(Move move in activeKing.Moves)
         {
             if(move.Description != MoveType.Defends)
                 NextMoves.Add(move);
-        }
+        }*/
         if (activeKing.Threatened)
             Check = true;
     }

@@ -1,6 +1,5 @@
 ﻿using Chess.AI;
 using Chess.Board;
-using Chess.Graphics;
 using Chess.Pieces;
 using Chess.Pieces.Info;
 using Microsoft.Xna.Framework;
@@ -13,8 +12,8 @@ internal sealed class MovementManager : IDisposable
 {
     private static MovementManager s_instance;
     public static MovementManager Instance { get => s_instance ??= new MovementManager(); }
-    private readonly List<Initiator> _initiators;
-    private readonly Stack<Initiator> _toRemove;
+    private readonly List<IInitiator> _initiators;
+    private readonly Stack<IInitiator> _toRemove;
     public static EventHandler MovementConcluded;
     private bool _rapidMovement;
     private bool _isDisposed;
@@ -32,18 +31,18 @@ internal sealed class MovementManager : IDisposable
     {
         if (e.Piece.Owner is Controller controller)
         {
-            DrawableObject drawablePiece = controller.GetDrawablePiece(e.Piece);
-            if (drawablePiece != null)
+            IMovable movable = controller.GetPieceModel(e.Piece);
+            if (movable != null)
             {
                 Vector2 newPosition = Chessboard.Instance.ToCordsFromSquare(e.Move.Latter);
                 if (controller is HumanController && e.Move.Description != MoveType.ParticipatesInCastling)
                 {
-                    drawablePiece.MoveObject(newPosition - drawablePiece.Position);
+                    movable.Position = newPosition;
                     _rapidMovement = true;
                 }
                 else
                 {
-                    _initiators.Add(new Initiator(newPosition, drawablePiece, OnDestinationReached));
+                    _initiators.Add(new Initiator(newPosition, movable, MovementVelocity, OnDestinationReached));
                 }
             }
         }
@@ -66,7 +65,7 @@ internal sealed class MovementManager : IDisposable
     private bool TryRemoveInitiators()
     {
         bool initiatorRemovedOnThisUpdate = false;
-        while (_toRemove.TryPop(out Initiator i))
+        while (_toRemove.TryPop(out IInitiator i))
         {
             _initiators.Remove(i);
             initiatorRemovedOnThisUpdate = true;

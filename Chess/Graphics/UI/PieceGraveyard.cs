@@ -9,22 +9,22 @@ namespace Chess.Graphics.UI;
 
 internal class PieceGraveyard : IDrawableProvider
 {
-    private readonly List<DrawableObject> _whitePieces;
-    private readonly List<DrawableObject> _blackPieces;
+    private readonly List<IMovableDrawable> _whitePieces;
+    private readonly List<IMovableDrawable> _blackPieces;
     private readonly int _maxPiecesInRow;
     private readonly int _pieceWidth;
     private bool _isInverted;
     private bool _skipPromotionPawn;
     private const float _propotionalDistanceFromEdges = 0.05f;
-    private readonly Stack<(DrawableObject drawable, Team team)> _piecesToAdd;
+    private readonly Stack<(IMovableDrawable drawable, Team team)> _piecesToAdd;
     private Vector2 _zero;
     public int Width { get; private set; }
     public int Height { get; private set; }
     
     public PieceGraveyard(int widthOfAvailableSpace, int maxPiecesInRow, int numberOfRows)
     {
-        _whitePieces = new List<DrawableObject>();
-        _blackPieces = new List<DrawableObject>();
+        _whitePieces = new List<IMovableDrawable>();
+        _blackPieces = new List<IMovableDrawable>();
         _piecesToAdd = new();
         _pieceWidth = widthOfAvailableSpace/maxPiecesInRow;
         _maxPiecesInRow = maxPiecesInRow;
@@ -50,23 +50,22 @@ internal class PieceGraveyard : IDrawableProvider
         foreach(var piece in _whitePieces)
         {
             if(_isInverted)
-                piece.MoveObject(new Vector2(0, -(Height / 2)));
+                piece.Position += new Vector2(0, -(Height / 2));
             else
-                piece.MoveObject(new Vector2(0, Height / 2));
+                piece.Position += new Vector2(0, Height / 2);
         }
         foreach(var piece in _blackPieces)
         {
             if(_isInverted)
-                piece.MoveObject(new Vector2(0, Height / 2));
+                piece.Position += new Vector2(0, Height / 2);
             else
-                piece.MoveObject(new Vector2(0, -(Height / 2)));
+                piece.Position += new Vector2(0, -(Height / 2));
         }
         _isInverted = !_isInverted;
     }
     private void OnPieceRemovedFromTheBoard(object sender, PieceEventArgs e)
     {
-        Model blueprint = PieceFactory.CreatePieceDrawable(e.Piece).Model;
-        DrawableObject deadPiece;
+        IMovableDrawable deadPiece = PieceFactory.CreatePieceModel(e.Piece);
         int posX = (int)_zero.X;
         int posY = (int)_zero.Y;
 
@@ -76,7 +75,7 @@ internal class PieceGraveyard : IDrawableProvider
             posY += (_whitePieces.Count / _maxPiecesInRow) * _pieceWidth;
             if (_isInverted)
                 posY += Height / 2;
-            deadPiece = new DrawableObject(blueprint, new Rectangle(posX, posY, _pieceWidth, _pieceWidth));
+            deadPiece.DestinationRect = new Rectangle(posX, posY, _pieceWidth, _pieceWidth);
         }
         else
         {
@@ -84,13 +83,13 @@ internal class PieceGraveyard : IDrawableProvider
             posY += Height / 2 + (_blackPieces.Count / _maxPiecesInRow) * _pieceWidth;
             if (_isInverted)
                 posY -= Height / 2;
-            deadPiece = new DrawableObject(blueprint, new Rectangle(posX, posY, _pieceWidth, _pieceWidth));
+            deadPiece.DestinationRect = new Rectangle(posX, posY, _pieceWidth, _pieceWidth);
         }
         _piecesToAdd.Push((deadPiece, e.Piece.Team));
     }
     private void OnTurnEnded(object sender, EventArgs e)
     {
-        while(_piecesToAdd.TryPop(out (DrawableObject drawable, Team team) piece))
+        while(_piecesToAdd.TryPop(out (IMovableDrawable drawable, Team team) piece))
         {
             if (_skipPromotionPawn)
             {
@@ -104,10 +103,10 @@ internal class PieceGraveyard : IDrawableProvider
                 _blackPieces.Add(piece.drawable);
         }
     }
-    public IEnumerable<DrawableObject> GetDrawableObjects()
+    public IEnumerable<IDrawable> GetDrawableObjects()
     {
-        List<DrawableObject> drawables = new(_whitePieces);
+        List<IDrawable> drawables = new(_whitePieces);
         drawables.AddRange(_blackPieces);
-        return drawables.ToArray();
+        return drawables;
     }
 }

@@ -173,7 +173,7 @@ internal class MoveHistory : ITextProvider
         StringBuilder sb = new(entry.Text);
         int index = entry.Text.IndexOf(' ', entry.Text.Length - s_maxHalfmoveEntryLength);
         for (int j = 0, i = index; j < info.Length; ++i, ++j)
-    {
+        {
             sb[i] = info[j];
         }
         entry.Text = sb.ToString();
@@ -340,7 +340,7 @@ internal class MoveHistory : ITextProvider
         {
             _history[i].Position = CalculateEntryPosition(i - offset);
         }
-        }
+    }
     private Vector2 CalculateEntryPosition(int rowNumber)
     {
         float positionX = Width * _propotionalDistanceFromEdges;

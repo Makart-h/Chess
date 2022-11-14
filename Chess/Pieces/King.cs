@@ -104,7 +104,7 @@ internal sealed class King : Piece
     }
     public override void CheckPossibleMoves()
     {
-        _moves = new();
+        _moves = new(8);
         CheckRegularMoves();
         if(!_hasMoved)
             CheckCastlingMoves();
@@ -409,8 +409,8 @@ internal sealed class King : Piece
     }
     private List<Square> GenereateSquareSequence(Movesets targetedMoveset, in Square initialSquare, (int letterIt, int digitIt) iterator, bool isInfinite = true, bool onlyCaptures = false)
     { 
-        Square current = new(initialSquare, iterator);
-        if (!Square.Validate(current))
+        Square current = new(in initialSquare, iterator);
+        if (!Square.Validate(in current))
             return null;
         if (isInfinite)
         {
@@ -418,7 +418,7 @@ internal sealed class King : Piece
             List<Square> sequence = null;
             do
             {
-                Piece piece = Owner.GetPiece(current);
+                Piece piece = Owner.GetPiece(in current);
                 if (piece != null && piece != this)
                 {
                     if (piece.Team != Team && (piece.Moveset & targetedMoveset) != 0)
@@ -434,14 +434,14 @@ internal sealed class King : Piece
                     sequence ??= new(4);
                     sequence.Add(current);
                 }
-                current = new(current, iterator);
-                if (!Square.Validate(current))
+                current = new(in current, iterator);
+                if (!Square.Validate(in current))
                     return foundThreat ? sequence : null;
             } while (true);        
         }
         else
         {
-            Piece piece = Owner.GetPiece(current);
+            Piece piece = Owner.GetPiece(in current);
             if (piece != null)
             {
                 if (piece.Team != Team && (piece.Moveset & targetedMoveset) != 0)
@@ -459,60 +459,60 @@ internal sealed class King : Piece
     public bool CheckIfSquareIsThreatened(in Square checkedSquare)
     {
         int direction = Team == Team.White ? 1 : -1;
-        List<Square> sequenceToAdd;
+        List<Square> squareSequence;
 
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, 1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, -1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, 1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, -1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, 1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, -1));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (1, 0));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (-1, 0));
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (1, 1 * direction), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (-1, 1 * direction), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, 1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, -1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, -2), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, -2), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, -1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, 1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, 2), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, 2), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, 1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, -1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 0), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 0), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, -1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
-        sequenceToAdd = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, -1), isInfinite: false);
-        if (sequenceToAdd != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, 1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (1, -1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, 1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Diagonal, in checkedSquare, (-1, -1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, 1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Vertical, in checkedSquare, (0, -1));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (1, 0));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Horizontal, in checkedSquare, (-1, 0));
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (1, 1 * direction), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Pawn, in checkedSquare, (-1, 1 * direction), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, 1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (2, -1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, -2), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, -2), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, -1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-2, 1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (1, 2), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.Knight, in checkedSquare, (-1, 2), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, 1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (0, -1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 0), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 0), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, 1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (1, -1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, 1), isInfinite: false);
+        if (squareSequence != null) return true;
+        squareSequence = GenereateSquareSequence(Movesets.King, in checkedSquare, (-1, -1), isInfinite: false);
+        if (squareSequence != null) return true;
 
         return false;
     }

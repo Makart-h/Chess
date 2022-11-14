@@ -25,7 +25,7 @@ internal sealed class AIController : Controller
         _movesQueue = new();
         MoveMade += OnOpponentMoveMade;
     }
-    public override DrawableObject[] GetDrawableObjects() => _drawablePieces.Values.ToArray();
+    public override IEnumerable<IDrawable> GetDrawableObjects() => _piecesModels.Values;
     public override void Update()
     {
         base.Update();

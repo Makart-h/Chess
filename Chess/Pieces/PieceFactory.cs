@@ -35,14 +35,14 @@ internal static class PieceFactory
         if (!_isInitilized)
             throw new TypeInitializationException("Factory not initilized!", null);
     }
-    public static DrawableObject CreatePieceDrawable(Piece piece)
+    public static IMovableDrawable CreatePieceModel(Piece piece)
     {
         Chessboard board = Chessboard.Instance;
         int texturePosX = PieceTextureWidth * (int)piece.Type + (PiecesRawTexture.Width / 2 * ((byte)piece.Team & 1));
-        Model model = new(PiecesRawTexture, texturePosX, 0, PieceTextureWidth, PieceTextureWidth);
+        Rectangle textureRect = new(texturePosX, 0, PieceTextureWidth, PieceTextureWidth);
         Vector2 position = board.ToCordsFromSquare(piece.Square);
-        Rectangle destinationRectangle = new((int)position.X, (int)position.Y, board.SquareSideLength, board.SquareSideLength);
-        DrawableObject drawable = new(model, destinationRectangle);
+        Rectangle destinationRect = new((int)position.X, (int)position.Y, board.SquareSideLength, board.SquareSideLength);
+        MovableDrawable drawable = new(position, PiecesRawTexture, textureRect, destinationRect);
         return drawable;
     }
     public static Piece CreateAPiece(char type, Square square, bool isRaw = false)

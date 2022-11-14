@@ -2,7 +2,6 @@ using Chess.Board;
 using Chess.Movement;
 using Chess.Pieces;
 using Chess.Pieces.Info;
-using Microsoft.Xna.Framework.Graphics;
 using System;
 using System.Collections.Generic;
 
@@ -11,25 +10,18 @@ namespace Chess.Graphics;
 internal sealed class OverlayManager : IDrawableProvider, IDisposable
 {
     private static OverlayManager s_instance;
-    public static OverlayManager Instance
-    {
-        get
-        {
-            return s_instance ?? throw new ArgumentNullException();
-        }
-        private set { s_instance = value; }
-    }
-    private readonly List<SquareOverlay> _selections;
-    private readonly List<SquareOverlay> _moves;
+    public static OverlayManager Instance { get => s_instance ?? throw new NullReferenceException(); }
+    private readonly IOverlayFactory _overlayFactory;
+    private readonly List<IMovableDrawable> _selections;
+    private readonly List<IMovableDrawable> _moves;
     private bool _showMoves;
     private bool _isDisposed;
-    public Texture2D OverlaysTexture { get; init; }
-    private OverlayManager(Texture2D overlaysTexture)
+    private OverlayManager(IOverlayFactory overlayFactory)
     {
         _selections = new();
         _moves = new();
         _showMoves = false;
-        OverlaysTexture = overlaysTexture;
+        _overlayFactory = overlayFactory;
         SubscribeToEvents();
     }
     private void SubscribeToEvents()
@@ -50,71 +42,52 @@ internal sealed class OverlayManager : IDrawableProvider, IDisposable
         King.Check -= OnCheck;
         MovementManager.MovementConcluded -= OnMovementConcluded;
     }
-    public static void Create(Texture2D overlaysTexture)
+    public static void Create(IOverlayFactory overlayFactory)
     {
         if (s_instance != null)
             throw new InvalidOperationException("Instance already created!");
 
-        s_instance = new OverlayManager(overlaysTexture);
+        s_instance = new OverlayManager(overlayFactory);
     }
-    public IEnumerable<DrawableObject> GetDrawableObjects()
+    public IEnumerable<IDrawable> GetDrawableObjects()
     {
         if(_isDisposed)
             return null;
 
-        List<DrawableObject> overlays = new(_selections);
+        List<IDrawable> overlays = new(_selections);
         if (_showMoves)
             overlays.AddRange(_moves);
-        return overlays.ToArray();
+        return overlays;
     }
     private void OnBoardInverted(object sender, EventArgs e)
     {
-        foreach (DrawableObject overlay in _moves)
+        foreach (IMovable overlay in _moves)
         {
-            overlay.RecalculatePosition();
+            overlay.Position = MovementManager.RecalculateVector(overlay.Position);
         }
-        foreach (DrawableObject overlay in _selections)
+        foreach (IMovable overlay in _selections)
         {
-            overlay.RecalculatePosition();
+            overlay.Position = MovementManager.RecalculateVector(overlay.Position);
         }
     }
     private void OnPieceSelected(object sender, PieceEventArgs e)
     {
-        Piece piece = e.Piece;
-        _selections.Add(new SquareOverlay(SquareOverlayType.Selected, piece.Square));
-        foreach (Move move in piece.Moves)
-        {
-            switch (move.Description)
-            {
-                default:
-                case MoveType.Moves:
-                    _selections.Add(new SquareOverlay(SquareOverlayType.CanMove, move.Latter));
-                    break;
-                case MoveType.Takes:
-                case MoveType.EnPassant:
-                    _selections.Add(new SquareOverlay(SquareOverlayType.CanTake, move.Latter));
-                    break;
-            }
-        }
+        _selections.AddRange(_overlayFactory.CreateOverlays(sender, e));
     }
     private void OnPieceDeselected(object sender, EventArgs e) => _selections.Clear();
     private void OnPieceMoved(object sender, PieceMovedEventArgs e)
     {
-        if (e.Move.Description != MoveType.ParticipatesInCastling)
+        List<IMovableDrawable> overlays = new(_overlayFactory.CreateOverlays(sender, e));
+        if(overlays.Count > 0)
         {
             _showMoves = false;
-            Move move = e.Move;
             _moves.Clear();
-            _moves.Add(new SquareOverlay(SquareOverlayType.MovedFrom, move.Former));
-            _moves.Add(new SquareOverlay(SquareOverlayType.MovedTo, move.Latter));
+            _moves.AddRange(overlays);
         }
     }
     private void OnCheck(object sender, EventArgs e)
     {
-        if (sender is Piece p)
-        {
-            _moves.Add(new SquareOverlay(SquareOverlayType.Check, p.Square));
-        }
+        _moves.AddRange(_overlayFactory.CreateOverlays(sender, e));
     }
     private void OnMovementConcluded(object sender, EventArgs e) => _showMoves = true;
     public void Dispose()

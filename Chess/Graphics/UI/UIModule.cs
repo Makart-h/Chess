@@ -15,19 +15,19 @@ internal sealed class UIModule : IComparable<UIModule>
     private Vector2 _screenFraction;
     public int Width { get => (int)(GraphicsDevice.PresentationParameters.BackBufferWidth * _screenFraction.X); }
     public int Height { get => (int)(GraphicsDevice.PresentationParameters.BackBufferHeight * _screenFraction.Y); }
-    public DrawableObject Background { get; private set; }
+    public IDrawable Background { get; private set; }
     private readonly List<IDrawableProvider> _drawableProviders;
     private readonly List<ITextProvider> _textProviders;
-    private readonly List<DrawableObject> _drawables;
+    private readonly List<IDrawable> _drawables;
     private readonly List<TextObject> _texts;
     private readonly List<Button> _buttons;
     public int Layer {get; set;}
     private readonly Stack<object> _objectsToRemove;
     private readonly Stack<object> _objectsToAdd;
-    public UIModule(GraphicsDevice graphicsDevice, DrawableObject background, Vector2 positionFraction, Vector2 screenFraction, IDrawableProvider[] drawableProviders, ITextProvider[] textProviders, Button[] buttons = null)
-        : this(graphicsDevice, background, (background.Model.TextureRect.Width, background.Model.TextureRect.Height), positionFraction, screenFraction, drawableProviders, textProviders, buttons)
+    public UIModule(GraphicsDevice graphicsDevice, IDrawable background, Vector2 positionFraction, Vector2 screenFraction, IDrawableProvider[] drawableProviders, ITextProvider[] textProviders, Button[] buttons = null)
+        : this(graphicsDevice, background, (background.TextureRect.Width, background.TextureRect.Height), positionFraction, screenFraction, drawableProviders, textProviders, buttons)
     {    }
-    public UIModule(GraphicsDevice graphicsDevice, DrawableObject background, (int width, int height) renderTargetSize, Vector2 positionFraction, Vector2 screenFraction, IDrawableProvider[] drawableProviders, ITextProvider[] textProviders, Button[] buttons = null)
+    public UIModule(GraphicsDevice graphicsDevice, IDrawable background, (int width, int height) renderTargetSize, Vector2 positionFraction, Vector2 screenFraction, IDrawableProvider[] drawableProviders, ITextProvider[] textProviders, Button[] buttons = null)
     {
         GraphicsDevice = graphicsDevice;
         SpriteBatch = new SpriteBatch(graphicsDevice);
@@ -50,17 +50,17 @@ internal sealed class UIModule : IComparable<UIModule>
         GraphicsDevice.Clear(Color.CornflowerBlue);
         SpriteBatch.Begin();
         if(Background != null)
-            SpriteBatch.Draw(Background.Model.RawTexture, new Rectangle(0,0,RenderTarget.Width,RenderTarget.Height), Background.Model.TextureRect, Background.Color);
+            SpriteBatch.Draw(Background.RawTexture, new Rectangle(0,0,RenderTarget.Width,RenderTarget.Height), Background.TextureRect, Background.Color);
         foreach (IDrawableProvider provider in _drawableProviders)
         {
-            foreach (DrawableObject drawable in provider.GetDrawableObjects())
+            foreach (IDrawable drawable in provider.GetDrawableObjects())
             {
-                SpriteBatch.Draw(drawable.Model.RawTexture, drawable.DestinationRectangle, drawable.Model.TextureRect, drawable.Color);
+                SpriteBatch.Draw(drawable.RawTexture, drawable.DestinationRect, drawable.TextureRect, drawable.Color);
             }
         }
-        foreach(DrawableObject drawable in _drawables)
+        foreach(IDrawable drawable in _drawables)
         {
-            SpriteBatch.Draw(drawable.Model.RawTexture, drawable.DestinationRectangle, drawable.Model.TextureRect, drawable.Color);
+            SpriteBatch.Draw(drawable.RawTexture, drawable.DestinationRect, drawable.TextureRect, drawable.Color);
         }
         foreach (ITextProvider textProvider in _textProviders)
         {

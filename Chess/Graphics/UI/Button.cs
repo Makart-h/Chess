@@ -2,6 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using System;
+using System.Collections.Generic;
 
 namespace Chess.Graphics.UI;
 
@@ -20,7 +21,7 @@ internal sealed class Button : IDisposable
     private bool _isInteracted;
     private bool _isHoverd;
 
-    public Button(GraphicsDevice graphicsDevice, Texture2D background, DrawableObject[] drawablesToDraw, TextObject[] textsToDraw, Rectangle destinationRectangle, ButtonActionInfo actions, bool isRepeatable = true, bool shouldApplyDefaultBehaviour = true)
+    public Button(GraphicsDevice graphicsDevice, Texture2D background, IEnumerable<IDrawable> drawablesToDraw, IEnumerable<TextObject> textsToDraw, Rectangle destinationRectangle, ButtonActionInfo actions, bool isRepeatable = true, bool shouldApplyDefaultBehaviour = true)
     {
         SetActions(actions, shouldApplyDefaultBehaviour);
         Texture = new RenderTarget2D(graphicsDevice, destinationRectangle.Width, destinationRectangle.Height);
@@ -49,7 +50,7 @@ internal sealed class Button : IDisposable
         if(actions.OnHoverEnded != null)
             _onHoverEnded = new Action(actions.OnHoverEnded);
     }
-    private void PrepareTexture(Texture2D background, DrawableObject[] drawables, TextObject[] texts) 
+    private void PrepareTexture(Texture2D background, IEnumerable<IDrawable> drawables, IEnumerable<TextObject> texts) 
     {
         var spriteBatch = new SpriteBatch(Texture.GraphicsDevice);
         Texture.GraphicsDevice.SetRenderTarget(Texture);
@@ -58,9 +59,9 @@ internal sealed class Button : IDisposable
             spriteBatch.Draw(background, new Rectangle(0,0, Texture.Width, Texture.Height), Color);
         if (drawables != null)
         {
-            foreach (DrawableObject drawable in drawables)
+            foreach (IDrawable drawable in drawables)
             {
-                spriteBatch.Draw(drawable.Model.RawTexture, drawable.DestinationRectangle, drawable.Model.TextureRect, Color);
+                spriteBatch.Draw(drawable.RawTexture, drawable.DestinationRect, drawable.TextureRect, Color);
             }
         }
         if (texts != null)
