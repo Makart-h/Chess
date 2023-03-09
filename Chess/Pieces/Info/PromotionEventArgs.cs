@@ -1,6 +1,8 @@
-﻿namespace Chess.Pieces.Info;
+﻿using System;
 
-internal sealed class PromotionEventArgs
+namespace Chess.Pieces.Info;
+
+internal sealed class PromotionEventArgs : EventArgs
 {
     public Pawn PromotedPawn { get; init; }
     public PieceType TypeToBePromotedInto { get; init; }
